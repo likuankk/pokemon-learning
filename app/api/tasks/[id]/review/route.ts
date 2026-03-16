@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
-import { calculateRewards, calculateStatUpdates, calculateLevel } from '@/lib/game-logic'
+import {
+  calculateRewards, calculateStatUpdates, calculateLevel,
+  checkEvolution, getStreakMilestoneReward, getBaseSpeciesId
+} from '@/lib/game-logic'
 
 export async function POST(
   request: NextRequest,
@@ -44,34 +47,60 @@ export async function POST(
     let rewards = null
     let statUpdates = null
     let levelUp = null
+    let streakUpdate: { days: number; milestone?: string } | null = null
+    let evolution: { from: number; to: number; fromStage: number; toStage: number } | null = null
 
     if (reviewStatus === 'approved' || reviewStatus === 'partial') {
       const effectiveScore = reviewStatus === 'partial' ? Math.max(1, qualityScore - 1) : qualityScore
       rewards = calculateRewards(effectiveScore)
 
-      const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId)
+      const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId) as any
 
       if (pokemon) {
-        // Streak: count distinct approved tasks today (by task status, not submissions)
+        // ── Streak calculation ─────────────────────────────────────────────────
         const today = new Date().toISOString().split('T')[0]
-        const todayApproved = sqlite.prepare(
-          `SELECT COUNT(*) as count FROM tasks
-           WHERE family_id = ? AND status IN ('approved', 'partial')
-           AND date(last_updated) = ?`
-        ).get(task.family_id, today) as { count: number }
+        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0]
 
-        const streakDays = todayApproved.count >= 1 ? 1 : 0
+        let newStreakDays = pokemon.streak_days ?? 0
+        const lastCheckin = pokemon.last_checkin_date
 
+        if (lastCheckin === today) {
+          // Already checked in today — don't change streak
+        } else if (lastCheckin === yesterday) {
+          // Consecutive day
+          newStreakDays += 1
+        } else {
+          // Broken streak or first time
+          newStreakDays = 1
+        }
+
+        // Streak milestone bonus
+        const milestoneReward = getStreakMilestoneReward(newStreakDays)
+        if (milestoneReward) {
+          rewards = {
+            food: rewards.food + milestoneReward.food,
+            crystal: rewards.crystal + milestoneReward.crystal,
+            candy: rewards.candy + milestoneReward.candy,
+            fragment: rewards.fragment + milestoneReward.fragment,
+          }
+          const milestoneLabel = newStreakDays === 3 ? '🎉 3天里程碑！' :
+                                  newStreakDays === 7 ? '🔥 7天里程碑！' : '🌟 30天里程碑！'
+          streakUpdate = { days: newStreakDays, milestone: milestoneLabel }
+        } else {
+          streakUpdate = { days: newStreakDays }
+        }
+
+        // ── Stat updates ───────────────────────────────────────────────────────
         statUpdates = calculateStatUpdates(
           rewards,
           task.difficulty,
           pokemon.vitality,
           pokemon.wisdom,
           pokemon.affection,
-          streakDays
+          newStreakDays
         )
 
-        // Level up check: count all approved/partial tasks for this child's family
+        // ── Level up check ─────────────────────────────────────────────────────
         const totalApproved = sqlite.prepare(
           `SELECT COUNT(*) as count FROM tasks
            WHERE family_id = ? AND status IN ('approved', 'partial')`
@@ -84,13 +113,18 @@ export async function POST(
           levelUp = { from: oldLevel, to: newLevel }
         }
 
-        // Update pokemon stats and level
+        // ── Update pokemon base stats ──────────────────────────────────────────
         sqlite.prepare(
-          `UPDATE pokemons SET vitality = ?, wisdom = ?, affection = ?, level = ?, last_updated = datetime('now')
+          `UPDATE pokemons SET vitality = ?, wisdom = ?, affection = ?, level = ?,
+           streak_days = ?, last_checkin_date = ?, last_updated = datetime('now')
            WHERE child_id = ?`
-        ).run(statUpdates.vitality, statUpdates.wisdom, statUpdates.affection, newLevel, childId)
+        ).run(
+          statUpdates.vitality, statUpdates.wisdom, statUpdates.affection, newLevel,
+          newStreakDays, today,
+          childId
+        )
 
-        // Update inventory
+        // ── Inventory update ───────────────────────────────────────────────────
         const itemTypes = ['food', 'crystal', 'candy', 'fragment'] as const
         for (const itemType of itemTypes) {
           const rewardQty = rewards[itemType]
@@ -111,6 +145,40 @@ export async function POST(
             }
           }
         }
+
+        // ── Evolution check ────────────────────────────────────────────────────
+        const updatedPokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId) as any
+        const fragmentInv = sqlite.prepare(
+          'SELECT quantity FROM inventory WHERE child_id = ? AND item_type = ?'
+        ).get(childId, 'fragment') as { quantity: number } | undefined
+
+        const fragmentQty = fragmentInv?.quantity ?? 0
+        const currentStage = updatedPokemon.evolution_stage ?? 1
+        const { canEvolve, nextSpeciesId } = checkEvolution(
+          updatedPokemon.species_id, currentStage, newLevel, fragmentQty
+        )
+
+        if (canEvolve && nextSpeciesId) {
+          const newStage = currentStage + 1
+          // Consume fragments
+          const requiredFragments = currentStage === 1 ? 3 : 5
+          sqlite.prepare(
+            `UPDATE inventory SET quantity = quantity - ?, updated_at = datetime('now')
+             WHERE child_id = ? AND item_type = 'fragment'`
+          ).run(requiredFragments, childId)
+
+          // Update pokemon species and stage
+          sqlite.prepare(
+            `UPDATE pokemons SET species_id = ?, evolution_stage = ? WHERE child_id = ?`
+          ).run(nextSpeciesId, newStage, childId)
+
+          evolution = {
+            from: updatedPokemon.species_id,
+            to: nextSpeciesId,
+            fromStage: currentStage,
+            toStage: newStage,
+          }
+        }
       }
     }
 
@@ -121,6 +189,8 @@ export async function POST(
       rewards,
       statUpdates,
       levelUp,
+      streakUpdate,
+      evolution,
     })
   } catch (error) {
     console.error('POST /api/tasks/[id]/review error:', error)

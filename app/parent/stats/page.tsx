@@ -23,6 +23,22 @@ interface StatsData {
   recentApprovals: { title: string; subject: string; difficulty: number; last_updated: string; quality_score: number; review_comment: string }[]
 }
 
+interface WeeklyReport {
+  weekRange: { start: string; end: string }
+  completionRate: number
+  totalTasks: number
+  completedTasks: number
+  subjectBreakdown: Record<string, { total: number; completed: number }>
+  dailyStats: { day: string; count: number }[]
+  streakDays: number
+  allTimeCompleted: number
+  bestQualityScore: number
+  pokemon: {
+    name: string; species_id: number; level: number
+    evolution_stage: number; vitality: number; wisdom: number; affection: number
+  } | null
+}
+
 function WeekChart({ data }: { data: { day: string; count: number }[] }) {
   const max = Math.max(...data.map(d => d.count), 1)
   const days = ['一', '二', '三', '四', '五', '六', '日']
@@ -65,12 +81,18 @@ function WeekChart({ data }: { data: { day: string; count: number }[] }) {
 
 export default function StatsPage() {
   const [data, setData] = useState<StatsData | null>(null)
+  const [weeklyReport, setWeeklyReport] = useState<WeeklyReport | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/stats?familyId=1&childId=2')
-      .then(r => r.json())
-      .then(d => { setData(d); setLoading(false) })
+    Promise.all([
+      fetch('/api/stats?familyId=1&childId=2').then(r => r.json()),
+      fetch('/api/weekly-report?familyId=1&childId=2').then(r => r.json()),
+    ]).then(([statsData, reportData]) => {
+      setData(statsData)
+      setWeeklyReport(reportData)
+      setLoading(false)
+    })
   }, [])
 
   if (loading || !data) {
@@ -94,6 +116,54 @@ export default function StatsPage() {
       </div>
 
       <div className="px-8 py-8 space-y-7">
+        {/* Weekly Report Card */}
+        {weeklyReport && (
+          <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-7 text-white"
+            style={{ boxShadow: '0 6px 0 rgba(79,46,220,0.4)' }}>
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <h2 className="font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '2rem' }}>
+                  📅 本周学习周报
+                </h2>
+                <p className="opacity-80 mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>
+                  {weeklyReport.weekRange.start} — {weeklyReport.weekRange.end}
+                </p>
+              </div>
+              {weeklyReport.pokemon && (
+                <img
+                  src={HOME_SPRITE(weeklyReport.pokemon.species_id)}
+                  alt={weeklyReport.pokemon.name}
+                  width={90} height={90}
+                  style={{ width: 90, height: 90, objectFit: 'contain', filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.3))' }}
+                />
+              )}
+            </div>
+
+            <div className="grid grid-cols-4 gap-4">
+              {[
+                { label: '本周完成率', value: `${weeklyReport.completionRate}%`, emoji: '🏆' },
+                { label: '完成任务数', value: `${weeklyReport.completedTasks}/${weeklyReport.totalTasks}`, emoji: '✅' },
+                { label: '连续打卡', value: `${weeklyReport.streakDays} 天`, emoji: '🔥' },
+                { label: '累计完成', value: `${weeklyReport.allTimeCompleted} 个`, emoji: '🌟' },
+              ].map(s => (
+                <div key={s.label} className="bg-white/20 rounded-2xl p-4 text-center backdrop-blur-sm">
+                  <div className="text-3xl mb-1">{s.emoji}</div>
+                  <div className="font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>{s.value}</div>
+                  <div className="opacity-80 text-sm mt-0.5" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{s.label}</div>
+                </div>
+              ))}
+            </div>
+
+            {weeklyReport.completionRate >= 80 && (
+              <div className="mt-4 bg-white/20 rounded-2xl px-5 py-3 text-center">
+                <p className="font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}>
+                  🎉 本周表现优秀！小明完成了 {weeklyReport.completionRate}% 的任务，宝可梦为你骄傲！
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Top stat cards */}
         <div className="grid grid-cols-4 gap-5">
           {[

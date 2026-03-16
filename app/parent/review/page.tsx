@@ -24,6 +24,8 @@ interface ReviewResult {
     gains: { vitality: number; wisdom: number; affection: number }
   } | null
   levelUp: { from: number; to: number } | null
+  streakUpdate: { days: number; milestone?: string } | null
+  evolution: { from: number; to: number; fromStage: number; toStage: number } | null
 }
 
 const subjectColorMap: Record<string, string> = {
@@ -78,6 +80,12 @@ export default function ReviewPage() {
         loadTasks()
         if (data.levelUp) {
           showToast(`🎉 宝可梦升级了！Lv.${data.levelUp.from} → Lv.${data.levelUp.to}`, 'reward', '⬆️')
+        }
+        if (data.streakUpdate?.milestone) {
+          showToast(`${data.streakUpdate.milestone} 连续${data.streakUpdate.days}天！`, 'reward', '🔥')
+        }
+        if (data.evolution) {
+          showToast(`✨ 宝可梦进化了！`, 'reward', '🌟')
         }
       }
     } catch (e) { console.error(e) }
@@ -159,6 +167,34 @@ export default function ReviewPage() {
                   </p>
                   <p className="text-center mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem', opacity: 0.9 }}>
                     Lv.{result.levelUp.from} → Lv.{result.levelUp.to}
+                  </p>
+                </motion.div>
+              )}
+              {result.streakUpdate && result.streakUpdate.days > 0 && (
+                <motion.div
+                  className="mb-4 bg-gradient-to-r from-orange-400 to-red-400 rounded-3xl px-10 py-4 text-white"
+                  initial={{ scale: 0 }} animate={{ scale: [0, 1.1, 1] }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                  style={{ boxShadow: '0 4px 0 #b91c1c' }}
+                >
+                  <p className="font-bold text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>
+                    🔥 连续打卡 {result.streakUpdate.days} 天！
+                    {result.streakUpdate.milestone && ` ${result.streakUpdate.milestone}`}
+                  </p>
+                </motion.div>
+              )}
+              {result.evolution && (
+                <motion.div
+                  className="mb-4 bg-gradient-to-r from-purple-400 to-pink-400 rounded-3xl px-10 py-5 text-white"
+                  initial={{ scale: 0 }} animate={{ scale: [0, 1.2, 1] }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  style={{ boxShadow: '0 6px 0 #7e22ce' }}
+                >
+                  <p className="font-bold text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '2rem' }}>
+                    ✨ 宝可梦进化了！
+                  </p>
+                  <p className="text-center mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.4rem', opacity: 0.9 }}>
+                    阶段 {result.evolution.fromStage} → 阶段 {result.evolution.toStage}
                   </p>
                 </motion.div>
               )}

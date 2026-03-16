@@ -63,8 +63,9 @@ export function calculateStatUpdates(
   const wisdomGain = rewards.crystal * 2
   const newWisdom = Math.min(100, currentWisdom + wisdomGain)
 
-  const affectionGain = streakDays >= 1 ? 1 : 0
-  const newAffection = Math.min(100, currentAffection + affectionGain)
+  // Affection: +1 for any task today, +extra for streak milestones
+  const affectionBonus = streakDays >= 7 ? 3 : streakDays >= 3 ? 2 : streakDays >= 1 ? 1 : 0
+  const newAffection = Math.min(100, currentAffection + affectionBonus)
 
   return {
     vitality: Math.round(newVitality * 10) / 10,
@@ -73,7 +74,7 @@ export function calculateStatUpdates(
     gains: {
       vitality: Math.round(vitalityGain * 10) / 10,
       wisdom: Math.round(wisdomGain * 10) / 10,
-      affection: affectionGain,
+      affection: affectionBonus,
     }
   }
 }
@@ -114,4 +115,57 @@ export const subjectColors: Record<string, string> = {
   '英语': 'bg-green-100 text-green-700 border-green-200',
   '科学': 'bg-purple-100 text-purple-700 border-purple-200',
   '其他': 'bg-gray-100 text-gray-700 border-gray-200',
+}
+
+// ── 进化系统 ─────────────────────────────────────────────────────────────────
+
+// 进化路径：species_id → [stage1, stage2, stage3?]
+export const EVOLUTION_PATHS: Record<number, number[]> = {
+  1:   [1, 2, 3],    // 妙蛙种子 → 妙蛙草 → 妙蛙花
+  4:   [4, 5, 6],    // 小火龙 → 火恐龙 → 喷火龙
+  7:   [7, 8, 9],    // 杰尼龟 → 卡咪龟 → 水箭龟
+  25:  [25, 26],     // 皮卡丘 → 雷丘
+  39:  [39, 40],     // 胖丁 → 胖可丁
+  133: [133, 135],   // 伊布 → 雷伊布
+}
+
+// 获取宝可梦的起始species_id（用于查找进化路径）
+export function getBaseSpeciesId(speciesId: number): number {
+  for (const [base, path] of Object.entries(EVOLUTION_PATHS)) {
+    if (path.includes(speciesId)) return parseInt(base)
+  }
+  return speciesId
+}
+
+// 检查是否可以进化
+export function checkEvolution(
+  speciesId: number,
+  evolutionStage: number,
+  level: number,
+  fragmentQty: number
+): { canEvolve: boolean; nextSpeciesId?: number } {
+  const baseId = getBaseSpeciesId(speciesId)
+  const path = EVOLUTION_PATHS[baseId]
+  if (!path) return { canEvolve: false }
+
+  const maxStage = path.length // 2-stage pokemon: maxStage=2, 3-stage: maxStage=3
+  if (evolutionStage >= maxStage) return { canEvolve: false }
+
+  // Stage 1→2: level >= 10, fragment >= 3
+  // Stage 2→3: level >= 20, fragment >= 5
+  const requiredLevel = evolutionStage === 1 ? 10 : 20
+  const requiredFragments = evolutionStage === 1 ? 3 : 5
+
+  if (level >= requiredLevel && fragmentQty >= requiredFragments) {
+    return { canEvolve: true, nextSpeciesId: path[evolutionStage] }
+  }
+  return { canEvolve: false }
+}
+
+// 连续打卡里程碑奖励
+export function getStreakMilestoneReward(newStreak: number): ItemReward | null {
+  if (newStreak === 30) return { food: 0, crystal: 0, candy: 0, fragment: 1 }
+  if (newStreak === 7)  return { food: 0, crystal: 1, candy: 0, fragment: 0 }
+  if (newStreak === 3)  return { food: 0, crystal: 0, candy: 2, fragment: 0 }
+  return null
 }

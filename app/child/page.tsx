@@ -17,6 +17,8 @@ interface PokemonData {
   affection: number
   level: number
   status: string
+  streak_days?: number
+  evolution_stage?: number
 }
 
 interface InventoryItem {
@@ -117,6 +119,15 @@ export default function ChildPage() {
                   {statusLabels[status as keyof typeof statusLabels]}
                 </span>
               </div>
+              {/* Streak display */}
+              {(pokemon.streak_days ?? 0) > 0 && (
+                <div className="mt-3 flex items-center gap-2 bg-orange-50 border-2 border-orange-200 rounded-full px-5 py-2">
+                  <span className="text-2xl">🔥</span>
+                  <span className="font-bold text-orange-600" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}>
+                    连续 {pokemon.streak_days} 天打卡！
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Stats */}

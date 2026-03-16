@@ -71,12 +71,23 @@ sqlite.exec(`
 
 // Run migrations for existing DBs
 const runMigrations = () => {
-  const cols = (sqlite.prepare(`PRAGMA table_info(tasks)`).all() as {name:string}[]).map(c => c.name)
-  if (!cols.includes('last_updated')) {
-    // SQLite ALTER TABLE doesn't support datetime() as default — use a literal string
+  // tasks: add last_updated
+  const taskCols = (sqlite.prepare(`PRAGMA table_info(tasks)`).all() as {name:string}[]).map(c => c.name)
+  if (!taskCols.includes('last_updated')) {
     sqlite.exec(`ALTER TABLE tasks ADD COLUMN last_updated TEXT NOT NULL DEFAULT '2024-01-01T00:00:00.000Z'`)
-    // Back-fill existing rows with their created_at value
     sqlite.exec(`UPDATE tasks SET last_updated = created_at WHERE last_updated = '2024-01-01T00:00:00.000Z'`)
+  }
+
+  // pokemons: add streak_days, last_checkin_date, evolution_stage
+  const pokeCols = (sqlite.prepare(`PRAGMA table_info(pokemons)`).all() as {name:string}[]).map(c => c.name)
+  if (!pokeCols.includes('streak_days')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN streak_days INTEGER NOT NULL DEFAULT 0`)
+  }
+  if (!pokeCols.includes('last_checkin_date')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN last_checkin_date TEXT`)
+  }
+  if (!pokeCols.includes('evolution_stage')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN evolution_stage INTEGER NOT NULL DEFAULT 1`)
   }
 }
 runMigrations()
