@@ -175,6 +175,17 @@ sqlite.exec(`
     data TEXT,
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
+
+  -- Family settings (anti-addiction config etc.)
+  CREATE TABLE IF NOT EXISTS family_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    family_id INTEGER NOT NULL UNIQUE,
+    curfew_start INTEGER NOT NULL DEFAULT 21,
+    curfew_end INTEGER NOT NULL DEFAULT 7,
+    warning_minutes INTEGER NOT NULL DEFAULT 20,
+    limit_minutes INTEGER NOT NULL DEFAULT 30,
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
 `)
 
 // Run migrations for existing DBs

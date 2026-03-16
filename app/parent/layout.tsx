@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { href: '/parent/stats', label: '学习统计', emoji: '📊' },
   { href: '/parent/honor', label: '荣誉榜', emoji: '🏆' },
   { href: '/parent/weekend', label: '周末挑战', emoji: '🎯' },
+  { href: '/parent/settings', label: '家庭设置', emoji: '⚙️' },
 ]
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
@@ -128,6 +129,23 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
               <span className="text-2xl">←</span>
               <span>切换身份</span>
             </Link>
+            <button
+              onClick={async () => {
+                await fetch('/api/auth', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'logout' }),
+                })
+                window.location.href = '/auth'
+              }}
+              className="flex items-center gap-3 px-5 py-4 rounded-2xl text-indigo-300 hover:text-white transition-all font-bold w-full text-left"
+              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.35rem' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.12)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+            >
+              <span className="text-2xl">🚪</span>
+              <span>退出登录</span>
+            </button>
           </div>
         </div>
       </aside>

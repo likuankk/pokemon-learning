@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { useSession } from '@/components/SessionProvider'
 
 export default function AuthPage() {
   const router = useRouter()
+  const { refresh } = useSession()
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [role, setRole] = useState<'parent' | 'child'>('parent')
   const [name, setName] = useState('')
@@ -13,6 +15,7 @@ export default function AuthPage() {
   const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showInviteCode, setShowInviteCode] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,7 +32,16 @@ export default function AuthPage() {
     })
     const data = await res.json()
     if (res.ok && data.success) {
-      router.push(role === 'parent' ? '/parent' : '/child')
+      refresh()
+      // After parent registration, show invite code
+      if (mode === 'register' && data.user.role === 'parent' && data.inviteCode) {
+        setShowInviteCode(data.inviteCode)
+        setLoading(false)
+        return
+      }
+      // Redirect based on actual role from server (not form)
+      const actualRole = data.user.role
+      router.push(actualRole === 'parent' ? '/parent' : '/child')
     } else {
       setError(data.error || '操作失败')
     }
@@ -45,9 +57,59 @@ export default function AuthPage() {
     })
     const data = await res.json()
     if (res.ok && data.success) {
-      router.push(demoRole === 'parent' ? '/parent' : '/child')
+      refresh()
+      router.push(data.user.role === 'parent' ? '/parent' : '/child')
     }
     setLoading(false)
+  }
+
+  // Show invite code after parent registration
+  if (showInviteCode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600">
+        <motion.div
+          className="bg-white rounded-3xl p-10 w-full max-w-md shadow-2xl text-center"
+          initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+        >
+          <div className="text-7xl mb-4">🎉</div>
+          <h1 className="game-label mb-2" style={{ fontSize: '2.5rem' }}>注册成功！</h1>
+          <p className="text-gray-400 mb-6" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+            请将以下邀请码发送给孩子，让 TA 加入你的家庭
+          </p>
+
+          <div className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl px-6 py-5 mb-4">
+            <p className="text-gray-500 mb-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
+              家庭邀请码
+            </p>
+            <p className="text-indigo-600 font-bold tracking-widest" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '3rem' }}>
+              {showInviteCode}
+            </p>
+          </div>
+
+          <button
+            onClick={() => {
+              navigator.clipboard?.writeText(showInviteCode)
+            }}
+            className="text-indigo-500 hover:text-indigo-700 font-bold mb-6 block mx-auto"
+            style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
+          >
+            📋 点击复制
+          </button>
+
+          <p className="text-gray-400 text-sm mb-6" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            💡 你也可以稍后在「防沉迷设置」页面查看邀请码
+          </p>
+
+          <button
+            onClick={() => router.push('/parent')}
+            className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-5 rounded-2xl transition-all"
+            style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem', boxShadow: '0 5px 0 #3730a3' }}
+          >
+            进入家长端 →
+          </button>
+        </motion.div>
+      </div>
+    )
   }
 
   return (
@@ -115,12 +177,17 @@ export default function AuthPage() {
           />
 
           {mode === 'register' && role === 'child' && (
-            <input
-              type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)}
-              placeholder="家庭邀请码（家长的家庭ID）"
-              className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-xl focus:outline-none focus:ring-4 focus:ring-indigo-300"
-              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
-            />
+            <div>
+              <input
+                type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value)}
+                placeholder="家庭邀请码" required
+                className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-xl focus:outline-none focus:ring-4 focus:ring-indigo-300"
+                style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+              />
+              <p className="text-gray-400 text-sm mt-2 px-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                💡 请向家长索取邀请码，家长注册后可以查看
+              </p>
+            </div>
           )}
 
           {error && <p className="text-red-500 text-center font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{error}</p>}
