@@ -86,7 +86,7 @@ export default function NewTaskPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>创建任务 ➕</h1>
-            <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>为小明布置一个新的学习任务</p>
+            <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>为孩子布置一个新的学习任务</p>
           </div>
           <button
             onClick={() => setShowTemplates(!showTemplates)}

@@ -112,7 +112,7 @@ export default function StatsPage() {
       <div className="border-b-4 border-indigo-200 px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
         <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>学习统计 📊</h1>
-        <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>小明的学习成果一览</p>
+        <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>孩子的学习成果一览</p>
       </div>
 
       <div className="px-8 py-8 space-y-7">
@@ -157,7 +157,7 @@ export default function StatsPage() {
             {weeklyReport.completionRate >= 80 && (
               <div className="mt-4 bg-white/20 rounded-2xl px-5 py-3 text-center">
                 <p className="font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}>
-                  🎉 本周表现优秀！小明完成了 {weeklyReport.completionRate}% 的任务，宝可梦为你骄傲！
+                  🎉 本周表现优秀！完成了 {weeklyReport.completionRate}% 的任务，宝可梦为你骄傲！
                 </p>
               </div>
             )}

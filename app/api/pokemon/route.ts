@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
-import { getPokemonStatus } from '@/lib/game-logic'
+import { getPokemonStatus, getEvolutionTargets, getEvolutionRequirements, POKEMON_NAMES } from '@/lib/game-logic'
 import { getSession, getChildId, getFamilyId } from '@/lib/auth'
 
 // Natural decay: vitality -2/day, wisdom -2/day, affection -1/day, floor 20
@@ -100,6 +100,14 @@ export async function POST(request: NextRequest) {
     }
 
     const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId)
+
+    // Record initial species as discovered
+    try {
+      sqlite.prepare(
+        'INSERT OR IGNORE INTO discovered_species (child_id, species_id) VALUES (?, ?)'
+      ).run(childId, speciesId)
+    } catch (e) { /* table may not exist yet */ }
+
     return NextResponse.json({ pokemon }, { status: 201 })
   } catch (error) {
     console.error('POST /api/pokemon error:', error)

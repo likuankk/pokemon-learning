@@ -24,7 +24,7 @@ export default function HonorPage() {
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
         <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>家庭荣誉榜 🏆</h1>
         <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
-          小明的正向成长记录
+          孩子的正向成长记录
         </p>
       </div>
 
@@ -38,7 +38,7 @@ export default function HonorPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '2rem' }}>
-                    小明的成长旅程
+                    孩子的成长旅程
                   </h2>
                   <p className="opacity-80 mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
                     每一点进步都值得骄傲

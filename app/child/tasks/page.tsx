@@ -46,7 +46,7 @@ export default function ChildTasksPage() {
         body: JSON.stringify({}),
       })
       if (res.ok) {
-        showToast('任务已提交！等待妈妈审核 🎉', 'success', '✅')
+        showToast('任务已提交！等待家长审核 🎉', 'success', '✅')
         setSelectedTask(null)
         loadTasks()
       } else {
@@ -164,7 +164,7 @@ export default function ChildTasksPage() {
                         </p>
                         <div className="mt-3 inline-block px-4 py-2 rounded-xl bg-yellow-100 text-yellow-700 font-bold"
                           style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>
-                          已提交，等待妈妈审核...
+                          已提交，等待家长审核...
                         </div>
                       </div>
                     ))}
@@ -248,7 +248,7 @@ export default function ChildTasksPage() {
                 <div className="bg-teal-50 border-2 border-teal-200 rounded-2xl p-5 mb-6">
                   <p className="font-bold text-teal-700 mb-2" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>💡 完成后记得：</p>
                   <ul className="space-y-1">
-                    {['认真检查作业有没有错误', '整理好书桌和文具', '准备好汇报给妈妈'].map(tip => (
+                    {['认真检查作业有没有错误', '整理好书桌和文具', '准备好汇报给家长'].map(tip => (
                       <li key={tip} className="text-teal-600 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>
                         ✓ {tip}
                       </li>
@@ -270,7 +270,7 @@ export default function ChildTasksPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97, y: 3 }}
                 >
-                  {submitting ? '提交中...' : '✅ 我完成了！提交给妈妈'}
+                  {submitting ? '提交中...' : '✅ 我完成了！提交给家长'}
                 </motion.button>
               </div>
             </motion.div>

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import {
   calculateRewards, calculateStatUpdates, calculateLevel,
-  checkEvolution, getStreakMilestoneReward, getBaseSpeciesId
+  checkEvolution, getStreakMilestoneReward, getBaseSpeciesId,
+  getEvolutionRequirements, POKEMON_NAMES
 } from '@/lib/game-logic'
 import { getSession, getChildId } from '@/lib/auth'
 
@@ -116,14 +117,17 @@ export async function POST(
           levelUp = { from: oldLevel, to: newLevel }
         }
 
+        // ── Update max_streak ─────────────────────────────────────────────────
+        const newMaxStreak = Math.max(pokemon.max_streak ?? 0, newStreakDays)
+
         // ── Update pokemon base stats ──────────────────────────────────────────
         sqlite.prepare(
           `UPDATE pokemons SET vitality = ?, wisdom = ?, affection = ?, level = ?,
-           streak_days = ?, last_checkin_date = ?, last_updated = datetime('now')
+           streak_days = ?, max_streak = ?, last_checkin_date = ?, last_updated = datetime('now')
            WHERE child_id = ?`
         ).run(
           statUpdates.vitality, statUpdates.wisdom, statUpdates.affection, newLevel,
-          newStreakDays, today,
+          newStreakDays, newMaxStreak, today,
           childId
         )
 
@@ -163,17 +167,47 @@ export async function POST(
 
         if (canEvolve && nextSpeciesId) {
           const newStage = currentStage + 1
+          const requiredFragments = getEvolutionRequirements(currentStage).fragments
+          const newName = POKEMON_NAMES[nextSpeciesId] || updatedPokemon.name
+
           // Consume fragments
-          const requiredFragments = currentStage === 1 ? 3 : 5
           sqlite.prepare(
             `UPDATE inventory SET quantity = quantity - ?, updated_at = datetime('now')
              WHERE child_id = ? AND item_type = 'fragment'`
           ).run(requiredFragments, childId)
 
-          // Update pokemon species and stage
+          // Update pokemon species, name and stage
           sqlite.prepare(
-            `UPDATE pokemons SET species_id = ?, evolution_stage = ? WHERE child_id = ?`
-          ).run(nextSpeciesId, newStage, childId)
+            `UPDATE pokemons SET species_id = ?, name = ?, evolution_stage = ? WHERE child_id = ?`
+          ).run(nextSpeciesId, newName, newStage, childId)
+
+          // Record evolution history
+          try {
+            sqlite.prepare(
+              `INSERT INTO evolution_history (child_id, from_species_id, to_species_id, from_stage, to_stage)
+               VALUES (?, ?, ?, ?, ?)`
+            ).run(childId, updatedPokemon.species_id, nextSpeciesId, currentStage, newStage)
+
+            // Record discovered species
+            sqlite.prepare(
+              'INSERT OR IGNORE INTO discovered_species (child_id, species_id) VALUES (?, ?)'
+            ).run(childId, nextSpeciesId)
+            sqlite.prepare(
+              'INSERT OR IGNORE INTO discovered_species (child_id, species_id) VALUES (?, ?)'
+            ).run(childId, updatedPokemon.species_id)
+
+            // Unlock evolution achievements
+            if (newStage === 2) {
+              sqlite.prepare(
+                'INSERT OR IGNORE INTO child_achievements (child_id, achievement_id) VALUES (?, ?)'
+              ).run(childId, 'first_evolution')
+            }
+            if (newStage >= 3) {
+              sqlite.prepare(
+                'INSERT OR IGNORE INTO child_achievements (child_id, achievement_id) VALUES (?, ?)'
+              ).run(childId, 'second_evolution')
+            }
+          } catch (e) { /* tables may not exist yet */ }
 
           evolution = {
             from: updatedPokemon.species_id,
@@ -183,6 +217,63 @@ export async function POST(
           }
         }
       }
+    }
+
+    // ── Auto-create notifications ──────────────────────────────────────────
+    try {
+      // Notify child about review result
+      const notifTitle = reviewStatus === 'approved' ? '✅ 任务通过！' :
+                         reviewStatus === 'partial' ? '📝 部分通过' : '🔄 需要重做'
+      const notifMsg = reviewStatus === 'approved'
+        ? `「${task.title}」已通过审核，宝可梦获得了奖励！`
+        : reviewStatus === 'partial'
+        ? `「${task.title}」部分通过，继续加油！`
+        : `「${task.title}」需要重做，${reviewComment || '请再试一次'}。`
+
+      sqlite.prepare(
+        'INSERT INTO notifications (user_id, type, title, message, data) VALUES (?, ?, ?, ?, ?)'
+      ).run(childId, 'review', notifTitle, notifMsg, JSON.stringify({ taskId: parseInt(id), reviewStatus }))
+
+      // Notify about level up
+      if (levelUp) {
+        sqlite.prepare(
+          'INSERT INTO notifications (user_id, type, title, message) VALUES (?, ?, ?, ?)'
+        ).run(childId, 'level_up', '🎉 升级了！', `宝可梦升到了 ${levelUp.to} 级！`)
+      }
+
+      // Notify about evolution
+      if (evolution) {
+        const evolvedName = POKEMON_NAMES[evolution.to] || '新形态'
+        sqlite.prepare(
+          'INSERT INTO notifications (user_id, type, title, message) VALUES (?, ?, ?, ?)'
+        ).run(childId, 'evolution', '✨ 进化成功！', `宝可梦进化成了 ${evolvedName}！`)
+      }
+
+      // Notify about streak milestones
+      if (streakUpdate?.milestone) {
+        sqlite.prepare(
+          'INSERT INTO notifications (user_id, type, title, message) VALUES (?, ?, ?, ?)'
+        ).run(childId, 'streak', '🔥 打卡里程碑！', `连续打卡 ${streakUpdate.days} 天！${streakUpdate.milestone}`)
+      }
+
+      // Notify parent about child completion (find parent user)
+      const parent = sqlite.prepare(
+        `SELECT id FROM users WHERE family_id = (SELECT family_id FROM users WHERE id = ?) AND role = 'parent' LIMIT 1`
+      ).get(childId) as { id: number } | undefined
+
+      if (parent && (reviewStatus === 'approved' || evolution)) {
+        const childUser = sqlite.prepare('SELECT name FROM users WHERE id = ?').get(childId) as { name: string } | undefined
+        const childName = childUser?.name || '孩子'
+        if (evolution) {
+          const evolvedName = POKEMON_NAMES[evolution.to] || '新形态'
+          sqlite.prepare(
+            'INSERT INTO notifications (user_id, type, title, message) VALUES (?, ?, ?, ?)'
+          ).run(parent.id, 'evolution', '🎉 宝可梦进化了！', `${childName}的宝可梦进化成了 ${evolvedName}！`)
+        }
+      }
+    } catch (notifError) {
+      // Don't fail the whole request if notifications fail
+      console.error('Notification creation error:', notifError)
     }
 
     return NextResponse.json({

@@ -200,7 +200,7 @@ export default function ReviewPage() {
               )}
               {result.rewards && (
                 <div className="mt-4 bg-yellow-50 border-2 border-yellow-200 rounded-3xl p-8 w-full max-w-lg">
-                  <p className="text-2xl text-gray-600 font-bold mb-5">小明获得的奖励</p>
+                  <p className="text-2xl text-gray-600 font-bold mb-5">孩子获得的奖励</p>
                   <div className="grid grid-cols-2 gap-4">
                     {Object.entries(result.rewards).filter(([, qty]) => qty > 0).map(([item, qty]) => (
                       <div key={item} className="bg-white rounded-2xl p-5 text-center border border-yellow-100">
@@ -306,7 +306,7 @@ export default function ReviewPage() {
                   <textarea
                     value={comment}
                     onChange={e => setComment(e.target.value)}
-                    placeholder="鼓励小明，让他更有动力..."
+                    placeholder="鼓励孩子，让 TA 更有动力..."
                     rows={3}
                     className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-gray-800 text-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 resize-none"
                   />

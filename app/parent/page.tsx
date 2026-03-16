@@ -68,7 +68,7 @@ export default function ParentPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>今日概览 👩‍👦</h1>
-            <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>小明家的学习情况</p>
+            <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>家庭学习情况</p>
           </div>
           <button
             onClick={() => setShowRewardPanel(!showRewardPanel)}
@@ -92,7 +92,7 @@ export default function ParentPage() {
             style={{ overflow: 'hidden' }}
           >
             <h3 className="font-bold text-orange-800 mb-4" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
-              🎁 给小明发送奖励道具
+              🎁 给孩子发送奖励道具
             </h3>
             <div className="flex items-start gap-6">
               {/* Item select */}
@@ -140,7 +140,7 @@ export default function ParentPage() {
                   type="text"
                   value={rewardMsg}
                   onChange={e => setRewardMsg(e.target.value)}
-                  placeholder="妈妈爱你！好好加油哦～"
+                  placeholder="加油哦，好好学习～"
                   className="w-full border-2 border-orange-200 rounded-2xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-4 focus:ring-orange-300"
                   style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
                 />
@@ -204,7 +204,7 @@ export default function ParentPage() {
                   <span className="text-6xl">➕</span>
                   <div>
                     <div className="font-bold text-2xl">创建新任务</div>
-                    <div className="text-indigo-200 text-lg">给小明布置作业</div>
+                    <div className="text-indigo-200 text-lg">给孩子布置作业</div>
                   </div>
                 </motion.div>
               </Link>

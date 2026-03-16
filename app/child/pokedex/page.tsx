@@ -48,16 +48,28 @@ export default function PokedexPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all')
   const [loading, setLoading] = useState(true)
   const [myPokemon, setMyPokemon] = useState<any>(null)
+  const [discoveredIds, setDiscoveredIds] = useState<number[]>([])
 
   useEffect(() => {
     Promise.all([
       fetch('/api/achievements').then(r => r.json()),
       fetch('/api/pokemon').then(r => r.json()),
-    ]).then(([achData, pokeData]) => {
+      fetch('/api/pokemon/evolve').then(r => r.json()).catch(() => ({})),
+    ]).then(([achData, pokeData, evolveData]) => {
       setAchievements(achData.achievements || [])
       setTotalUnlocked(achData.totalUnlocked || 0)
       setTotalAchievements(achData.totalAchievements || 0)
       setMyPokemon(pokeData.pokemon)
+      // Collect all discovered species: current + evolution history
+      const discovered = new Set<number>()
+      if (pokeData.pokemon?.species_id) discovered.add(pokeData.pokemon.species_id)
+      if (evolveData?.history) {
+        for (const h of evolveData.history) {
+          discovered.add(h.fromSpeciesId)
+          discovered.add(h.toSpeciesId)
+        }
+      }
+      setDiscoveredIds(Array.from(discovered))
       setLoading(false)
     })
   }, [])
@@ -65,7 +77,7 @@ export default function PokedexPage() {
   const categories = Object.keys(CATEGORY_LABELS)
   const filteredAch = filterCategory === 'all' ? achievements : achievements.filter(a => a.category === filterCategory)
 
-  const ownedSpeciesIds = myPokemon ? [myPokemon.species_id] : []
+  const ownedSpeciesIds = discoveredIds.length > 0 ? discoveredIds : (myPokemon ? [myPokemon.species_id] : [])
 
   return (
     <div className="min-h-full bg-gray-50">

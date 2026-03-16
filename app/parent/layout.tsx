@@ -119,16 +119,6 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         {/* Bottom */}
         <div className="px-4 pb-8">
           <div className="border-t border-indigo-600/50 mb-3 pt-3">
-            <Link
-              href="/"
-              className="flex items-center gap-3 px-5 py-4 rounded-2xl text-indigo-300 hover:text-white transition-all font-bold"
-              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.35rem' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.12)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-            >
-              <span className="text-2xl">←</span>
-              <span>切换身份</span>
-            </Link>
             <button
               onClick={async () => {
                 await fetch('/api/auth', {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { getSession, getChildId } from '@/lib/auth'
+import { itemLabels, itemEmojis } from '@/lib/game-logic'
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +34,21 @@ export async function POST(request: NextRequest) {
         'INSERT INTO inventory (child_id, item_type, quantity) VALUES (?, ?, ?)'
       ).run(childId, itemType, quantity)
     }
+
+    // ── Notify child about the reward ─────────────────────────────────────
+    try {
+      const emoji = itemEmojis[itemType] || '🎁'
+      const label = itemLabels[itemType] || itemType
+      const notifMsg = message
+        ? `家长奖励了你 ${quantity} 个${label}！留言：${message}`
+        : `家长奖励了你 ${quantity} 个${label}！继续加油！`
+      sqlite.prepare(
+        'INSERT INTO notifications (user_id, type, title, message, data) VALUES (?, ?, ?, ?, ?)'
+      ).run(
+        childId, 'reward', `${emoji} 收到奖励！`, notifMsg,
+        JSON.stringify({ itemType, quantity })
+      )
+    } catch { /* notification is non-critical */ }
 
     const updatedInventory = sqlite.prepare(
       'SELECT * FROM inventory WHERE child_id = ?'

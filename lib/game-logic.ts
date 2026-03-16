@@ -119,22 +119,100 @@ export const subjectColors: Record<string, string> = {
 
 // ── 进化系统 ─────────────────────────────────────────────────────────────────
 
-// 进化路径：species_id → [stage1, stage2, stage3?]
-export const EVOLUTION_PATHS: Record<number, number[]> = {
-  1:   [1, 2, 3],    // 妙蛙种子 → 妙蛙草 → 妙蛙花
-  4:   [4, 5, 6],    // 小火龙 → 火恐龙 → 喷火龙
-  7:   [7, 8, 9],    // 杰尼龟 → 卡咪龟 → 水箭龟
-  25:  [25, 26],     // 皮卡丘 → 雷丘
-  39:  [39, 40],     // 胖丁 → 胖可丁
-  133: [133, 135],   // 伊布 → 雷伊布
+// 宝可梦名称映射
+export const POKEMON_NAMES: Record<number, string> = {
+  1: '妙蛙种子', 2: '妙蛙草', 3: '妙蛙花',
+  4: '小火龙', 5: '火恐龙', 6: '喷火龙',
+  7: '杰尼龟', 8: '卡咪龟', 9: '水箭龟',
+  25: '皮卡丘', 26: '雷丘',
+  39: '胖丁', 40: '胖可丁',
+  133: '伊布', 134: '水伊布', 135: '雷伊布', 136: '火伊布',
+}
+
+// 宝可梦属性映射
+export const POKEMON_TYPES: Record<number, string> = {
+  1: '草/毒', 2: '草/毒', 3: '草/毒',
+  4: '火', 5: '火', 6: '火/飞行',
+  7: '水', 8: '水', 9: '水',
+  25: '电', 26: '电',
+  39: '一般/妖精', 40: '一般/妖精',
+  133: '一般', 134: '水', 135: '电', 136: '火',
+}
+
+// 进化路径：base_species_id → 进化链 (支持分支进化)
+export interface EvolutionPath {
+  chain: number[]         // 默认进化链
+  branches?: Record<number, number[]>  // 分支进化 (阶段 → [可选species_id])
+}
+
+export const EVOLUTION_PATHS: Record<number, EvolutionPath> = {
+  1:   { chain: [1, 2, 3] },      // 妙蛙种子 → 妙蛙草 → 妙蛙花
+  4:   { chain: [4, 5, 6] },      // 小火龙 → 火恐龙 → 喷火龙
+  7:   { chain: [7, 8, 9] },      // 杰尼龟 → 卡咪龟 → 水箭龟
+  25:  { chain: [25, 26] },       // 皮卡丘 → 雷丘
+  39:  { chain: [39, 40] },       // 胖丁 → 胖可丁
+  133: { chain: [133, 135],       // 伊布 → 雷伊布 (默认)
+         branches: { 1: [134, 135, 136] } },  // 第一阶段分支: 水/雷/火伊布
 }
 
 // 获取宝可梦的起始species_id（用于查找进化路径）
 export function getBaseSpeciesId(speciesId: number): number {
-  for (const [base, path] of Object.entries(EVOLUTION_PATHS)) {
-    if (path.includes(speciesId)) return parseInt(base)
+  for (const [base, pathDef] of Object.entries(EVOLUTION_PATHS)) {
+    const allIds = new Set(pathDef.chain)
+    if (pathDef.branches) {
+      for (const ids of Object.values(pathDef.branches)) {
+        ids.forEach(id => allIds.add(id))
+      }
+    }
+    if (allIds.has(speciesId)) return parseInt(base)
   }
   return speciesId
+}
+
+// 获取当前所处进化阶段
+export function getEvolutionStage(speciesId: number): number {
+  const baseId = getBaseSpeciesId(speciesId)
+  const pathDef = EVOLUTION_PATHS[baseId]
+  if (!pathDef) return 1
+
+  const idx = pathDef.chain.indexOf(speciesId)
+  if (idx >= 0) return idx + 1
+
+  // Check branches
+  if (pathDef.branches) {
+    for (const [stage, ids] of Object.entries(pathDef.branches)) {
+      if (ids.includes(speciesId)) return parseInt(stage) + 1
+    }
+  }
+  return 1
+}
+
+// 获取进化所需条件
+export function getEvolutionRequirements(evolutionStage: number): { level: number; fragments: number } {
+  if (evolutionStage === 1) return { level: 10, fragments: 3 }
+  if (evolutionStage === 2) return { level: 20, fragments: 5 }
+  return { level: 999, fragments: 999 } // 不可进化
+}
+
+// 获取可进化的目标列表 (支持分支)
+export function getEvolutionTargets(
+  speciesId: number,
+  evolutionStage: number,
+): number[] {
+  const baseId = getBaseSpeciesId(speciesId)
+  const pathDef = EVOLUTION_PATHS[baseId]
+  if (!pathDef) return []
+
+  const maxStage = pathDef.chain.length
+  if (evolutionStage >= maxStage) return []
+
+  // Check if there are branch options for this stage
+  if (pathDef.branches && pathDef.branches[evolutionStage]) {
+    return pathDef.branches[evolutionStage]
+  }
+
+  // Default chain evolution
+  return [pathDef.chain[evolutionStage]]
 }
 
 // 检查是否可以进化
@@ -142,24 +220,61 @@ export function checkEvolution(
   speciesId: number,
   evolutionStage: number,
   level: number,
-  fragmentQty: number
-): { canEvolve: boolean; nextSpeciesId?: number } {
-  const baseId = getBaseSpeciesId(speciesId)
-  const path = EVOLUTION_PATHS[baseId]
-  if (!path) return { canEvolve: false }
+  fragmentQty: number,
+  targetSpeciesId?: number
+): { canEvolve: boolean; nextSpeciesId?: number; targets?: number[] } {
+  const targets = getEvolutionTargets(speciesId, evolutionStage)
+  if (targets.length === 0) return { canEvolve: false }
 
-  const maxStage = path.length // 2-stage pokemon: maxStage=2, 3-stage: maxStage=3
-  if (evolutionStage >= maxStage) return { canEvolve: false }
-
-  // Stage 1→2: level >= 10, fragment >= 3
-  // Stage 2→3: level >= 20, fragment >= 5
-  const requiredLevel = evolutionStage === 1 ? 10 : 20
-  const requiredFragments = evolutionStage === 1 ? 3 : 5
+  const { level: requiredLevel, fragments: requiredFragments } = getEvolutionRequirements(evolutionStage)
 
   if (level >= requiredLevel && fragmentQty >= requiredFragments) {
-    return { canEvolve: true, nextSpeciesId: path[evolutionStage] }
+    // If targetSpeciesId specified and is valid, use it; otherwise use first target
+    const nextId = targetSpeciesId && targets.includes(targetSpeciesId)
+      ? targetSpeciesId
+      : targets[0]
+    return { canEvolve: true, nextSpeciesId: nextId, targets }
   }
-  return { canEvolve: false }
+  return { canEvolve: false, targets }
+}
+
+// 获取完整进化链展示数据
+export function getEvolutionChainDisplay(speciesId: number): {
+  stages: { speciesId: number; name: string; stage: number; isCurrent: boolean; isBranch?: boolean }[]
+  maxStage: number
+} {
+  const baseId = getBaseSpeciesId(speciesId)
+  const pathDef = EVOLUTION_PATHS[baseId]
+  if (!pathDef) return { stages: [{ speciesId, name: POKEMON_NAMES[speciesId] || '???', stage: 1, isCurrent: true }], maxStage: 1 }
+
+  const stages: { speciesId: number; name: string; stage: number; isCurrent: boolean; isBranch?: boolean }[] = []
+
+  for (let i = 0; i < pathDef.chain.length; i++) {
+    const id = pathDef.chain[i]
+    stages.push({
+      speciesId: id,
+      name: POKEMON_NAMES[id] || `#${id}`,
+      stage: i + 1,
+      isCurrent: id === speciesId,
+    })
+
+    // Add branch options at this stage
+    if (pathDef.branches && pathDef.branches[i]) {
+      for (const branchId of pathDef.branches[i]) {
+        if (!pathDef.chain.includes(branchId)) { // skip IDs already in the main chain
+          stages.push({
+            speciesId: branchId,
+            name: POKEMON_NAMES[branchId] || `#${branchId}`,
+            stage: i + 1 + 1,
+            isCurrent: branchId === speciesId,
+            isBranch: true,
+          })
+        }
+      }
+    }
+  }
+
+  return { stages, maxStage: pathDef.chain.length }
 }
 
 // 连续打卡里程碑奖励
