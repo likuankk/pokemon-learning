@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ToastProvider } from '@/components/ToastProvider'
+import NotificationBell from '@/components/NotificationBell'
 
 interface NavItem {
   href: string
@@ -18,6 +19,8 @@ const navItems: NavItem[] = [
   { href: '/parent/tasks/new', label: '创建任务', emoji: '➕' },
   { href: '/parent/review', label: '审核中心', emoji: '📝' },
   { href: '/parent/stats', label: '学习统计', emoji: '📊' },
+  { href: '/parent/honor', label: '荣誉榜', emoji: '🏆' },
+  { href: '/parent/weekend', label: '周末挑战', emoji: '🎯' },
 ]
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
@@ -128,7 +131,10 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto relative">
+        <div className="absolute top-4 right-4 z-40">
+          <NotificationBell userId={1} />
+        </div>
         <ToastProvider>
           {children}
         </ToastProvider>

@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react'
 import { getPokemonStatus, statusLabels } from '@/lib/game-logic'
 import { motion } from 'framer-motion'
 import { ToastProvider } from '@/components/ToastProvider'
+import AntiAddictionBanner from '@/components/AntiAddictionBanner'
+import NotificationBell from '@/components/NotificationBell'
 
 interface NavItem {
   href: string
@@ -19,6 +21,9 @@ const navItems: NavItem[] = [
   { href: '/child/tasks', label: '今日任务', emoji: '📋' },
   { href: '/child/planner', label: '时间规划', emoji: '🗓️' },
   { href: '/child/feed', label: '喂养宝可梦', emoji: '🍖' },
+  { href: '/child/pokedex', label: '图鉴成就', emoji: '🏅' },
+  { href: '/child/house', label: '小屋装饰', emoji: '🪑' },
+  { href: '/child/letter', label: '宝可梦的信', emoji: '💌' },
 ]
 
 interface PokemonSummary {
@@ -207,10 +212,14 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto relative">
+        <div className="absolute top-4 right-4 z-40">
+          <NotificationBell userId={2} />
+        </div>
         <ToastProvider>
           {children}
         </ToastProvider>
+        <AntiAddictionBanner childId={2} />
       </main>
     </div>
   )
