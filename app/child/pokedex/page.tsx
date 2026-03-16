@@ -51,8 +51,8 @@ export default function PokedexPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/achievements?childId=2&familyId=1').then(r => r.json()),
-      fetch('/api/pokemon?childId=2').then(r => r.json()),
+      fetch('/api/achievements').then(r => r.json()),
+      fetch('/api/pokemon').then(r => r.json()),
     ]).then(([achData, pokeData]) => {
       setAchievements(achData.achievements || [])
       setTotalUnlocked(achData.totalUnlocked || 0)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { getPokemonStatus } from '@/lib/game-logic'
+import { getSession, getChildId, getFamilyId } from '@/lib/auth'
 
 // Natural decay: vitality -2/day, wisdom -2/day, affection -1/day, floor 20
 function applyNaturalDecay(pokemon: any, sqlite: any) {
@@ -33,7 +34,8 @@ function applyNaturalDecay(pokemon: any, sqlite: any) {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const childId = parseInt(searchParams.get('childId') || '2')
+  const session = await getSession()
+  const childId = parseInt(searchParams.get('childId') || String(getChildId(session)))
 
   try {
     const sqlite = (db as any).session.client
@@ -53,13 +55,13 @@ export async function GET(request: NextRequest) {
     const status = getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection)
 
     const totalTasks = sqlite.prepare(
-      `SELECT COUNT(*) as total FROM tasks WHERE family_id = 1`
-    ).get() as { total: number }
+      `SELECT COUNT(*) as total FROM tasks WHERE family_id = ?`
+    ).get(getFamilyId(session)) as { total: number }
 
     const completedTasks = sqlite.prepare(
       `SELECT COUNT(*) as count FROM tasks
-       WHERE family_id = 1 AND status IN ('approved', 'partial')`
-    ).get() as { count: number }
+       WHERE family_id = ? AND status IN ('approved', 'partial')`
+    ).get(getFamilyId(session)) as { count: number }
 
     return NextResponse.json({
       pokemon: { ...pokemon, status },
@@ -78,7 +80,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { childId = 2, speciesId = 25, name = '皮卡丘' } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
+    const { speciesId = 25, name = '皮卡丘' } = body
 
     const sqlite = (db as any).session.client
 

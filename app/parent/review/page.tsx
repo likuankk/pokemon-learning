@@ -49,7 +49,7 @@ export default function ReviewPage() {
 
   const loadTasks = () => {
     setLoading(true)
-    fetch('/api/tasks?familyId=1&status=submitted')
+    fetch('/api/tasks?status=submitted')
       .then(r => r.json())
       .then(data => {
         const list = data.tasks || []
@@ -72,7 +72,7 @@ export default function ReviewPage() {
       const res = await fetch(`/api/tasks/${selectedTask.id}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qualityScore: score, reviewComment: comment, reviewStatus, childId: 2 }),
+        body: JSON.stringify({ qualityScore: score, reviewComment: comment, reviewStatus }),
       })
       const data = await res.json()
       if (res.ok) {

@@ -32,7 +32,7 @@ export default function TaskListPage() {
 
   const loadTasks = () => {
     setLoading(true)
-    const url = filter ? `/api/tasks?familyId=1&status=${filter}` : '/api/tasks?familyId=1'
+    const url = filter ? `/api/tasks?status=${filter}` : '/api/tasks'
     fetch(url).then(r => r.json()).then(data => { setTasks(data.tasks || []); setLoading(false) })
   }
 

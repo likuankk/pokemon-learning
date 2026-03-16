@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getFamilyId } from '@/lib/auth'
 
-// GET /api/weekend-challenge?familyId=1
+// GET /api/weekend-challenge
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const familyId = parseInt(searchParams.get('familyId') || '1')
+  const session = await getSession()
+  const familyId = parseInt(searchParams.get('familyId') || String(getFamilyId(session)))
 
   try {
     const sqlite = (db as any).session.client
@@ -37,7 +39,10 @@ const CHALLENGE_TYPES = [
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { familyId = 1, createdBy = 1, title, subject, description, difficulty, estimatedMinutes, challengeType, bonusMultiplier = 1.5 } = body
+    const session = await getSession()
+    const familyId = body.familyId || getFamilyId(session)
+    const createdBy = body.createdBy || session?.id || 1
+    const { title, subject, description, difficulty, estimatedMinutes, challengeType, bonusMultiplier = 1.5 } = body
 
     const sqlite = (db as any).session.client
 

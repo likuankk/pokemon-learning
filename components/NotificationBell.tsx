@@ -13,14 +13,14 @@ interface Notification {
   created_at: string
 }
 
-export default function NotificationBell({ userId }: { userId?: number }) {
+export default function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
   const load = () => {
-    fetch(`/api/notifications?userId=${userId || 2}`).then(r => r.json()).then(data => {
+    fetch('/api/notifications').then(r => r.json()).then(data => {
       setNotifications(data.notifications || [])
       setUnreadCount(data.unreadCount || 0)
     }).catch(() => {})
@@ -30,7 +30,7 @@ export default function NotificationBell({ userId }: { userId?: number }) {
     load()
     const t = setInterval(load, 30000)
     return () => clearInterval(t)
-  }, [userId])
+  }, [])
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -44,7 +44,7 @@ export default function NotificationBell({ userId }: { userId?: number }) {
     await fetch('/api/notifications', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'read_all', userId: userId || 2 }),
+      body: JSON.stringify({ action: 'read_all' }),
     })
     load()
   }

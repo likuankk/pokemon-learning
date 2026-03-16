@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { childId = 2, itemType, quantity = 1, message = '' } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
+    const { itemType, quantity = 1, message = '' } = body
 
     if (!itemType || !['food', 'crystal', 'candy', 'fragment'].includes(itemType)) {
       return NextResponse.json({ error: 'Invalid item type' }, { status: 400 })

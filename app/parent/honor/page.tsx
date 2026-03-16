@@ -12,7 +12,7 @@ export default function HonorPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/honor?childId=2&familyId=1').then(r => r.json()).then(data => {
+    fetch('/api/honor').then(r => r.json()).then(data => {
       setHonors(data.honors || [])
       setLoading(false)
     })

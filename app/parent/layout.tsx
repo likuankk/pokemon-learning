@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { ToastProvider } from '@/components/ToastProvider'
 import NotificationBell from '@/components/NotificationBell'
+import { useSession } from '@/components/SessionProvider'
 
 interface NavItem {
   href: string
@@ -25,11 +26,12 @@ const navItems: NavItem[] = [
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { user } = useSession()
   const [submittedCount, setSubmittedCount] = useState(0)
 
   useEffect(() => {
     const load = () => {
-      fetch('/api/tasks?familyId=1&status=submitted')
+      fetch('/api/tasks?status=submitted')
         .then(r => r.json())
         .then(d => setSubmittedCount((d.tasks || []).length))
         .catch(() => {})
@@ -64,7 +66,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
             style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
             <span className="text-4xl">👩‍👦</span>
             <div>
-              <p className="game-label-white font-bold" style={{ fontSize: '1.5rem' }}>妈妈</p>
+              <p className="game-label-white font-bold" style={{ fontSize: '1.5rem' }}>{user?.name || '家长'}</p>
               <p className="text-indigo-300 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>家长身份</p>
             </div>
           </div>
@@ -133,7 +135,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       {/* Main content */}
       <main className="flex-1 overflow-y-auto relative">
         <div className="absolute top-4 right-4 z-40">
-          <NotificationBell userId={1} />
+          <NotificationBell />
         </div>
         <ToastProvider>
           {children}

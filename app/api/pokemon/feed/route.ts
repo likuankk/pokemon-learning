@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId } from '@/lib/auth'
 
 const FEED_EFFECTS: Record<string, { vitality: number; wisdom: number; affection: number }> = {
   food:     { vitality: 10, wisdom: 0,  affection: 1 },
@@ -11,7 +12,9 @@ const FEED_EFFECTS: Record<string, { vitality: number; wisdom: number; affection
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { childId = 2, itemType } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
+    const { itemType } = body
 
     if (!itemType || !FEED_EFFECTS[itemType]) {
       return NextResponse.json({ error: 'Invalid item type' }, { status: 400 })

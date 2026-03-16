@@ -29,7 +29,7 @@ export default function ParentPage() {
   const [sendingReward, setSendingReward] = useState(false)
 
   useEffect(() => {
-    fetch('/api/tasks?familyId=1')
+    fetch('/api/tasks')
       .then(r => r.json())
       .then(data => { setTasks(data.tasks || []); setLoading(false) })
   }, [])
@@ -45,7 +45,7 @@ export default function ParentPage() {
       const res = await fetch('/api/reward', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: 2, itemType: rewardItem, quantity: rewardQty, message: rewardMsg }),
+        body: JSON.stringify({ itemType: rewardItem, quantity: rewardQty, message: rewardMsg }),
       })
       if (res.ok) {
         showToast(`🎁 已发送 ${rewardQty} 个 ${itemLabels[rewardItem]}！`, 'reward', itemEmojis[rewardItem])

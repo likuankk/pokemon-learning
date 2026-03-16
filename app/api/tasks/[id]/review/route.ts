@@ -4,6 +4,7 @@ import {
   calculateRewards, calculateStatUpdates, calculateLevel,
   checkEvolution, getStreakMilestoneReward, getBaseSpeciesId
 } from '@/lib/game-logic'
+import { getSession, getChildId } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
@@ -12,7 +13,9 @@ export async function POST(
   const { id } = await params
   try {
     const body = await request.json()
-    const { qualityScore, reviewComment, reviewStatus = 'approved', childId = 2 } = body
+    const session = await getSession()
+    const { qualityScore, reviewComment, reviewStatus = 'approved' } = body
+    const childId = body.childId || getChildId(session)
 
     if (!qualityScore || qualityScore < 1 || qualityScore > 5) {
       return NextResponse.json({ error: 'Invalid quality score (1-5 required)' }, { status: 400 })

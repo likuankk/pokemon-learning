@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId, getFamilyId } from '@/lib/auth'
 
-// GET /api/honor?childId=2
+// GET /api/honor
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const childId = parseInt(searchParams.get('childId') || '2')
-  const familyId = parseInt(searchParams.get('familyId') || '1')
+  const session = await getSession()
+  const childId = parseInt(searchParams.get('childId') || String(getChildId(session)))
+  const familyId = parseInt(searchParams.get('familyId') || String(getFamilyId(session)))
 
   try {
     const sqlite = (db as any).session.client

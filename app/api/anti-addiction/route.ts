@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId } from '@/lib/auth'
 
-// GET /api/anti-addiction?childId=2
+// GET /api/anti-addiction
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const childId = parseInt(searchParams.get('childId') || '2')
+  const session = await getSession()
+  const childId = parseInt(searchParams.get('childId') || String(getChildId(session)))
 
   try {
     const sqlite = (db as any).session.client
@@ -57,7 +59,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { childId = 2, action, sessionId } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
+    const { action, sessionId } = body
     const sqlite = (db as any).session.client
 
     if (action === 'start') {

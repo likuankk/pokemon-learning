@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +9,8 @@ export async function POST(
   const { id } = await params
   try {
     const body = await request.json()
-    const { childId = 2 } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
 
     const sqlite = (db as any).session.client
 

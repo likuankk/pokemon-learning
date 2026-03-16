@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId, getFamilyId } from '@/lib/auth'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const familyId = searchParams.get('familyId') || '1'
+  const session = await getSession()
+  const familyId = searchParams.get('familyId') || String(getFamilyId(session))
   const status = searchParams.get('status')
 
   try {
@@ -32,7 +34,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { title, subject, description, difficulty, estimatedMinutes, dueDate, familyId = 1, createdBy = 1 } = body
+    const session = await getSession()
+    const { title, subject, description, difficulty, estimatedMinutes, dueDate } = body
+    const familyId = body.familyId || getFamilyId(session)
+    const createdBy = body.createdBy || session?.id || 1
 
     if (!title || !subject || !dueDate) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })

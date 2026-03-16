@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
-// GET /api/onboarding?userId=2
+// GET /api/onboarding
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const userId = parseInt(searchParams.get('userId') || '0')
+  const session = await getSession()
+  const userId = parseInt(searchParams.get('userId') || String(session?.id || 0))
 
   try {
     const sqlite = (db as any).session.client
@@ -26,7 +28,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { userId, step, completed, data } = body
+    const session = await getSession()
+    const userId = body.userId || session?.id || 0
+    const { step, completed, data } = body
     const sqlite = (db as any).session.client
 
     // Ensure record exists

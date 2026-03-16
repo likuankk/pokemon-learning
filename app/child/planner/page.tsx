@@ -33,7 +33,7 @@ export default function PlannerPage() {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
   useEffect(() => {
-    fetch('/api/tasks?familyId=1')
+    fetch('/api/tasks')
       .then(r => r.json())
       .then(data => {
         const pending = (data.tasks || []).filter(

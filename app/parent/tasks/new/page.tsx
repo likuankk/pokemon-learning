@@ -61,7 +61,7 @@ export default function NewTaskPage() {
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, familyId: 1, createdBy: 1 }),
+        body: JSON.stringify({ ...form }),
       })
       if (res.ok) { router.push('/parent/tasks') }
       else { const d = await res.json(); setError(d.error || '创建失败'); setLoading(false) }

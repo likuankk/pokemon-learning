@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession } from '@/lib/auth'
 
-// GET /api/notifications?userId=2
+// GET /api/notifications
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const userId = parseInt(searchParams.get('userId') || '2')
+  const session = await getSession()
+  const userId = parseInt(searchParams.get('userId') || String(session?.id || 2))
 
   try {
     const sqlite = (db as any).session.client
@@ -27,7 +29,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { action, userId, notificationId, type, title, message, data } = body
+    const session = await getSession()
+    const userId = body.userId || session?.id || 2
+    const { action, notificationId, type, title, message, data } = body
     const sqlite = (db as any).session.client
 
     if (action === 'create') {

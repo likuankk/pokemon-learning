@@ -86,8 +86,8 @@ export default function StatsPage() {
 
   useEffect(() => {
     Promise.all([
-      fetch('/api/stats?familyId=1&childId=2').then(r => r.json()),
-      fetch('/api/weekly-report?familyId=1&childId=2').then(r => r.json()),
+      fetch('/api/stats').then(r => r.json()),
+      fetch('/api/weekly-report').then(r => r.json()),
     ]).then(([statsData, reportData]) => {
       setData(statsData)
       setWeeklyReport(reportData)

@@ -20,8 +20,8 @@ export default function LetterPage() {
 
   const load = () => {
     Promise.all([
-      fetch('/api/pokemon-letter?childId=2').then(r => r.json()),
-      fetch('/api/pokemon?childId=2').then(r => r.json()),
+      fetch('/api/pokemon-letter').then(r => r.json()),
+      fetch('/api/pokemon').then(r => r.json()),
     ]).then(([letterData, pokeData]) => {
       setLetters(letterData.letters || [])
       setPokemon(pokeData.pokemon)
@@ -36,7 +36,7 @@ export default function LetterPage() {
     const res = await fetch('/api/pokemon-letter', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ childId: 2, familyId: 1 }),
+      body: JSON.stringify({}),
     })
     const data = await res.json()
     if (data.letter) {

@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
-export default function AntiAddictionBanner({ childId }: { childId?: number }) {
+export default function AntiAddictionBanner() {
   const [status, setStatus] = useState<any>(null)
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
     const check = () => {
-      fetch(`/api/anti-addiction?childId=${childId || 2}`).then(r => r.json()).then(data => {
+      fetch('/api/anti-addiction').then(r => r.json()).then(data => {
         setStatus(data)
       }).catch(() => {})
     }
@@ -19,7 +19,7 @@ export default function AntiAddictionBanner({ childId }: { childId?: number }) {
       fetch('/api/anti-addiction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: childId || 2, action: 'heartbeat' }),
+        body: JSON.stringify({ action: 'heartbeat' }),
       }).then(r => r.json()).then(data => setStatus(data)).catch(() => {})
     }, 60000)
 
@@ -27,7 +27,7 @@ export default function AntiAddictionBanner({ childId }: { childId?: number }) {
     fetch('/api/anti-addiction', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ childId: childId || 2, action: 'start' }),
+      body: JSON.stringify({ action: 'start' }),
     }).catch(() => {})
 
     return () => {
@@ -36,10 +36,10 @@ export default function AntiAddictionBanner({ childId }: { childId?: number }) {
       fetch('/api/anti-addiction', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: childId || 2, action: 'end' }),
+        body: JSON.stringify({ action: 'end' }),
       }).catch(() => {})
     }
-  }, [childId])
+  }, [])
 
   if (!status || dismissed) return null
 

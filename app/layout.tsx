@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { SessionProvider } from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: "宝可梦学习乐园",
@@ -22,7 +23,9 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-gray-50 min-h-screen">
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

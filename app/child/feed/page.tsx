@@ -33,7 +33,7 @@ export default function FeedPage() {
   let floatId = 0
 
   const load = () => {
-    fetch('/api/pokemon?childId=2')
+    fetch('/api/pokemon')
       .then(r => r.json())
       .then(d => {
         setPokemon(d.pokemon)
@@ -59,7 +59,7 @@ export default function FeedPage() {
       const res = await fetch('/api/pokemon/feed', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: 2, itemType }),
+        body: JSON.stringify({ itemType }),
       })
       const data = await res.json()
       if (res.ok) {

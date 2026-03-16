@@ -38,7 +38,7 @@ export default function HousePage() {
   const [message, setMessage] = useState('')
 
   const load = () => {
-    fetch('/api/decorations?childId=2').then(r => r.json()).then(data => {
+    fetch('/api/decorations').then(r => r.json()).then(data => {
       setCatalog(data.catalog || [])
       setOwned(data.owned || [])
       setCandyBalance(data.candyBalance || 0)
@@ -54,7 +54,7 @@ export default function HousePage() {
     const res = await fetch('/api/decorations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ childId: 2, action: 'buy', decorationId }),
+      body: JSON.stringify({ action: 'buy', decorationId }),
     })
     const data = await res.json()
     if (res.ok) {
@@ -71,7 +71,7 @@ export default function HousePage() {
     await fetch('/api/decorations', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ childId: 2, action, houseItemId: item.id, slot: 'main' }),
+      body: JSON.stringify({ action, houseItemId: item.id, slot: 'main' }),
     })
     load()
   }

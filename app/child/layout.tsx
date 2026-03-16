@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { ToastProvider } from '@/components/ToastProvider'
 import AntiAddictionBanner from '@/components/AntiAddictionBanner'
 import NotificationBell from '@/components/NotificationBell'
+import { useSession } from '@/components/SessionProvider'
 
 interface NavItem {
   href: string
@@ -40,16 +41,17 @@ const HOME_SPRITE = (id: number) =>
 
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { user } = useSession()
   const [pokemon, setPokemon] = useState<PokemonSummary | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
     const load = () => {
-      fetch('/api/pokemon?childId=2')
+      fetch('/api/pokemon')
         .then(r => r.json())
         .then(d => { if (d.pokemon) setPokemon(d.pokemon) })
         .catch(() => {})
-      fetch('/api/tasks?familyId=1&status=pending')
+      fetch('/api/tasks?status=pending')
         .then(r => r.json())
         .then(d => setPendingCount((d.tasks || []).length))
         .catch(() => {})
@@ -214,12 +216,12 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
       {/* Main content */}
       <main className="flex-1 overflow-y-auto relative">
         <div className="absolute top-4 right-4 z-40">
-          <NotificationBell userId={2} />
+          <NotificationBell />
         </div>
         <ToastProvider>
           {children}
         </ToastProvider>
-        <AntiAddictionBanner childId={2} />
+        <AntiAddictionBanner />
       </main>
     </div>
   )

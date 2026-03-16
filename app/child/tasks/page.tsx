@@ -30,7 +30,7 @@ export default function ChildTasksPage() {
   const [rewardData, setRewardData] = useState<ItemReward | null>(null)
 
   const loadTasks = () => {
-    fetch('/api/tasks?familyId=1')
+    fetch('/api/tasks')
       .then(r => r.json())
       .then(data => { setTasks(data.tasks || []); setLoading(false) })
   }
@@ -43,7 +43,7 @@ export default function ChildTasksPage() {
       const res = await fetch(`/api/tasks/${taskId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: 2 }),
+        body: JSON.stringify({}),
       })
       if (res.ok) {
         showToast('任务已提交！等待妈妈审核 🎉', 'success', '✅')

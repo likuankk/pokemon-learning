@@ -72,13 +72,13 @@ export default function OnboardingPage() {
       await fetch('/api/pokemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: 2, speciesId: selectedPokemon.id, name: selectedPokemon.name }),
+        body: JSON.stringify({ speciesId: selectedPokemon.id, name: selectedPokemon.name }),
       })
     }
     await fetch('/api/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: 2, step: 'completed' }),
+      body: JSON.stringify({ step: 'completed' }),
     })
     router.push('/child')
   }

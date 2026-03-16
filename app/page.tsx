@@ -29,7 +29,7 @@ export default function HomePage() {
       await fetch('/api/pokemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: 2, speciesId: pokemon.id, name: pokemon.name }),
+        body: JSON.stringify({ speciesId: pokemon.id, name: pokemon.name }),
       })
       router.push('/child')
     } catch {

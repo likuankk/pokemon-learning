@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId, getFamilyId } from '@/lib/auth'
 
 const POKEMON_PERSONALITIES: Record<number, { name: string; style: string; greeting: string }> = {
   1:   { name: '妙蛙种子', style: '温柔鼓励', greeting: '嘿嘿，小主人' },
@@ -63,11 +64,11 @@ function getBaseSpecies(speciesId: number): number {
   return speciesId
 }
 
-// GET /api/pokemon-letter?childId=2
+// GET /api/pokemon-letter
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const childId = parseInt(searchParams.get('childId') || '2')
-  const familyId = parseInt(searchParams.get('familyId') || '1')
+  const session = await getSession()
+  const childId = parseInt(searchParams.get('childId') || String(getChildId(session)))
 
   try {
     const sqlite = (db as any).session.client
@@ -88,7 +89,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { childId = 2, familyId = 1 } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
+    const familyId = body.familyId || getFamilyId(session)
     const sqlite = (db as any).session.client
 
     const child = sqlite.prepare('SELECT name FROM users WHERE id = ?').get(childId) as any

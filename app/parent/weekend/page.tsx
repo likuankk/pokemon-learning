@@ -26,7 +26,7 @@ export default function WeekendChallengePage() {
   const [message, setMessage] = useState('')
 
   const load = () => {
-    fetch('/api/weekend-challenge?familyId=1').then(r => r.json()).then(data => {
+    fetch('/api/weekend-challenge').then(r => r.json()).then(data => {
       setChallenges(data.challenges || [])
       setLoading(false)
     })
@@ -42,8 +42,6 @@ export default function WeekendChallengePage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        familyId: 1,
-        childId: 2,
         type,
         title: challengeInfo?.label || type,
         description: challengeInfo?.desc || '',

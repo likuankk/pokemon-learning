@@ -33,7 +33,7 @@ export default function ChildPage() {
   const [loading, setLoading] = useState(true)
 
   const loadData = () => {
-    fetch('/api/pokemon?childId=2')
+    fetch('/api/pokemon')
       .then(r => r.json())
       .then(data => {
         setPokemon(data.pokemon)
