@@ -1,26 +1,150 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* ===== GAME FONTS ===== */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'ZCOOL KuaiLe', 'Noto Sans SC', -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
 }
+
+/* ===== 3D GAME TEXT STYLES ===== */
+
+/* Golden title text - for main headers */
+.game-title {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(251, 191, 36, 0.6), 0 0 40px rgba(251, 191, 36, 0.3);
+  -webkit-text-stroke: 2px #d97706;
+  letter-spacing: 0.05em;
+}
+
+/* Blue title text - for section headers */
+.game-title-blue {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(96, 165, 250, 0.5);
+  -webkit-text-stroke: 2px #2563eb;
+  letter-spacing: 0.05em;
+}
+
+/* Green title text */
+.game-title-green {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(74, 222, 128, 0.5);
+  -webkit-text-stroke: 2px #16a34a;
+}
+
+/* Red title text */
+.game-title-red {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(248, 113, 113, 0.5);
+  -webkit-text-stroke: 2px #dc2626;
+}
+
+/* Indigo/purple title text */
+.game-title-indigo {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #fff;
+  text-shadow: 0 0 20px rgba(129, 140, 248, 0.5);
+  -webkit-text-stroke: 2px #6366f1;
+}
+
+/* Dark label text */
+.game-label {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #1f2937;
+  letter-spacing: 0.03em;
+}
+
+/* White label text */
+.game-label-white {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  color: #fff;
+}
+
+/* ===== 3D BUTTON STYLE ===== */
+.game-btn {
+  font-family: 'ZCOOL KuaiLe', sans-serif;
+  position: relative;
+  transition: all 0.12s ease;
+  transform-style: preserve-3d;
+}
+
+.game-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: inherit;
+  filter: brightness(0.65);
+  transform: translateY(6px) translateX(2px);
+  z-index: -1;
+  border-radius: inherit;
+}
+
+.game-btn:active {
+  transform: translateY(3px) translateX(1px);
+}
+.game-btn:active::after {
+  transform: translateY(3px) translateX(1px);
+}
+
+/* ===== 3D CARD ===== */
+.game-card {
+  border-radius: 20px;
+  box-shadow:
+    0 6px 0 rgba(0,0,0,0.15),
+    0 10px 20px rgba(0,0,0,0.1),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-card:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 10px 0 rgba(0,0,0,0.12),
+    0 16px 24px rgba(0,0,0,0.12),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+/* ===== POKEMON 3D CONTAINER ===== */
+.pokemon-3d-container {
+  position: relative;
+  filter: drop-shadow(0 12px 16px rgba(0,0,0,0.3)) drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+}
+
+.pokemon-3d-container::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  height: 20px;
+  background: radial-gradient(ellipse, rgba(0,0,0,0.25) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* ===== STAT BAR 3D ===== */
+.stat-bar-3d {
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.2),
+    inset 0 -1px 2px rgba(255,255,255,0.2);
+}
+
+.stat-bar-fill-3d {
+  box-shadow:
+    inset 0 2px 4px rgba(255,255,255,0.3),
+    0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ===== SCROLL & MISC ===== */
+img.pixelated {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
