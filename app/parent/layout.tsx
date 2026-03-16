@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ToastProvider } from '@/components/ToastProvider'
 
 interface NavItem {
   href: string
@@ -16,6 +17,7 @@ const navItems: NavItem[] = [
   { href: '/parent/tasks', label: '任务列表', emoji: '📚', exact: true },
   { href: '/parent/tasks/new', label: '创建任务', emoji: '➕' },
   { href: '/parent/review', label: '审核中心', emoji: '📝' },
+  { href: '/parent/stats', label: '学习统计', emoji: '📊' },
 ]
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
@@ -127,7 +129,9 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </main>
     </div>
   )

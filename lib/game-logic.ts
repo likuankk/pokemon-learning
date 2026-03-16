@@ -12,13 +12,10 @@ export type PokemonStatus = 'energetic' | 'good' | 'tired' | 'sad'
 // 奖励计算：根据质量评分(1-5)
 export function calculateRewards(qualityScore: number): ItemReward {
   if (qualityScore <= 3) {
-    // 普通完成 1-3分
     return { food: 2, crystal: 0, candy: 1, fragment: 0 }
   } else if (qualityScore === 4) {
-    // 良好完成 4分
     return { food: 3, crystal: 1, candy: 1, fragment: 0 }
   } else {
-    // 优秀完成 5分
     return { food: 3, crystal: 2, candy: 2, fragment: 0.5 }
   }
 }
@@ -26,13 +23,27 @@ export function calculateRewards(qualityScore: number): ItemReward {
 // 难度系数
 export function getDifficultyMultiplier(difficulty: number): number {
   const multipliers: Record<number, number> = {
-    1: 1.0,
-    2: 1.1,
-    3: 1.2,
-    4: 1.35,
-    5: 1.5,
+    1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35, 5: 1.5,
   }
   return multipliers[difficulty] ?? 1.2
+}
+
+// 升级所需完成任务数（每级需要更多）
+export function getLevelUpThreshold(currentLevel: number): number {
+  return 3 + (currentLevel - 1) * 2  // lv1→3个, lv2→5个, lv3→7个...
+}
+
+// 计算新等级（根据累计通过任务数）
+export function calculateLevel(approvedCount: number): number {
+  let level = 1
+  let needed = 3
+  let remaining = approvedCount
+  while (remaining >= needed) {
+    remaining -= needed
+    level++
+    needed = 3 + (level - 1) * 2
+  }
+  return level
 }
 
 // 更新宝可梦三维度
@@ -46,15 +57,12 @@ export function calculateStatUpdates(
 ) {
   const diffMultiplier = getDifficultyMultiplier(difficulty)
 
-  // 体力 += 精灵食物 × 难度系数，上限100
   const vitalityGain = rewards.food * diffMultiplier
   const newVitality = Math.min(100, currentVitality + vitalityGain)
 
-  // 智慧 += 知识结晶 × 2，上限100
   const wisdomGain = rewards.crystal * 2
   const newWisdom = Math.min(100, currentWisdom + wisdomGain)
 
-  // 亲密度 += 连续打卡天数奖励，当天完成≥1任务+1，上限100
   const affectionGain = streakDays >= 1 ? 1 : 0
   const newAffection = Math.min(100, currentAffection + affectionGain)
 
@@ -73,10 +81,10 @@ export function calculateStatUpdates(
 // 宝可梦状态判断
 export function getPokemonStatus(vitality: number, wisdom: number, affection: number): PokemonStatus {
   const avg = (vitality + wisdom + affection) / 3
-  if (avg >= 80) return 'energetic'  // 元气满满
-  if (avg >= 60) return 'good'       // 精神良好
-  if (avg >= 40) return 'tired'      // 有点疲惫
-  return 'sad'                        // 需要关心
+  if (avg >= 80) return 'energetic'
+  if (avg >= 60) return 'good'
+  if (avg >= 40) return 'tired'
+  return 'sad'
 }
 
 export const statusLabels: Record<PokemonStatus, string> = {

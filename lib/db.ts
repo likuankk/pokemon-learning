@@ -45,6 +45,7 @@ sqlite.exec(`
     estimated_minutes INTEGER NOT NULL DEFAULT 30,
     due_date TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending',
+    last_updated TEXT NOT NULL DEFAULT (datetime('now')),
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -67,5 +68,17 @@ sqlite.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `)
+
+// Run migrations for existing DBs
+const runMigrations = () => {
+  const cols = (sqlite.prepare(`PRAGMA table_info(tasks)`).all() as {name:string}[]).map(c => c.name)
+  if (!cols.includes('last_updated')) {
+    // SQLite ALTER TABLE doesn't support datetime() as default — use a literal string
+    sqlite.exec(`ALTER TABLE tasks ADD COLUMN last_updated TEXT NOT NULL DEFAULT '2024-01-01T00:00:00.000Z'`)
+    // Back-fill existing rows with their created_at value
+    sqlite.exec(`UPDATE tasks SET last_updated = created_at WHERE last_updated = '2024-01-01T00:00:00.000Z'`)
+  }
+}
+runMigrations()
 
 export default db

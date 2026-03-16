@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
-import { calculateRewards, calculateStatUpdates } from '@/lib/game-logic'
+import { calculateRewards, calculateStatUpdates, calculateLevel } from '@/lib/game-logic'
 
 export async function POST(
   request: NextRequest,
@@ -17,13 +17,11 @@ export async function POST(
 
     const sqlite = (db as any).session.client
 
-    // Get task
     const task = sqlite.prepare('SELECT * FROM tasks WHERE id = ?').get(parseInt(id))
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 })
     }
 
-    // Get submission
     const submission = sqlite.prepare(
       'SELECT * FROM submissions WHERE task_id = ? AND child_id = ? ORDER BY submitted_at DESC LIMIT 1'
     ).get(parseInt(id), childId)
@@ -38,29 +36,29 @@ export async function POST(
        WHERE id = ?`
     ).run(reviewStatus, reviewComment || '', qualityScore, submission.id)
 
-    // Update task status
+    // Update task status and timestamp
     const taskStatus = reviewStatus === 'approved' ? 'approved' :
                        reviewStatus === 'partial' ? 'partial' : 'rejected'
-    sqlite.prepare(`UPDATE tasks SET status = ? WHERE id = ?`).run(taskStatus, parseInt(id))
+    sqlite.prepare(`UPDATE tasks SET status = ?, last_updated = datetime('now') WHERE id = ?`).run(taskStatus, parseInt(id))
 
     let rewards = null
     let statUpdates = null
+    let levelUp = null
 
-    // Calculate and apply rewards only if approved or partial
     if (reviewStatus === 'approved' || reviewStatus === 'partial') {
       const effectiveScore = reviewStatus === 'partial' ? Math.max(1, qualityScore - 1) : qualityScore
       rewards = calculateRewards(effectiveScore)
 
-      // Get current pokemon stats
       const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId)
 
       if (pokemon) {
-        // Check streak (how many tasks completed today)
+        // Streak: count distinct approved tasks today (by task status, not submissions)
         const today = new Date().toISOString().split('T')[0]
         const todayApproved = sqlite.prepare(
-          `SELECT COUNT(*) as count FROM submissions
-           WHERE child_id = ? AND date(reviewed_at) = ? AND review_status IN ('approved', 'partial')`
-        ).get(childId, today) as { count: number }
+          `SELECT COUNT(*) as count FROM tasks
+           WHERE family_id = ? AND status IN ('approved', 'partial')
+           AND date(last_updated) = ?`
+        ).get(task.family_id, today) as { count: number }
 
         const streakDays = todayApproved.count >= 1 ? 1 : 0
 
@@ -73,11 +71,24 @@ export async function POST(
           streakDays
         )
 
-        // Update pokemon stats
+        // Level up check: count all approved/partial tasks for this child's family
+        const totalApproved = sqlite.prepare(
+          `SELECT COUNT(*) as count FROM tasks
+           WHERE family_id = ? AND status IN ('approved', 'partial')`
+        ).get(task.family_id) as { count: number }
+
+        const newLevel = calculateLevel(totalApproved.count)
+        const oldLevel = pokemon.level
+
+        if (newLevel > oldLevel) {
+          levelUp = { from: oldLevel, to: newLevel }
+        }
+
+        // Update pokemon stats and level
         sqlite.prepare(
-          `UPDATE pokemons SET vitality = ?, wisdom = ?, affection = ?, last_updated = datetime('now')
+          `UPDATE pokemons SET vitality = ?, wisdom = ?, affection = ?, level = ?, last_updated = datetime('now')
            WHERE child_id = ?`
-        ).run(statUpdates.vitality, statUpdates.wisdom, statUpdates.affection, childId)
+        ).run(statUpdates.vitality, statUpdates.wisdom, statUpdates.affection, newLevel, childId)
 
         // Update inventory
         const itemTypes = ['food', 'crystal', 'candy', 'fragment'] as const
@@ -109,6 +120,7 @@ export async function POST(
                 reviewStatus === 'partial' ? '部分完成，继续加油！' : '请重新完成任务',
       rewards,
       statUpdates,
+      levelUp,
     })
   } catch (error) {
     console.error('POST /api/tasks/[id]/review error:', error)

@@ -164,30 +164,43 @@ export default function ChildPage() {
             </div>
 
             {/* Navigation cards */}
-            <div className="grid grid-cols-2 gap-5">
+            <div className="grid grid-cols-3 gap-5">
               <Link href="/child/tasks">
                 <motion.div
-                  className="bg-white/70 backdrop-blur rounded-2xl p-8 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
+                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="text-6xl">📋</div>
                   <div>
-                    <div className="font-bold text-gray-800 text-3xl">今日任务</div>
-                    <div className="text-gray-400 text-xl mt-1">查看和完成学习任务</div>
+                    <div className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>今日任务</div>
+                    <div className="text-gray-400 mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>查看和完成学习任务</div>
                   </div>
                 </motion.div>
               </Link>
               <Link href="/child/planner">
                 <motion.div
-                  className="bg-white/70 backdrop-blur rounded-2xl p-8 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
+                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <div className="text-6xl">🗓️</div>
                   <div>
-                    <div className="font-bold text-gray-800 text-3xl">时间规划</div>
-                    <div className="text-gray-400 text-xl mt-1">安排今天的学习时间</div>
+                    <div className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>时间规划</div>
+                    <div className="text-gray-400 mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>安排今天的学习时间</div>
+                  </div>
+                </motion.div>
+              </Link>
+              <Link href="/child/feed">
+                <motion.div
+                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="text-6xl">🍖</div>
+                  <div>
+                    <div className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>喂养伙伴</div>
+                    <div className="text-gray-400 mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>用道具让它更强！</div>
                   </div>
                 </motion.div>
               </Link>

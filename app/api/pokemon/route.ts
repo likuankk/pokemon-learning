@@ -20,23 +20,24 @@ export async function GET(request: NextRequest) {
 
     const status = getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection)
 
-    // Get today's task completion count
-    const today = new Date().toISOString().split('T')[0]
-    const todayTasks = sqlite.prepare(
-      `SELECT COUNT(*) as total FROM tasks WHERE family_id = 1 AND status != 'pending'`
+    // Get today's task progress
+    // total = all tasks for this family (each task counted once)
+    // completed = tasks whose final status is approved or partial (each task counted once, regardless of how many times resubmitted)
+    const totalTasks = sqlite.prepare(
+      `SELECT COUNT(*) as total FROM tasks WHERE family_id = 1`
     ).get() as { total: number }
 
-    const completedToday = sqlite.prepare(
-      `SELECT COUNT(*) as count FROM submissions
-       WHERE child_id = ? AND date(submitted_at) = ?`
-    ).get(childId, today) as { count: number }
+    const completedTasks = sqlite.prepare(
+      `SELECT COUNT(*) as count FROM tasks
+       WHERE family_id = 1 AND status IN ('approved', 'partial')`
+    ).get() as { count: number }
 
     return NextResponse.json({
       pokemon: { ...pokemon, status },
       inventory,
       todayProgress: {
-        completed: completedToday.count,
-        total: todayTasks.total,
+        completed: completedTasks.count,
+        total: totalTasks.total,
       }
     })
   } catch (error) {

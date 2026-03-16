@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getPokemonStatus, statusLabels } from '@/lib/game-logic'
 import { motion } from 'framer-motion'
+import { ToastProvider } from '@/components/ToastProvider'
 
 interface NavItem {
   href: string
@@ -17,6 +18,7 @@ const navItems: NavItem[] = [
   { href: '/child', label: '宝可梦小屋', emoji: '🏠', exact: true },
   { href: '/child/tasks', label: '今日任务', emoji: '📋' },
   { href: '/child/planner', label: '时间规划', emoji: '🗓️' },
+  { href: '/child/feed', label: '喂养宝可梦', emoji: '🍖' },
 ]
 
 interface PokemonSummary {
@@ -206,7 +208,9 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto">
-        {children}
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </main>
     </div>
   )
