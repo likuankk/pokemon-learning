@@ -27,11 +27,21 @@ export default function ParentPage() {
   const [rewardQty, setRewardQty] = useState(1)
   const [rewardMsg, setRewardMsg] = useState('')
   const [sendingReward, setSendingReward] = useState(false)
+  const [battleEnergy, setBattleEnergy] = useState<{ current: number; max: number } | null>(null)
+  const [addingEnergy, setAddingEnergy] = useState(false)
+  const [energyAmount, setEnergyAmount] = useState(1)
 
   useEffect(() => {
     fetch('/api/tasks')
       .then(r => r.json())
       .then(data => { setTasks(data.tasks || []); setLoading(false) })
+    // Load child's battle energy
+    fetch('/api/battle')
+      .then(r => r.json())
+      .then(data => {
+        if (data.energy) setBattleEnergy({ current: data.energy.current, max: 10 })
+      })
+      .catch(() => {})
   }, [])
 
   const pending = tasks.filter(t => t.status === 'pending').length
@@ -59,6 +69,28 @@ export default function ParentPage() {
       showToast('网络错误', 'error', '❌')
     }
     setSendingReward(false)
+  }
+
+  const handleAddEnergy = async () => {
+    setAddingEnergy(true)
+    try {
+      const res = await fetch('/api/battle/energy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: energyAmount }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        showToast(`⚡ 已增加 ${energyAmount} 点战斗能量！`, 'success', '⚡')
+        setBattleEnergy(prev => prev ? { ...prev, current: data.energy } : null)
+        setEnergyAmount(1)
+      } else {
+        showToast(data.error || '操作失败', 'error', '❌')
+      }
+    } catch {
+      showToast('网络错误', 'error', '❌')
+    }
+    setAddingEnergy(false)
   }
 
   return (
@@ -254,6 +286,45 @@ export default function ParentPage() {
                   </div>
                 </motion.div>
               </Link>
+
+              {/* Battle Energy Card */}
+              <motion.div
+                className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-3xl p-7 h-44 flex flex-col justify-between"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-4xl">⚡</span>
+                  {battleEnergy && (
+                    <span className="text-2xl font-bold text-amber-600" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                      {battleEnergy.current}/{battleEnergy.max}
+                    </span>
+                  )}
+                </div>
+                <div>
+                  <div className="font-bold text-gray-800 text-xl mb-2">战斗能量</div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEnergyAmount(Math.max(1, energyAmount - 1))}
+                      className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-lg font-bold"
+                    >−</button>
+                    <span className="text-xl font-bold text-amber-600 w-6 text-center">{energyAmount}</span>
+                    <button
+                      onClick={() => setEnergyAmount(Math.min(10, energyAmount + 1))}
+                      className="w-8 h-8 rounded-lg bg-white border border-gray-200 text-lg font-bold"
+                    >+</button>
+                    <motion.button
+                      onClick={handleAddEnergy}
+                      disabled={addingEnergy}
+                      className="ml-2 bg-amber-400 hover:bg-amber-500 text-white font-bold px-4 py-1.5 rounded-xl text-sm disabled:opacity-50"
+                      style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      {addingEnergy ? '...' : '⚡ 增加'}
+                    </motion.button>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
 

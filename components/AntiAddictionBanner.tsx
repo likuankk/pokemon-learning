@@ -45,7 +45,7 @@ export default function AntiAddictionBanner() {
 
   const { tier, isCurfew, totalMinutes, limitMinutes } = status
 
-  if (tier === 'normal' && !isCurfew) return null
+  if ((tier === 'normal' || tier === 'warning') && !isCurfew) return null
 
   return (
     <AnimatePresence>

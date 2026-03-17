@@ -748,6 +748,23 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
 function ResultView({ result, wild, pokemon, onReturn }: {
   result: any; wild: WildPokemon | null; pokemon: PokemonInfo | null; onReturn: () => void
 }) {
+  const [countdown, setCountdown] = useState(5)
+
+  useEffect(() => {
+    if (!result) return
+    const timer = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(timer)
+          onReturn()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(timer)
+  }, [result, onReturn])
+
   if (!result) return null
 
   const isWin = result.battleStatus === 'win'
@@ -828,7 +845,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
       <button onClick={onReturn}
         className="mt-4 px-8 py-3 rounded-xl font-bold text-white transition hover:brightness-110"
         style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
-        返回地图
+        返回地图 ({countdown}s)
       </button>
     </motion.div>
   )

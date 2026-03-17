@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import PokemonDisplay from '@/components/PokemonDisplay'
 import StatsBar from '@/components/StatsBar'
 import { getPokemonStatus, statusLabels, itemEmojis, itemLabels, getEvolutionRequirements, getEvolutionTargets, POKEMON_NAMES } from '@/lib/game-logic'
 import Link from 'next/link'
 import { useSession } from '@/components/SessionProvider'
+import { getSoundManager } from '@/lib/sound-manager'
 
 interface PokemonData {
   id: number
@@ -33,6 +34,7 @@ export default function ChildPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([])
   const [todayProgress, setTodayProgress] = useState({ completed: 0, total: 0 })
   const [loading, setLoading] = useState(true)
+  const prevStatusRef = useRef<string | null>(null)
 
   const loadData = () => {
     fetch('/api/pokemon')
@@ -45,11 +47,28 @@ export default function ChildPage() {
       })
   }
 
+  const status = pokemon ? getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection) : null
+
   useEffect(() => {
     loadData()
     const interval = setInterval(loadData, 10000)
     return () => clearInterval(interval)
   }, [])
+
+  // Play sound on status change
+  useEffect(() => {
+    if (!status) return
+    if (prevStatusRef.current !== null && prevStatusRef.current !== status) {
+      getSoundManager().playStatusChange(status)
+    }
+    prevStatusRef.current = status
+  }, [status])
+
+  // Preload cry
+  useEffect(() => {
+    if (!pokemon) return
+    getSoundManager().preloadCry(pokemon.species_id)
+  }, [pokemon?.species_id])
 
   if (loading) {
     return (
@@ -59,7 +78,7 @@ export default function ChildPage() {
     )
   }
 
-  if (!pokemon) {
+  if (!pokemon || !status) {
     return (
       <div className="min-h-full flex flex-col items-center justify-center bg-gray-50">
         <p className="text-gray-500 text-2xl mb-6">还没有宝可梦！</p>
@@ -67,8 +86,6 @@ export default function ChildPage() {
       </div>
     )
   }
-
-  const status = getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection)
 
   const bgColors: Record<string, string> = {
     joyful: 'from-yellow-50 to-amber-50',
@@ -119,6 +136,7 @@ export default function ChildPage() {
                 affection={pokemon.affection}
                 level={pokemon.level}
                 size="xlarge"
+                onPokemonClick={() => getSoundManager().playCry(pokemon.species_id)}
               />
               <div className="mt-5 bg-white rounded-full px-6 py-3 shadow-sm border-2 border-gray-100"
                 style={{ boxShadow: '0 3px 0 rgba(0,0,0,0.1)' }}>
