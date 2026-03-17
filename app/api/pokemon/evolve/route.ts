@@ -8,16 +8,31 @@ import { getSession, getChildId } from '@/lib/auth'
 
 // GET: get evolution status and progress
 export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
   const session = await getSession()
   const childId = getChildId(session)
+  const pokemonId = searchParams.get('pokemonId')
 
   try {
     const sqlite = (db as any).session.client
 
-    const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId) as any
+    // Get the specific pokemon, or the active one, or fallback to first
+    let pokemon: any
+    if (pokemonId) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE id = ? AND child_id = ?').get(parseInt(pokemonId), childId)
+    }
+    if (!pokemon) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? AND is_active = 1').get(childId)
+    }
+    if (!pokemon) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? ORDER BY id LIMIT 1').get(childId)
+    }
     if (!pokemon) {
       return NextResponse.json({ error: 'Pokemon not found' }, { status: 404 })
     }
+
+    // Get all pokemons for the selector
+    const allPokemons = sqlite.prepare('SELECT id, species_id, name, level, battle_level, evolution_stage, is_active, source FROM pokemons WHERE child_id = ?').all(childId) as any[]
 
     const fragmentInv = sqlite.prepare(
       'SELECT quantity FROM inventory WHERE child_id = ? AND item_type = ?'
@@ -25,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const fragmentQty = Math.floor(fragmentInv?.quantity ?? 0)
     const currentStage = pokemon.evolution_stage ?? 1
-    const level = pokemon.level
+    const level = Math.max(pokemon.level || 1, pokemon.battle_level || 1)
 
     const { canEvolve, targets } = checkEvolution(
       pokemon.species_id, currentStage, level, fragmentQty
@@ -58,11 +73,21 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       pokemon: {
+        id: pokemon.id,
         speciesId: pokemon.species_id,
         name: pokemon.name,
-        level: pokemon.level,
+        level: level,
         evolutionStage: currentStage,
       },
+      allPokemons: allPokemons.map((p: any) => ({
+        id: p.id,
+        speciesId: p.species_id,
+        name: p.name,
+        level: Math.max(p.level || 1, p.battle_level || 1),
+        evolutionStage: p.evolution_stage ?? 1,
+        isActive: p.is_active === 1,
+        source: p.source,
+      })),
       canEvolve,
       requirements: {
         level: requirements.level,
@@ -89,11 +114,21 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { targetSpeciesId } = body
+    const { targetSpeciesId, pokemonId: reqPokemonId } = body
 
     const sqlite = (db as any).session.client
 
-    const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId) as any
+    // Get the specific pokemon, or the active one, or fallback to first
+    let pokemon: any
+    if (reqPokemonId) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE id = ? AND child_id = ?').get(reqPokemonId, childId)
+    }
+    if (!pokemon) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? AND is_active = 1').get(childId)
+    }
+    if (!pokemon) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? ORDER BY id LIMIT 1').get(childId)
+    }
     if (!pokemon) {
       return NextResponse.json({ error: 'Pokemon not found' }, { status: 404 })
     }
@@ -104,7 +139,7 @@ export async function POST(request: NextRequest) {
 
     const fragmentQty = Math.floor(fragmentInv?.quantity ?? 0)
     const currentStage = pokemon.evolution_stage ?? 1
-    const level = pokemon.level
+    const level = Math.max(pokemon.level || 1, pokemon.battle_level || 1)
 
     const { canEvolve, nextSpeciesId } = checkEvolution(
       pokemon.species_id, currentStage, level, fragmentQty, targetSpeciesId
@@ -136,8 +171,8 @@ export async function POST(request: NextRequest) {
     // Update pokemon species, name, and stage
     sqlite.prepare(
       `UPDATE pokemons SET species_id = ?, name = ?, evolution_stage = ?, last_updated = datetime('now')
-       WHERE child_id = ?`
-    ).run(nextSpeciesId, newName, newStage, childId)
+       WHERE id = ?`
+    ).run(nextSpeciesId, newName, newStage, pokemon.id)
 
     // Record evolution history
     sqlite.prepare(

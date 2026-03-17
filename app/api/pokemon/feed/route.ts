@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const session = await getSession()
     const childId = body.childId || getChildId(session)
-    const { itemType } = body
+    const { itemType, pokemonId } = body
 
     if (!itemType || !FEED_EFFECTS[itemType]) {
       return NextResponse.json({ error: 'Invalid item type' }, { status: 400 })
@@ -31,9 +31,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '道具数量不足' }, { status: 400 })
     }
 
-    const pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId)
-    if (!pokemon) {
-      return NextResponse.json({ error: 'Pokemon not found' }, { status: 404 })
+    // Get the target pokemon - either by pokemonId or default first one
+    let pokemon: any
+    if (pokemonId) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE id = ? AND child_id = ?').get(pokemonId, childId)
+      if (!pokemon) {
+        return NextResponse.json({ error: 'Pokemon not found' }, { status: 404 })
+      }
+    } else {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? AND is_active = 1').get(childId)
+      if (!pokemon) {
+        pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? ORDER BY id LIMIT 1').get(childId)
+      }
+      if (!pokemon) {
+        return NextResponse.json({ error: 'Pokemon not found' }, { status: 404 })
+      }
     }
 
     const effect = FEED_EFFECTS[itemType]
@@ -47,13 +59,13 @@ export async function POST(request: NextRequest) {
        WHERE child_id = ? AND item_type = ?`
     ).run(childId, itemType)
 
-    // Update pokemon
+    // Update pokemon by id
     sqlite.prepare(
       `UPDATE pokemons SET vitality = ?, wisdom = ?, affection = ?, last_updated = datetime('now')
-       WHERE child_id = ?`
-    ).run(newVitality, newWisdom, newAffection, childId)
+       WHERE id = ?`
+    ).run(newVitality, newWisdom, newAffection, pokemon.id)
 
-    const updatedPokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId)
+    const updatedPokemon = sqlite.prepare('SELECT * FROM pokemons WHERE id = ?').get(pokemon.id)
     const updatedInv = sqlite.prepare('SELECT * FROM inventory WHERE child_id = ?').all(childId)
 
     return NextResponse.json({

@@ -10,11 +10,21 @@ const HOME_SPRITE = (id: number) =>
 
 interface EvolutionData {
   pokemon: {
+    id: number
     speciesId: number
     name: string
     level: number
     evolutionStage: number
   }
+  allPokemons?: {
+    id: number
+    speciesId: number
+    name: string
+    level: number
+    evolutionStage: number
+    isActive: boolean
+    source: string
+  }[]
   canEvolve: boolean
   requirements: {
     level: number
@@ -43,12 +53,14 @@ export default function EvolvePage() {
   const [evolving, setEvolving] = useState(false)
   const [selectedTarget, setSelectedTarget] = useState<number | null>(null)
   const [showAnimation, setShowAnimation] = useState(false)
+  const [currentPokemonId, setCurrentPokemonId] = useState<number | null>(null)
   const [evolutionResult, setEvolutionResult] = useState<{
     from: number; to: number; fromName: string; toName: string
   } | null>(null)
 
-  const loadData = () => {
-    fetch('/api/pokemon/evolve')
+  const loadData = (pokemonId?: number) => {
+    const url = pokemonId ? `/api/pokemon/evolve?pokemonId=${pokemonId}` : '/api/pokemon/evolve'
+    fetch(url)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false) })
       .catch(() => setLoading(false))
@@ -66,6 +78,7 @@ export default function EvolvePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           targetSpeciesId: selectedTarget || data.targets[0]?.speciesId,
+          pokemonId: data.pokemon.id,
         }),
       })
       const result = await res.json()
@@ -203,6 +216,55 @@ export default function EvolvePage() {
       </div>
 
       <div className="px-4 md:px-8 py-8 space-y-8">
+        {/* Pokemon Selector */}
+        {data.allPokemons && data.allPokemons.length > 1 && (
+          <div className="bg-white rounded-3xl border-2 border-gray-200 p-5" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
+            <h2 className="font-bold text-gray-800 mb-4" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.3rem' }}>
+              选择宝可梦
+            </h2>
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {data.allPokemons.map(p => (
+                <motion.button
+                  key={p.id}
+                  onClick={() => {
+                    setCurrentPokemonId(p.id)
+                    setSelectedTarget(null)
+                    loadData(p.id)
+                  }}
+                  className={`flex flex-col items-center p-3 rounded-2xl border-2 flex-shrink-0 transition-all ${
+                    data.pokemon.id === p.id
+                      ? 'border-purple-400 bg-purple-50'
+                      : 'border-gray-200 bg-gray-50 hover:border-purple-300'
+                  }`}
+                  style={{ minWidth: 90 }}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <img
+                    src={HOME_SPRITE(p.speciesId)}
+                    alt={p.name}
+                    width={56} height={56}
+                    style={{
+                      width: 56, height: 56, objectFit: 'contain',
+                      filter: data.pokemon.id === p.id
+                        ? 'drop-shadow(0 3px 6px rgba(147,51,234,0.3))'
+                        : 'drop-shadow(0 2px 4px rgba(0,0,0,0.15))',
+                    }}
+                  />
+                  <span className="font-bold text-xs mt-1 truncate max-w-[80px]" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    {p.name}
+                  </span>
+                  <span className="text-xs text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    Lv.{p.level}
+                  </span>
+                  {p.isActive && (
+                    <span className="text-xs text-amber-600 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>★</span>
+                  )}
+                </motion.button>
+              ))}
+            </div>
+          </div>
+        )}
         {/* Current Pokemon + Evolution Chain */}
         <div className="bg-white rounded-3xl border-2 border-gray-200 p-8" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
           <h2 className="font-bold text-gray-800 mb-6" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>

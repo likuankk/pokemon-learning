@@ -71,10 +71,15 @@ export default function ChildPage() {
   const status = getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection)
 
   const bgColors: Record<string, string> = {
-    energetic: 'from-yellow-50 to-amber-50',
-    good: 'from-teal-50 to-cyan-50',
+    joyful: 'from-yellow-50 to-amber-50',
+    happy: 'from-teal-50 to-cyan-50',
+    calm: 'from-sky-50 to-blue-50',
     tired: 'from-gray-50 to-slate-100',
-    sad: 'from-gray-100 to-slate-100',
+    sad: 'from-blue-50 to-indigo-50',
+    anxious: 'from-yellow-50 to-orange-50',
+    exhausted: 'from-gray-100 to-slate-100',
+    lonely: 'from-indigo-50 to-slate-100',
+    sleeping: 'from-purple-50 to-indigo-50',
   }
 
   const getInventoryQty = (itemType: string) => {
@@ -87,7 +92,7 @@ export default function ChildPage() {
     : 0
 
   return (
-    <div className={`min-h-full bg-gradient-to-br ${bgColors[status] || bgColors.good}`}>
+    <div className={`min-h-full bg-gradient-to-br ${bgColors[status] || bgColors.calm}`}>
       {/* Header */}
       <div className="border-b-4 border-white/50 px-4 md:px-8 py-6 flex items-center justify-between"
         style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)' }}>
@@ -130,6 +135,11 @@ export default function ChildPage() {
                   </span>
                 </div>
               )}
+              <Link href="/child/manage" className="mt-3">
+                <span className="text-indigo-500 font-bold hover:text-indigo-700 transition-colors" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.05rem' }}>
+                  管理全部宝可梦 →
+                </span>
+              </Link>
             </div>
 
             {/* Stats */}

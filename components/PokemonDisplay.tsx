@@ -2,6 +2,7 @@
 
 import { motion, type TargetAndTransition } from 'framer-motion'
 import { getPokemonStatus, PokemonStatus } from '@/lib/game-logic'
+import { getSpeciesAnimation, getSpeciesParticles, getSpeciesAura, getSpeciesFilter, type ParticleConfig } from '@/lib/pokemon-animations'
 
 type SizeVariant = 'small' | 'medium' | 'large' | 'xlarge'
 
@@ -32,38 +33,62 @@ const getHomeSprite = (speciesId: number) =>
 const getOfficialArt = (speciesId: number) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${speciesId}.png`
 
-const statusAnimations: Record<PokemonStatus, TargetAndTransition> = {
-  energetic: {
-    y: [0, -20, 0],
-    transition: { repeat: Infinity, duration: 0.75, ease: 'easeInOut' }
-  },
-  good: {
-    rotate: [0, 4, -4, 0],
-    transition: { repeat: Infinity, duration: 3, ease: 'easeInOut' }
-  },
-  tired: {
-    x: [0, 5, -5, 0],
-    transition: { repeat: Infinity, duration: 4.5, ease: 'easeInOut' }
-  },
+// ── Default 9-State Aura & Filter (fallback for species without category override) ──
+
+const defaultAura: Record<PokemonStatus, string> = {
+  joyful: 'radial-gradient(ellipse, rgba(251,191,36,0.5) 0%, rgba(245,158,11,0.2) 40%, transparent 70%)',
+  happy: 'radial-gradient(ellipse, rgba(52,211,153,0.4) 0%, rgba(16,185,129,0.15) 40%, transparent 70%)',
+  calm: 'radial-gradient(ellipse, rgba(135,206,235,0.3) 0%, rgba(135,206,235,0.1) 40%, transparent 70%)',
+  tired: 'radial-gradient(ellipse, rgba(169,180,194,0.3) 0%, transparent 60%)',
+  sad: 'radial-gradient(ellipse, rgba(100,149,237,0.25) 0%, transparent 60%)',
+  anxious: 'radial-gradient(ellipse, rgba(255,215,0,0.3) 0%, rgba(255,165,0,0.1) 40%, transparent 70%)',
+  exhausted: 'radial-gradient(ellipse, rgba(105,105,105,0.3) 0%, transparent 60%)',
+  lonely: 'radial-gradient(ellipse, rgba(65,105,225,0.25) 0%, transparent 60%)',
+  sleeping: 'radial-gradient(ellipse, rgba(106,90,205,0.3) 0%, rgba(106,90,205,0.1) 40%, transparent 70%)',
+}
+
+const defaultFilter: Record<PokemonStatus, string> = {
+  joyful: 'drop-shadow(0 0 16px rgba(251,191,36,0.7)) drop-shadow(0 12px 20px rgba(0,0,0,0.35)) saturate(1.2)',
+  happy: 'drop-shadow(0 0 12px rgba(52,211,153,0.5)) drop-shadow(0 12px 20px rgba(0,0,0,0.3)) saturate(1.1)',
+  calm: 'drop-shadow(0 8px 16px rgba(0,0,0,0.25))',
+  tired: 'drop-shadow(0 8px 12px rgba(0,0,0,0.25)) brightness(0.85) saturate(0.85)',
+  sad: 'drop-shadow(0 6px 10px rgba(0,0,0,0.2)) brightness(0.9) saturate(0.85) hue-rotate(-10deg)',
+  anxious: 'drop-shadow(0 6px 12px rgba(0,0,0,0.25)) saturate(1.1) hue-rotate(10deg)',
+  exhausted: 'drop-shadow(0 4px 8px rgba(0,0,0,0.2)) brightness(0.7) saturate(0.7) grayscale(0.3)',
+  lonely: 'drop-shadow(0 4px 8px rgba(0,0,0,0.15)) grayscale(0.8) brightness(0.75)',
+  sleeping: 'drop-shadow(0 6px 10px rgba(106,90,205,0.3)) brightness(0.8) saturate(0.8) hue-rotate(-15deg)',
+}
+
+// ── Default particle configs (fallback) ──
+const defaultParticles: Partial<Record<PokemonStatus, ParticleConfig>> = {
   sad: {
-    y: [0, 3, 0],
-    transition: { repeat: Infinity, duration: 5, ease: 'easeInOut' }
+    char: '💧',
+    positions: [{ top: '30%', left: '15%' }, { top: '25%', left: '80%' }, { top: '45%', left: '10%' }],
+    fontSize: '1rem', fontSizeSm: '0.8rem', color: '#6495ed',
+    animateProps: { opacity: [0, 0.7, 0], y: [0, 20, 40], scale: [0.8, 1, 0.5] },
+    transitionBase: { repeat: Infinity, duration: 3 },
   },
-}
-
-// Colored aura glow per status
-const statusAura: Record<PokemonStatus, string> = {
-  energetic: 'radial-gradient(ellipse, rgba(251,191,36,0.5) 0%, rgba(245,158,11,0.2) 40%, transparent 70%)',
-  good: 'radial-gradient(ellipse, rgba(52,211,153,0.4) 0%, rgba(16,185,129,0.15) 40%, transparent 70%)',
-  tired: 'radial-gradient(ellipse, rgba(148,163,184,0.3) 0%, transparent 60%)',
-  sad: 'radial-gradient(ellipse, rgba(100,116,139,0.2) 0%, transparent 60%)',
-}
-
-const statusFilter: Record<PokemonStatus, string> = {
-  energetic: 'drop-shadow(0 0 16px rgba(251,191,36,0.7)) drop-shadow(0 12px 20px rgba(0,0,0,0.35))',
-  good: 'drop-shadow(0 0 12px rgba(52,211,153,0.5)) drop-shadow(0 12px 20px rgba(0,0,0,0.3))',
-  tired: 'drop-shadow(0 8px 12px rgba(0,0,0,0.25)) brightness(0.85)',
-  sad: 'drop-shadow(0 6px 10px rgba(0,0,0,0.2)) grayscale(0.5) brightness(0.75)',
+  anxious: {
+    char: '❗',
+    positions: [{ top: '0%', left: '45%' }],
+    fontSize: '1.5rem', fontSizeSm: '1.1rem', color: '#ef4444',
+    animateProps: { opacity: [0, 1, 1, 0], scale: [0.5, 1.3, 1, 0.5] },
+    transitionBase: { repeat: Infinity, duration: 2.5 },
+  },
+  exhausted: {
+    char: '💫',
+    positions: [{ top: '5%', left: '30%' }, { top: '8%', left: '65%' }, { top: '2%', left: '48%' }],
+    fontSize: '1.2rem', fontSizeSm: '0.9rem', color: '#9ca3af',
+    animateProps: { opacity: [0.3, 0.8, 0.3], rotate: [0, 360] },
+    transitionBase: { repeat: Infinity, duration: 4 },
+  },
+  lonely: {
+    char: '?',
+    positions: [{ top: '10%', left: '20%' }, { top: '20%', left: '78%' }],
+    fontSize: '1.3rem', fontSizeSm: '1rem', color: '#94a3b8',
+    animateProps: { opacity: [0, 0.5, 0], y: [0, -10, -20] },
+    transitionBase: { repeat: Infinity, duration: 5 },
+  },
 }
 
 export default function PokemonDisplay({
@@ -75,6 +100,15 @@ export default function PokemonDisplay({
   const status = getPokemonStatus(vitality, wisdom, affection)
   const homeUrl = getHomeSprite(speciesId)
   const fallbackUrl = getOfficialArt(speciesId)
+  const isSmall = resolvedSize === 'small' || resolvedSize === 'medium'
+
+  // ── Species-specific animation, aura, filter, particles ──
+  const animation = getSpeciesAnimation(speciesId, status)
+  const aura = getSpeciesAura(speciesId, status, defaultAura[status])
+  const filter = getSpeciesFilter(speciesId, status, defaultFilter[status])
+  const speciesParticle = getSpeciesParticles(speciesId, status)
+  // Merge with default particles for states not covered by species config (sad, anxious, exhausted, lonely)
+  const particle = speciesParticle || defaultParticles[status]
 
   const nameFontSize = resolvedSize === 'xlarge' ? '2rem'
     : resolvedSize === 'large' ? '1.5rem'
@@ -97,7 +131,7 @@ export default function PokemonDisplay({
         <div
           className="absolute inset-0 rounded-full scale-125"
           style={{
-            background: statusAura[status],
+            background: aura,
             filter: 'blur(12px)',
             transform: 'scale(1.3) translateY(10%)',
           }}
@@ -105,7 +139,7 @@ export default function PokemonDisplay({
 
         {/* The Pokemon image */}
         <motion.div
-          animate={statusAnimations[status]}
+          animate={animation}
           className="relative z-10"
         >
           <img
@@ -117,7 +151,7 @@ export default function PokemonDisplay({
               width: imgSize,
               height: imgSize,
               objectFit: 'contain',
-              filter: statusFilter[status],
+              filter: filter,
             }}
             onError={(e) => {
               const img = e.currentTarget
@@ -137,17 +171,43 @@ export default function PokemonDisplay({
           }}
         />
 
-        {/* Sparkle for energetic status */}
-        {status === 'energetic' && (
+        {/* Status-specific particle effects */}
+        {particle && (
+          <>
+            {particle.positions.map((pos, i) => (
+              <motion.div
+                key={`${speciesId}-${status}-${i}`}
+                className="absolute select-none pointer-events-none z-20"
+                style={{
+                  top: pos.top,
+                  left: pos.left,
+                  fontSize: isSmall ? particle.fontSizeSm : particle.fontSize,
+                  color: particle.color,
+                  textShadow: `0 0 8px ${particle.color}40`,
+                }}
+                animate={particle.animateProps}
+                transition={{
+                  ...particle.transitionBase,
+                  delay: i * (particle.transitionBase.duration / particle.positions.length),
+                }}
+              >
+                {particle.char}
+              </motion.div>
+            ))}
+          </>
+        )}
+
+        {/* Extra sparkle burst for joyful */}
+        {status === 'joyful' && (
           <>
             {[...Array(4)].map((_, i) => (
               <motion.div
-                key={i}
-                className="absolute text-yellow-300 select-none pointer-events-none"
+                key={`sparkle-${i}`}
+                className="absolute text-yellow-300 select-none pointer-events-none z-20"
                 style={{
                   top: `${15 + i * 20}%`,
                   left: i % 2 === 0 ? '5%' : '82%',
-                  fontSize: resolvedSize === 'xlarge' ? '1.5rem' : '1rem',
+                  fontSize: isSmall ? '0.8rem' : '1rem',
                 }}
                 animate={{
                   opacity: [0, 1, 0],
@@ -164,6 +224,40 @@ export default function PokemonDisplay({
               </motion.div>
             ))}
           </>
+        )}
+
+        {/* Moonlight overlay for sleeping */}
+        {status === 'sleeping' && !isSmall && (
+          <motion.div
+            className="absolute inset-0 rounded-full pointer-events-none z-5"
+            style={{
+              background: 'radial-gradient(ellipse at 30% 20%, rgba(192,192,255,0.15) 0%, transparent 60%)',
+            }}
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ repeat: Infinity, duration: 4, ease: 'easeInOut' }}
+          />
+        )}
+
+        {/* Anxious screen-shake effect (subtle border pulse) */}
+        {status === 'anxious' && !isSmall && (
+          <motion.div
+            className="absolute inset-0 rounded-full pointer-events-none z-5"
+            style={{ border: '2px solid rgba(255,215,0,0.3)' }}
+            animate={{ opacity: [0, 0.6, 0], scale: [0.95, 1.05, 0.95] }}
+            transition={{ repeat: Infinity, duration: 2 }}
+          />
+        )}
+
+        {/* Lonely desaturated vignette */}
+        {status === 'lonely' && !isSmall && (
+          <motion.div
+            className="absolute inset-0 rounded-full pointer-events-none z-5"
+            style={{
+              background: 'radial-gradient(ellipse, transparent 40%, rgba(65,105,225,0.1) 100%)',
+            }}
+            animate={{ opacity: [0.5, 0.8, 0.5] }}
+            transition={{ repeat: Infinity, duration: 6, ease: 'easeInOut' }}
+          />
         )}
       </div>
 

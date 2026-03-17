@@ -40,7 +40,11 @@ export async function GET(request: NextRequest) {
   try {
     const sqlite = (db as any).session.client
 
-    let pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId) as any
+    // Get the active pokemon first, fallback to any pokemon
+    let pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? AND is_active = 1').get(childId) as any
+    if (!pokemon) {
+      pokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ? ORDER BY id LIMIT 1').get(childId) as any
+    }
     if (!pokemon) {
       return NextResponse.json({ error: 'Pokemon not found' }, { status: 404 })
     }
@@ -49,7 +53,12 @@ export async function GET(request: NextRequest) {
     pokemon = applyNaturalDecay(pokemon, sqlite)
 
     // Get all pokemons for this child (for team/collection display)
-    const allPokemons = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').all(childId) as any[]
+    const allPokemonsRaw = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').all(childId) as any[]
+    const allPokemons = allPokemonsRaw.map((p: any) => ({
+      ...p,
+      display_level: Math.max(p.level || 1, p.battle_level || 1),
+      status: getPokemonStatus(p.vitality, p.wisdom, p.affection),
+    }))
 
     const inventory = sqlite.prepare(
       'SELECT * FROM inventory WHERE child_id = ?'
