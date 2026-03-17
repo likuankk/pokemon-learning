@@ -94,17 +94,17 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-full flex flex-col bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6 flex-shrink-0"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6 flex-shrink-0"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>审核中心 📝</h1>
+        <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>审核中心 📝</h1>
         <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
           {loading ? '加载中...' : tasks.length > 0 ? `${tasks.length} 个任务等待审核` : '暂无待审核任务'}
         </p>
       </div>
 
-      <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {/* Left list */}
-        <div className="w-[440px] flex-shrink-0 border-r-4 border-gray-200 bg-white overflow-y-auto">
+        <div className="w-full md:w-[440px] md:flex-shrink-0 border-r-4 border-gray-200 bg-white overflow-y-auto">
           <div className="p-5">
             {loading ? (
               <div className="text-center py-12 text-gray-400 text-xl">加载中...</div>
@@ -147,7 +147,7 @@ export default function ReviewPage() {
         </div>
 
         {/* Right panel */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 md:p-8">
           {result ? (
             <motion.div
               className="flex flex-col items-center justify-center h-full text-center"

@@ -25,10 +25,20 @@ const navItems: NavItem[] = [
   { href: '/parent/settings', label: '家庭设置', emoji: '⚙️' },
 ]
 
+// 底部导航栏核心入口
+const bottomNavItems: NavItem[] = [
+  { href: '/parent', label: '首页', emoji: '🏠', exact: true },
+  { href: '/parent/tasks', label: '任务', emoji: '📚', exact: true },
+  { href: '/parent/review', label: '审核', emoji: '📝' },
+  { href: '/parent/stats', label: '统计', emoji: '📊' },
+  { href: '/parent/settings', label: '设置', emoji: '⚙️' },
+]
+
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const { user } = useSession()
   const [submittedCount, setSubmittedCount] = useState(0)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   useEffect(() => {
     const load = () => {
@@ -45,10 +55,14 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
   const isActive = (item: NavItem) =>
     item.exact ? pathname === item.href : pathname.startsWith(item.href)
 
+  const moreNavItems = navItems.filter(
+    item => !bottomNavItems.some(b => b.href === item.href)
+  )
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-72 flex-shrink-0 flex flex-col h-full overflow-hidden"
+      {/* Desktop Sidebar - hidden on mobile */}
+      <aside className="hidden md:flex w-72 flex-shrink-0 flex-col h-full overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #1e1b4b 0%, #312e81 40%, #3730a3 100%)' }}>
 
         {/* Logo */}
@@ -77,7 +91,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         <div className="mx-6 border-t border-indigo-600/50 mb-3" />
 
         {/* Nav */}
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {navItems.map(item => {
             const active = isActive(item)
             const badge = item.href === '/parent/review' && submittedCount > 0 ? submittedCount : 0
@@ -141,7 +155,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto relative">
+      <main className="flex-1 overflow-y-auto relative pb-20 md:pb-0">
         <div className="absolute top-4 right-4 z-40">
           <NotificationBell />
         </div>
@@ -149,6 +163,92 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
           {children}
         </ToastProvider>
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-gray-200"
+        style={{ boxShadow: '0 -4px 12px rgba(0,0,0,0.08)' }}>
+        {/* More menu overlay */}
+        {moreOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setMoreOpen(false)} />
+            <div className="absolute bottom-full left-0 right-0 bg-white border-t-2 border-gray-200 z-50 rounded-t-2xl shadow-lg px-4 py-4">
+              <div className="grid grid-cols-4 gap-3">
+                {moreNavItems.map(item => {
+                  const active = isActive(item)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-xl transition-all ${
+                        active ? 'bg-indigo-50 text-indigo-600' : 'text-gray-600'
+                      }`}
+                    >
+                      <span className="text-2xl">{item.emoji}</span>
+                      <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  )
+                })}
+                <button
+                  onClick={async () => {
+                    await fetch('/api/auth', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'logout' }),
+                    })
+                    window.location.href = '/auth'
+                  }}
+                  className="flex flex-col items-center gap-1 py-3 rounded-xl text-gray-600"
+                >
+                  <span className="text-2xl">🚪</span>
+                  <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    退出
+                  </span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+        <div className="flex items-center justify-around px-2 py-2">
+          {bottomNavItems.map(item => {
+            const active = isActive(item)
+            const badge = item.href === '/parent/review' && submittedCount > 0 ? submittedCount : 0
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative ${
+                  active ? 'text-indigo-600' : 'text-gray-400'
+                }`}
+              >
+                <span className="text-2xl">{item.emoji}</span>
+                <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  {item.label}
+                </span>
+                {badge > 0 && (
+                  <span className="absolute -top-1 right-0 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+          {/* More button */}
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+              moreOpen ? 'text-indigo-600' : 'text-gray-400'
+            }`}
+          >
+            <span className="text-2xl">•••</span>
+            <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              更多
+            </span>
+          </button>
+        </div>
+      </nav>
     </div>
   )
 }

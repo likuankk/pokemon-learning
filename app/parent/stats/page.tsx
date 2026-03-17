@@ -109,13 +109,13 @@ export default function StatsPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>学习统计 📊</h1>
+        <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>学习统计 📊</h1>
         <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>孩子的学习成果一览</p>
       </div>
 
-      <div className="px-8 py-8 space-y-7">
+      <div className="px-4 md:px-8 py-8 space-y-7">
         {/* Weekly Report Card */}
         {weeklyReport && (
           <div className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl p-7 text-white"
@@ -139,7 +139,7 @@ export default function StatsPage() {
               )}
             </div>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
                 { label: '本周完成率', value: `${weeklyReport.completionRate}%`, emoji: '🏆' },
                 { label: '完成任务数', value: `${weeklyReport.completedTasks}/${weeklyReport.totalTasks}`, emoji: '✅' },
@@ -165,7 +165,7 @@ export default function StatsPage() {
         )}
 
         {/* Top stat cards */}
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
           {[
             { label: '全部任务', value: taskStats.total,     emoji: '📋', bg: '#eef2ff', border: '#c7d2fe', text: '#4338ca' },
             { label: '已完成',   value: taskStats.completed, emoji: '✅', bg: '#f0fdf4', border: '#bbf7d0', text: '#15803d' },
@@ -186,7 +186,7 @@ export default function StatsPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Weekly chart */}
           <div className="col-span-2 bg-white rounded-3xl border-2 border-gray-200 p-7"
             style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.05)' }}>

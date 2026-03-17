@@ -46,10 +46,10 @@ export default function TaskListPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6 flex items-center justify-between"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6 flex items-center justify-between"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
         <div>
-          <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>任务列表 📚</h1>
+          <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>任务列表 📚</h1>
           <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>共 {tasks.length} 个任务</p>
         </div>
         <Link
@@ -66,7 +66,7 @@ export default function TaskListPage() {
         </Link>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-6">
         {/* Filter Tabs */}
         <div className="flex items-center gap-3 mb-6 bg-white rounded-2xl border-2 border-gray-200 p-2 w-fit">
           {STATUS_FILTERS.map(f => (
@@ -95,7 +95,7 @@ export default function TaskListPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {tasks.map((task, i) => (
               <motion.div
                 key={task.id}

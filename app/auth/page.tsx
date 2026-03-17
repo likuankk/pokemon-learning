@@ -41,7 +41,16 @@ export default function AuthPage() {
       }
       // Redirect based on actual role from server (not form)
       const actualRole = data.user.role
-      router.push(actualRole === 'parent' ? '/parent' : '/child')
+      if (actualRole === 'parent') {
+        router.push('/parent')
+      } else if (mode === 'register') {
+        // 新注册的小朋友先进入引导页选择初始宝可梦
+        router.push('/onboarding')
+      } else {
+        // 老用户登录，标记 onboarding 已完成（跳过检查）
+        document.cookie = 'onboarding_completed=1; path=/; max-age=31536000'
+        router.push('/child')
+      }
     } else {
       setError(data.error || '操作失败')
     }
@@ -58,6 +67,9 @@ export default function AuthPage() {
     const data = await res.json()
     if (res.ok && data.success) {
       refresh()
+      if (data.user.role === 'child') {
+        document.cookie = 'onboarding_completed=1; path=/; max-age=31536000'
+      }
       router.push(data.user.role === 'parent' ? '/parent' : '/child')
     }
     setLoading(false)

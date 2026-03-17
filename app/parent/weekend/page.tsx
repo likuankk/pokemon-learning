@@ -61,15 +61,15 @@ export default function WeekendChallengePage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>周末挑战 🎯</h1>
+        <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>周末挑战 🎯</h1>
         <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
           为孩子创建有趣的周末特别任务！
         </p>
       </div>
 
-      <div className="px-8 py-8">
+      <div className="px-4 md:px-8 py-8">
         {message && (
           <motion.div
             className="bg-green-50 border-2 border-green-200 rounded-2xl px-5 py-3 mb-6 text-green-700 font-bold"
@@ -83,7 +83,7 @@ export default function WeekendChallengePage() {
         {/* Create new challenge */}
         <div className="bg-white rounded-3xl border-2 border-gray-200 p-7 mb-8" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
           <h2 className="game-label mb-4" style={{ fontSize: '1.75rem' }}>创建新挑战</h2>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {CHALLENGE_TYPES.map(ct => (
               <motion.button
                 key={ct.type}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { POKEMON_NAMES } from '@/lib/game-logic'
 
 const HOME_SPRITE = (id: number) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
@@ -30,15 +31,10 @@ const TIER_COLORS = [
 
 const TIER_LABELS = ['', '铜', '银', '金', '钻石']
 
-// All 151 gen-1 pokemon for Pokedex
-const POKEDEX_POKEMON = [
-  { id: 1, name: '妙蛙种子' }, { id: 2, name: '妙蛙草' }, { id: 3, name: '妙蛙花' },
-  { id: 4, name: '小火龙' }, { id: 5, name: '火恐龙' }, { id: 6, name: '喷火龙' },
-  { id: 7, name: '杰尼龟' }, { id: 8, name: '卡咪龟' }, { id: 9, name: '水箭龟' },
-  { id: 25, name: '皮卡丘' }, { id: 26, name: '雷丘' },
-  { id: 39, name: '胖丁' }, { id: 40, name: '胖可丁' },
-  { id: 133, name: '伊布' }, { id: 134, name: '水伊布' }, { id: 135, name: '雷伊布' }, { id: 136, name: '火伊布' },
-]
+// Build pokedex from POKEMON_NAMES, sorted by ID
+const POKEDEX_POKEMON = Object.entries(POKEMON_NAMES)
+  .map(([id, name]) => ({ id: Number(id), name }))
+  .sort((a, b) => a.id - b.id)
 
 export default function PokedexPage() {
   const [achievements, setAchievements] = useState<Achievement[]>([])
@@ -55,18 +51,27 @@ export default function PokedexPage() {
       fetch('/api/achievements').then(r => r.json()),
       fetch('/api/pokemon').then(r => r.json()),
       fetch('/api/pokemon/evolve').then(r => r.json()).catch(() => ({})),
-    ]).then(([achData, pokeData, evolveData]) => {
+      fetch('/api/battle/species').then(r => r.json()).catch(() => ({ species: [] })),
+    ]).then(([achData, pokeData, evolveData, speciesData]) => {
       setAchievements(achData.achievements || [])
       setTotalUnlocked(achData.totalUnlocked || 0)
       setTotalAchievements(achData.totalAchievements || 0)
       setMyPokemon(pokeData.pokemon)
-      // Collect all discovered species: current + evolution history
+      // Collect all discovered species from multiple sources
       const discovered = new Set<number>()
+      // 1. Current pokemon
       if (pokeData.pokemon?.species_id) discovered.add(pokeData.pokemon.species_id)
+      // 2. Evolution history
       if (evolveData?.history) {
         for (const h of evolveData.history) {
           discovered.add(h.fromSpeciesId)
           discovered.add(h.toSpeciesId)
+        }
+      }
+      // 3. Battle system discovered_species (catches, encounters)
+      if (speciesData?.species) {
+        for (const sp of speciesData.species) {
+          if (sp.discovered) discovered.add(sp.id)
         }
       }
       setDiscoveredIds(Array.from(discovered))
@@ -81,18 +86,18 @@ export default function PokedexPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-teal-200 px-8 py-6"
+      <div className="border-b-4 border-teal-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
-        <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>
+        <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#065f46' }}>
           图鉴与成就 🏅
         </h1>
-        <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
+        <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: 'clamp(1rem, 2vw, 1.5rem)' }}>
           收集宝可梦，解锁成就徽章！
         </p>
       </div>
 
       {/* Tab switch */}
-      <div className="px-8 pt-6">
+      <div className="px-4 md:px-8 pt-6">
         <div className="flex gap-3 bg-white rounded-2xl border-2 border-gray-200 p-2 w-fit mb-6">
           {[
             { key: 'pokedex', label: '宝可梦图鉴', icon: '📖' },
@@ -112,7 +117,7 @@ export default function PokedexPage() {
         </div>
       </div>
 
-      <div className="px-8 pb-8">
+      <div className="px-4 md:px-8 pb-8">
         {loading ? (
           <div className="text-center py-16 text-gray-400 text-2xl">加载中...</div>
         ) : tab === 'pokedex' ? (
@@ -129,7 +134,7 @@ export default function PokedexPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-6 gap-4">
+            <div className="grid grid-cols-3 md:grid-cols-6 gap-4">
               {POKEDEX_POKEMON.map(p => {
                 const owned = ownedSpeciesIds.includes(p.id)
                 return (
@@ -202,7 +207,7 @@ export default function PokedexPage() {
             </div>
 
             {/* Achievement grid */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {filteredAch.map(ach => (
                 <motion.div
                   key={ach.id}

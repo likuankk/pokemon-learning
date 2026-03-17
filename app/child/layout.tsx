@@ -29,6 +29,15 @@ const navItems: NavItem[] = [
   { href: '/child/letter', label: '宝可梦的信', emoji: '💌' },
 ]
 
+// 底部导航栏显示的核心入口
+const bottomNavItems: NavItem[] = [
+  { href: '/child', label: '小屋', emoji: '🏠', exact: true },
+  { href: '/child/tasks', label: '任务', emoji: '📋' },
+  { href: '/child/feed', label: '喂养', emoji: '🍖' },
+  { href: '/child/pokedex', label: '图鉴', emoji: '🏅' },
+  { href: '/child/battle', label: '战斗', emoji: '⚔️' },
+]
+
 interface PokemonSummary {
   name: string
   species_id: number
@@ -46,6 +55,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const { user } = useSession()
   const [pokemon, setPokemon] = useState<PokemonSummary | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
+  const [moreOpen, setMoreOpen] = useState(false)
 
   useEffect(() => {
     const load = () => {
@@ -77,10 +87,15 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
     sad:       { background: 'linear-gradient(135deg, #fecaca, #f87171)', color: '#7f1d1d', boxShadow: '0 2px 0 #b91c1c' },
   }
 
+  // 不在底部导航里的其他入口
+  const moreNavItems = navItems.filter(
+    item => !bottomNavItems.some(b => b.href === item.href)
+  )
+
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-72 flex-shrink-0 flex flex-col h-full overflow-hidden"
+      {/* Desktop Sidebar - hidden on mobile */}
+      <aside className="hidden md:flex w-72 flex-shrink-0 flex-col h-full overflow-hidden"
         style={{ background: 'linear-gradient(180deg, #0d4f3c 0%, #065f46 40%, #047857 100%)' }}>
 
         {/* Pokemon Summary */}
@@ -156,7 +171,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         <div className="mx-5 border-t border-teal-600/50 mb-2" />
 
         {/* Nav */}
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
           {navItems.map(item => {
             const active = isActive(item)
             const badge = item.href === '/child/tasks' && pendingCount > 0 ? pendingCount : 0
@@ -223,7 +238,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto relative">
+      <main className="flex-1 overflow-y-auto relative pb-20 md:pb-0">
         <div className="absolute top-4 right-4 z-40">
           <NotificationBell />
         </div>
@@ -232,6 +247,92 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         </ToastProvider>
         <AntiAddictionBanner />
       </main>
+
+      {/* Mobile Bottom Navigation */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t-2 border-gray-200 safe-area-bottom"
+        style={{ boxShadow: '0 -4px 12px rgba(0,0,0,0.08)' }}>
+        {/* More menu overlay */}
+        {moreOpen && (
+          <>
+            <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setMoreOpen(false)} />
+            <div className="absolute bottom-full left-0 right-0 bg-white border-t-2 border-gray-200 z-50 rounded-t-2xl shadow-lg px-4 py-4">
+              <div className="grid grid-cols-4 gap-3">
+                {moreNavItems.map(item => {
+                  const active = isActive(item)
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setMoreOpen(false)}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-xl transition-all ${
+                        active ? 'bg-emerald-50 text-emerald-600' : 'text-gray-600'
+                      }`}
+                    >
+                      <span className="text-2xl">{item.emoji}</span>
+                      <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                        {item.label}
+                      </span>
+                    </Link>
+                  )
+                })}
+                <button
+                  onClick={async () => {
+                    await fetch('/api/auth', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ action: 'logout' }),
+                    })
+                    window.location.href = '/auth'
+                  }}
+                  className="flex flex-col items-center gap-1 py-3 rounded-xl text-gray-600"
+                >
+                  <span className="text-2xl">🚪</span>
+                  <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    退出
+                  </span>
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+        <div className="flex items-center justify-around px-2 py-2">
+          {bottomNavItems.map(item => {
+            const active = isActive(item)
+            const badge = item.href === '/child/tasks' && pendingCount > 0 ? pendingCount : 0
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative ${
+                  active ? 'text-emerald-600' : 'text-gray-400'
+                }`}
+              >
+                <span className="text-2xl">{item.emoji}</span>
+                <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  {item.label}
+                </span>
+                {badge > 0 && (
+                  <span className="absolute -top-1 right-0 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            )
+          })}
+          {/* More button */}
+          <button
+            onClick={() => setMoreOpen(!moreOpen)}
+            className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all ${
+              moreOpen ? 'text-emerald-600' : 'text-gray-400'
+            }`}
+          >
+            <span className="text-2xl">•••</span>
+            <span className="text-xs font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              更多
+            </span>
+          </button>
+        </div>
+      </nav>
     </div>
   )
 }

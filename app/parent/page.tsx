@@ -63,11 +63,11 @@ export default function ParentPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>今日概览 👩‍👦</h1>
+            <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>今日概览 👩‍👦</h1>
             <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>家庭学习情况</p>
           </div>
           <button
@@ -84,7 +84,7 @@ export default function ParentPage() {
       <AnimatePresence>
         {showRewardPanel && (
           <motion.div
-            className="border-b-4 border-orange-100 bg-orange-50 px-8 py-6"
+            className="border-b-4 border-orange-100 bg-orange-50 px-4 md:px-8 py-6"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -164,9 +164,9 @@ export default function ParentPage() {
         )}
       </AnimatePresence>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-6">
         {/* Stats Row */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           {[
             { label: '全部任务', value: total, emoji: '📋', bg: 'bg-gray-100', border: 'border-gray-300', text: 'text-gray-700' },
             { label: '待完成', value: pending, emoji: '⏳', bg: 'bg-blue-50', border: 'border-blue-300', text: 'text-blue-700' },
@@ -192,10 +192,10 @@ export default function ParentPage() {
         </div>
 
         {/* Actions + Recent Tasks */}
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="col-span-2 space-y-4">
             <h2 className="text-2xl font-bold text-gray-500 uppercase tracking-widest">快捷操作</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Link href="/parent/tasks/new">
                 <motion.div
                   className="bg-indigo-500 hover:bg-indigo-600 rounded-3xl p-7 text-white cursor-pointer transition-colors h-44 flex flex-col justify-between"

@@ -1201,7 +1201,7 @@ export default function HousePage() {
       <div className="border-b-3 border-teal-200 px-6 py-2.5 flex items-center justify-between flex-shrink-0"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
         <div className="flex items-center gap-4">
-          <h1 className="game-title-green leading-tight" style={{ fontSize: '2rem', color: '#065f46' }}>宝可梦小屋 🏠</h1>
+          <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.5rem, 4vw, 2rem)', color: '#065f46' }}>宝可梦小屋 🏠</h1>
           <p className="text-emerald-500 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.05rem' }}>
             {mode === 'edit' ? '点击装饰品放置到小屋中' : mode === 'shop' ? '选购喜欢的装饰品' : '你和宝可梦的温馨小窝'}
           </p>
@@ -1472,7 +1472,7 @@ export default function HousePage() {
               </div>
 
               {/* Shop grid */}
-              <div className="grid grid-cols-4 gap-3 px-6 pb-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 px-6 pb-4">
                 {shopCatalog.map(d => {
                   const alreadyOwned = owned.some(o => o.decoration_id === d.id)
                   const canAfford = candyBalance >= d.price

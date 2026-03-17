@@ -89,21 +89,21 @@ export default function ChildPage() {
   return (
     <div className={`min-h-full bg-gradient-to-br ${bgColors[status] || bgColors.good}`}>
       {/* Header */}
-      <div className="border-b-4 border-white/50 px-8 py-6 flex items-center justify-between"
+      <div className="border-b-4 border-white/50 px-4 md:px-8 py-6 flex items-center justify-between"
         style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)' }}>
         <div>
-          <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>{user?.name || '我'}的宝可梦小屋 🏠</h1>
-          <p className="text-emerald-600 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>今天也要加油哦！</p>
+          <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#065f46' }}>{user?.name || '我'}的宝可梦小屋 🏠</h1>
+          <p className="text-emerald-600 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: 'clamp(1rem, 2vw, 1.5rem)' }}>今天也要加油哦！</p>
         </div>
         <button onClick={loadData} className="text-gray-400 hover:text-gray-600 text-xl transition-colors font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
           刷新 ↻
         </button>
       </div>
 
-      <div className="px-8 py-8">
-        <div className="flex gap-8">
+      <div className="px-4 md:px-8 py-4 md:py-8">
+        <div className="flex flex-col md:flex-row gap-6 md:gap-8">
           {/* Left: Pokemon + Stats */}
-          <div className="w-[400px] flex-shrink-0 space-y-6">
+          <div className="w-full md:w-[400px] md:flex-shrink-0 space-y-6">
             {/* Pokemon display */}
             <div className="bg-white/70 backdrop-blur rounded-3xl p-8 flex flex-col items-center shadow-sm">
               <PokemonDisplay
@@ -165,7 +165,7 @@ export default function ChildPage() {
             {/* Inventory */}
             <div className="bg-white/70 backdrop-blur rounded-2xl p-7 shadow-sm">
               <h3 className="game-label font-bold mb-5" style={{ fontSize: '1.75rem' }}>道具背包</h3>
-              <div className="grid grid-cols-4 gap-5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                 {['food', 'crystal', 'candy', 'fragment'].map(itemType => (
                   <div key={itemType} className="bg-white rounded-2xl p-5 text-center shadow-sm border-2 border-gray-100">
                     <div className="text-5xl mb-3">{itemEmojis[itemType]}</div>
@@ -259,10 +259,10 @@ export default function ChildPage() {
             })()}
 
             {/* Navigation cards */}
-            <div className="grid grid-cols-3 gap-5">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
               <Link href="/child/tasks">
                 <motion.div
-                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
+                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-36 md:h-52 flex flex-col justify-between"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -275,7 +275,7 @@ export default function ChildPage() {
               </Link>
               <Link href="/child/planner">
                 <motion.div
-                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
+                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-36 md:h-52 flex flex-col justify-between"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
@@ -288,7 +288,7 @@ export default function ChildPage() {
               </Link>
               <Link href="/child/feed">
                 <motion.div
-                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-52 flex flex-col justify-between"
+                  className="bg-white/70 backdrop-blur rounded-2xl p-7 cursor-pointer hover:bg-white/90 transition-all shadow-sm h-36 md:h-52 flex flex-col justify-between"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >

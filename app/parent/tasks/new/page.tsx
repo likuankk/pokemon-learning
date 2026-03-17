@@ -81,11 +81,11 @@ export default function NewTaskPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>创建任务 ➕</h1>
+            <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>创建任务 ➕</h1>
             <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>为孩子布置一个新的学习任务</p>
           </div>
           <button
@@ -102,7 +102,7 @@ export default function NewTaskPage() {
       <AnimatePresence>
         {showTemplates && (
           <motion.div
-            className="border-b-4 border-indigo-100 bg-indigo-50 px-8 py-5"
+            className="border-b-4 border-indigo-100 bg-indigo-50 px-4 md:px-8 py-5"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -120,7 +120,7 @@ export default function NewTaskPage() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {filteredTemplates.map((t, i) => (
                 <motion.button
                   key={i}
@@ -147,7 +147,7 @@ export default function NewTaskPage() {
         )}
       </AnimatePresence>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-6">
         <div className="flex gap-8">
           {/* Form */}
           <div className="flex-1">
@@ -189,7 +189,7 @@ export default function NewTaskPage() {
 
                 <div>
                   <label className="block text-2xl font-bold text-gray-700 mb-3">预计时长</label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {[15, 20, 30, 45, 60, 90].map(m => (
                       <button
                         key={m}

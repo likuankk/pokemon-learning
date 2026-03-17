@@ -55,6 +55,7 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(0)
   const [selectedPokemon, setSelectedPokemon] = useState<typeof STARTER_POKEMON[0] | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showError, setShowError] = useState(false)
 
   const handleNext = () => {
     if (step < STEPS.length - 1) {
@@ -67,19 +68,25 @@ export default function OnboardingPage() {
   }
 
   const handleFinish = async () => {
-    setLoading(true)
-    if (selectedPokemon) {
-      await fetch('/api/pokemon', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ speciesId: selectedPokemon.id, name: selectedPokemon.name }),
-      })
+    if (!selectedPokemon) {
+      setShowError(true)
+      // 跳回选择宝可梦的步骤
+      setStep(1)
+      return
     }
+    setLoading(true)
+    await fetch('/api/pokemon', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ speciesId: selectedPokemon.id, name: selectedPokemon.name }),
+    })
     await fetch('/api/onboarding', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ step: 'completed' }),
+      body: JSON.stringify({ step: 'completed', completed: true }),
     })
+    // 设置 cookie 标记 onboarding 已完成，供中间件检查
+    document.cookie = 'onboarding_completed=1; path=/; max-age=31536000'
     router.push('/child')
   }
 
@@ -117,7 +124,13 @@ export default function OnboardingPage() {
 
         {/* Pokemon selection on step 1 */}
         {currentStep.showPokemon && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div>
+            {showError && !selectedPokemon && (
+              <p className="text-red-500 font-bold mb-4" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+                ⚠️ 请先选择一只宝可梦伙伴哦！
+              </p>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
             {STARTER_POKEMON.map(p => (
               <motion.button
                 key={p.id}
@@ -141,6 +154,7 @@ export default function OnboardingPage() {
                 </p>
               </motion.button>
             ))}
+          </div>
           </div>
         )}
 

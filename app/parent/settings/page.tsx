@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { useSession } from '@/components/SessionProvider'
+import { useToast } from '@/components/ToastProvider'
 
 export default function SettingsPage() {
   const router = useRouter()
   const { user, refresh } = useSession()
+  const { showToast } = useToast()
   const [curfewStart, setCurfewStart] = useState(21)
   const [curfewEnd, setCurfewEnd] = useState(7)
   const [warningMinutes, setWarningMinutes] = useState(20)
@@ -54,8 +56,10 @@ export default function SettingsPage() {
     const data = await res.json()
     if (res.ok) {
       setMessage('设置保存成功！')
+      showToast('✅ 设置保存成功！', 'success')
     } else {
       setMessage(data.error || '保存失败')
+      showToast('❌ ' + (data.error || '保存失败'), 'error')
     }
     setSaving(false)
   }
@@ -74,15 +78,15 @@ export default function SettingsPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>家庭设置 ⚙️</h1>
+        <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: '#4338ca' }}>家庭设置 ⚙️</h1>
         <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
           管理家庭成员、防沉迷和账号
         </p>
       </div>
 
-      <div className="px-8 py-8 max-w-2xl">
+      <div className="px-4 md:px-8 py-8 max-w-2xl">
         {loading ? (
           <div className="text-center py-16 text-gray-400 text-2xl">加载中...</div>
         ) : (

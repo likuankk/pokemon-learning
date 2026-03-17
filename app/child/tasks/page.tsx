@@ -64,17 +64,17 @@ export default function ChildTasksPage() {
 
   return (
     <div className="min-h-full bg-gray-50 flex flex-col">
-      <div className="border-b-4 border-teal-200 px-8 py-6"
+      <div className="border-b-4 border-teal-200 px-4 md:px-8 py-4 md:py-6"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
-        <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>今日任务 📋</h1>
+        <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#065f46' }}>今日任务 📋</h1>
         <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
           完成任务，让宝可梦更强！
         </p>
       </div>
 
-      <div className="flex flex-1 overflow-hidden" style={{ minHeight: 0 }}>
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden" style={{ minHeight: 0 }}>
         {/* Left: task list */}
-        <div className="flex-1 overflow-y-auto px-8 py-6">
+        <div className="flex-1 overflow-y-auto px-4 md:px-8 py-4 md:py-6">
           {/* Stats */}
           <div className="grid grid-cols-3 gap-5 mb-7">
             {[
@@ -200,7 +200,7 @@ export default function ChildTasksPage() {
         <AnimatePresence>
           {selectedTask && (
             <motion.div
-              className="w-[420px] flex-shrink-0 border-l-4 border-teal-200 bg-white overflow-y-auto"
+              className="w-full md:w-[420px] md:flex-shrink-0 border-l-4 border-teal-200 bg-white overflow-y-auto"
               initial={{ x: 420, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 420, opacity: 0 }}

@@ -109,10 +109,10 @@ export default function PlannerPage() {
   return (
     <div className="min-h-full bg-gray-50">
       {/* Header */}
-      <div className="border-b-4 border-teal-200 px-8 py-6 flex items-center justify-between"
+      <div className="border-b-4 border-teal-200 px-4 md:px-8 py-6 flex items-center justify-between"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
         <div>
-          <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>时间规划 🗓️</h1>
+          <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#065f46' }}>时间规划 🗓️</h1>
           <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>合理安排时间，轻松完成任务！</p>
         </div>
         <div className="flex items-center gap-4">
@@ -135,7 +135,7 @@ export default function PlannerPage() {
         </div>
       </div>
 
-      <div className="px-8 py-8 space-y-7">
+      <div className="px-4 md:px-8 py-8 space-y-7">
         {/* Unscheduled Tasks - horizontal scrolling pill bar */}
         <div>
           <div className="flex items-center gap-4 mb-4">
@@ -183,7 +183,7 @@ export default function PlannerPage() {
         </div>
 
         {/* Three-column time slots */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {TIME_SLOTS.map(slot => (
             <div key={slot.id}>
               <div className="flex items-center justify-between mb-4">
