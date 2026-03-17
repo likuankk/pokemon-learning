@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { href: '/child/feed', label: '喂养宝可梦', emoji: '🍖' },
   { href: '/child/pokedex', label: '图鉴成就', emoji: '🏅' },
   { href: '/child/house', label: '小屋装饰', emoji: '🪑' },
+  { href: '/child/battle', label: '宝可梦战斗', emoji: '⚔️' },
   { href: '/child/letter', label: '宝可梦的信', emoji: '💌' },
 ]
 

@@ -153,6 +153,20 @@ export async function POST(
           }
         }
 
+        // ── Battle energy refill (+1 per approved task) ──────────────────────
+        try {
+          sqlite.prepare('INSERT OR IGNORE INTO battle_energy (child_id) VALUES (?)').run(childId)
+          const battleEnergy = sqlite.prepare('SELECT current_energy FROM battle_energy WHERE child_id = ?').get(childId) as any
+          if (battleEnergy && battleEnergy.current_energy < 10) {
+            sqlite.prepare('UPDATE battle_energy SET current_energy = MIN(10, current_energy + 1) WHERE child_id = ?').run(childId)
+          }
+          // Also give battle exp to active pokemon (+5 per task)
+          const activePoke = sqlite.prepare('SELECT id, battle_exp FROM pokemons WHERE child_id = ? AND is_active = 1').get(childId) as any
+          if (activePoke) {
+            sqlite.prepare('UPDATE pokemons SET battle_exp = battle_exp + 5 WHERE id = ?').run(activePoke.id)
+          }
+        } catch (e) { /* battle tables may not exist yet */ }
+
         // ── Evolution check ────────────────────────────────────────────────────
         const updatedPokemon = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').get(childId) as any
         const fragmentInv = sqlite.prepare(

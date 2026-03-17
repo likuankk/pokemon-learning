@@ -218,6 +218,87 @@ sqlite.exec(`
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(child_id, plan_date, slot, task_id)
   );
+
+  -- ── Battle System Tables ──────────────────────────────────────────────────
+
+  -- Species catalog (55 Pokemon with battle stats)
+  CREATE TABLE IF NOT EXISTS species_catalog (
+    id INTEGER PRIMARY KEY,
+    name TEXT NOT NULL,
+    type1 TEXT NOT NULL,
+    type2 TEXT,
+    base_power INTEGER NOT NULL,
+    base_speed INTEGER NOT NULL,
+    rarity INTEGER NOT NULL DEFAULT 1,
+    region INTEGER NOT NULL DEFAULT 1,
+    evolves_from INTEGER,
+    evolves_to TEXT,
+    evolution_level INTEGER,
+    emoji TEXT NOT NULL DEFAULT '❓',
+    skill1 TEXT,
+    skill2 TEXT,
+    skill3 TEXT,
+    skill4 TEXT
+  );
+
+  -- Skills catalog
+  CREATE TABLE IF NOT EXISTS skills (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    power INTEGER NOT NULL DEFAULT 0,
+    accuracy INTEGER NOT NULL DEFAULT 100,
+    pp INTEGER NOT NULL DEFAULT 20,
+    effect TEXT,
+    unlock_level INTEGER NOT NULL DEFAULT 1
+  );
+
+  -- Pokemon learned skills
+  CREATE TABLE IF NOT EXISTS pokemon_skills (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pokemon_id INTEGER NOT NULL,
+    skill_id TEXT NOT NULL,
+    slot INTEGER NOT NULL DEFAULT 1,
+    current_pp INTEGER NOT NULL DEFAULT 20,
+    UNIQUE(pokemon_id, slot)
+  );
+
+  -- Battle logs
+  CREATE TABLE IF NOT EXISTS battle_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id INTEGER NOT NULL,
+    pokemon_id INTEGER NOT NULL,
+    wild_species_id INTEGER NOT NULL,
+    wild_level INTEGER NOT NULL,
+    region INTEGER NOT NULL,
+    result TEXT NOT NULL,
+    rounds INTEGER NOT NULL DEFAULT 0,
+    exp_gained INTEGER NOT NULL DEFAULT 0,
+    captured_pokemon_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Battle energy
+  CREATE TABLE IF NOT EXISTS battle_energy (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id INTEGER NOT NULL UNIQUE,
+    current_energy INTEGER NOT NULL DEFAULT 5,
+    max_energy INTEGER NOT NULL DEFAULT 5,
+    last_refill_date TEXT NOT NULL DEFAULT (date('now')),
+    total_wins INTEGER NOT NULL DEFAULT 0,
+    total_battles INTEGER NOT NULL DEFAULT 0
+  );
+
+  -- Region unlocks
+  CREATE TABLE IF NOT EXISTS region_unlocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id INTEGER NOT NULL,
+    region INTEGER NOT NULL,
+    unlocked_at TEXT NOT NULL DEFAULT (datetime('now')),
+    boss_defeated INTEGER NOT NULL DEFAULT 0,
+    elite_defeated INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(child_id, region)
+  );
 `)
 
 // Run migrations for existing DBs
@@ -259,6 +340,32 @@ const runMigrations = () => {
     sqlite.exec(`ALTER TABLE users ADD COLUMN avatar TEXT`)
   }
 
+  // pokemons: add battle columns
+  if (!pokeCols.includes('battle_power')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN battle_power REAL NOT NULL DEFAULT 0`)
+  }
+  if (!pokeCols.includes('defense')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN defense REAL NOT NULL DEFAULT 0`)
+  }
+  if (!pokeCols.includes('hp')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN hp REAL NOT NULL DEFAULT 0`)
+  }
+  if (!pokeCols.includes('speed')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN speed INTEGER NOT NULL DEFAULT 50`)
+  }
+  if (!pokeCols.includes('battle_exp')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN battle_exp INTEGER NOT NULL DEFAULT 0`)
+  }
+  if (!pokeCols.includes('battle_level')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN battle_level INTEGER NOT NULL DEFAULT 1`)
+  }
+  if (!pokeCols.includes('is_active')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN is_active INTEGER NOT NULL DEFAULT 0`)
+  }
+  if (!pokeCols.includes('source')) {
+    sqlite.exec(`ALTER TABLE pokemons ADD COLUMN source TEXT NOT NULL DEFAULT 'starter'`)
+  }
+
   // Seed achievements if empty
   const achCount = (sqlite.prepare('SELECT COUNT(*) as c FROM achievements').get() as {c:number}).c
   if (achCount === 0) {
@@ -269,6 +376,50 @@ const runMigrations = () => {
   const decCount = (sqlite.prepare('SELECT COUNT(*) as c FROM decorations').get() as {c:number}).c
   if (decCount === 0) {
     seedDecorations(sqlite)
+  }
+
+  // Seed species catalog if empty
+  const speciesCount = (sqlite.prepare('SELECT COUNT(*) as c FROM species_catalog').get() as {c:number}).c
+  if (speciesCount === 0) {
+    seedSpeciesCatalog(sqlite)
+  }
+
+  // Seed skills if empty
+  const skillCount = (sqlite.prepare('SELECT COUNT(*) as c FROM skills').get() as {c:number}).c
+  if (skillCount === 0) {
+    seedSkills(sqlite)
+  }
+
+  // Initialize battle energy for existing children
+  const children = sqlite.prepare(`SELECT id FROM users WHERE role = 'child'`).all() as {id:number}[]
+  for (const child of children) {
+    sqlite.prepare('INSERT OR IGNORE INTO battle_energy (child_id) VALUES (?)').run(child.id)
+    sqlite.prepare('INSERT OR IGNORE INTO region_unlocks (child_id, region) VALUES (?, 1)').run(child.id)
+    // Set first pokemon as active if none set
+    const hasActive = sqlite.prepare('SELECT id FROM pokemons WHERE child_id = ? AND is_active = 1').get(child.id)
+    if (!hasActive) {
+      const first = sqlite.prepare('SELECT id FROM pokemons WHERE child_id = ? ORDER BY id LIMIT 1').get(child.id) as {id:number} | undefined
+      if (first) {
+        sqlite.prepare('UPDATE pokemons SET is_active = 1 WHERE id = ?').run(first.id)
+      }
+    }
+    // Initialize battle stats for existing pokemon that have 0 battle_power
+    const zeroBP = sqlite.prepare('SELECT p.id, p.species_id, p.battle_level FROM pokemons p WHERE p.child_id = ? AND p.battle_power = 0').all(child.id) as {id:number, species_id:number, battle_level:number}[]
+    for (const poke of zeroBP) {
+      const species = sqlite.prepare('SELECT base_power, base_speed, skill1 FROM species_catalog WHERE id = ?').get(poke.species_id) as {base_power:number, base_speed:number, skill1:string} | undefined
+      if (species) {
+        const bl = poke.battle_level || 1
+        const bp = species.base_power * (1 + (bl - 1) * 0.08)
+        const def = species.base_power * 0.8 * (1 + (bl - 1) * 0.06)
+        const hp = species.base_power * 3 * (1 + (bl - 1) * 0.1)
+        sqlite.prepare('UPDATE pokemons SET battle_power = ?, defense = ?, hp = ?, speed = ? WHERE id = ?')
+          .run(Math.round(bp * 10) / 10, Math.round(def * 10) / 10, Math.round(hp * 10) / 10, species.base_speed, poke.id)
+        // Assign initial skill
+        if (species.skill1) {
+          sqlite.prepare('INSERT OR IGNORE INTO pokemon_skills (pokemon_id, skill_id, slot) VALUES (?, ?, 1)').run(poke.id, species.skill1)
+        }
+      }
+    }
   }
 }
 
@@ -333,6 +484,16 @@ function seedAchievements(s: any) {
     { id: 'F-06', title: '共同进步', description: '连续4周有留言互动且完成率≥80%', category: 'family', icon: '🤝', tier: 3, condition_type: 'family_streak', condition_value: 4 },
     { id: 'F-07', title: '爱的里程碑', description: '累计收到家长留言50条且完成任务≥100个', category: 'family', icon: '📸', tier: 3, condition_type: 'love_milestone', condition_value: 50 },
     { id: 'F-08', title: '永远在一起', description: '使用满1年，家长互动≥100次，打卡≥300天', category: 'family', icon: '💖', tier: 4, condition_type: 'forever_together', condition_value: 365 },
+
+    // ── 战斗系统类（8个）────────────────────────────────────────────────────
+    { id: 'B-01', title: '初次战斗', description: '完成第1场战斗', category: 'battle', icon: '⚔️', tier: 1, condition_type: 'total_battles', condition_value: 1 },
+    { id: 'B-02', title: '十胜将军', description: '累计胜利10场', category: 'battle', icon: '🏆', tier: 1, condition_type: 'total_wins', condition_value: 10 },
+    { id: 'B-03', title: '收服大师', description: '收服10种不同宝可梦', category: 'battle', icon: '🎯', tier: 2, condition_type: 'captured_species', condition_value: 10 },
+    { id: 'B-04', title: '属性克星', description: '使用属性克制赢得5场战斗', category: 'battle', icon: '💥', tier: 2, condition_type: 'super_effective_wins', condition_value: 5 },
+    { id: 'B-05', title: '区域征服者', description: '击败所有6个区域BOSS', category: 'battle', icon: '🗺️', tier: 3, condition_type: 'boss_defeated', condition_value: 6 },
+    { id: 'B-06', title: '传说训练家', description: '收服1只传说级宝可梦', category: 'battle', icon: '⭐', tier: 3, condition_type: 'legendary_captured', condition_value: 1 },
+    { id: 'B-07', title: '图鉴完成者', description: '发现全部55种宝可梦', category: 'battle', icon: '📖', tier: 4, condition_type: 'pokedex_complete', condition_value: 55 },
+    { id: 'B-08', title: '超梦猎人', description: '击败隐藏BOSS超梦', category: 'battle', icon: '🧬', tier: 4, condition_type: 'mewtwo_defeated', condition_value: 1 },
   ]
   const stmt = s.prepare('INSERT OR IGNORE INTO achievements (id,title,description,category,icon,tier,condition_type,condition_value) VALUES (?,?,?,?,?,?,?,?)')
   for (const a of achievements) {
@@ -423,6 +584,135 @@ function seedDecorations(s: any) {
   const stmt = s.prepare('INSERT OR IGNORE INTO decorations (id,name,category,price,icon,description,rarity) VALUES (?,?,?,?,?,?,?)')
   for (const d of decorations) {
     stmt.run(d.id, d.name, d.category, d.price, d.icon, d.description, d.rarity)
+  }
+}
+
+function seedSkills(s: any) {
+  const skills = [
+    // Tier 1 - Basic (unlock_level 1)
+    { id: 'S01', name: '撞击', type: 'normal', power: 30, accuracy: 100, pp: 30, effect: null, unlock_level: 1 },
+    { id: 'S02', name: '抓', type: 'normal', power: 35, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S03', name: '火花', type: 'fire', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S04', name: '水枪', type: 'water', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S05', name: '藤鞭', type: 'grass', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S06', name: '电击', type: 'electric', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S07', name: '泥巴射击', type: 'ground', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S08', name: '冰冻之风', type: 'ice', power: 40, accuracy: 95, pp: 20, effect: '{"type":"speed_down","chance":100,"amount":0.3}', unlock_level: 1 },
+    { id: 'S09', name: '翅膀攻击', type: 'flying', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S10', name: '虫咬', type: 'bug', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    { id: 'S11', name: '妖精之风', type: 'fairy', power: 40, accuracy: 100, pp: 25, effect: null, unlock_level: 1 },
+    // Tier 2 - Mid (unlock_level 3)
+    { id: 'S12', name: '喷射火焰', type: 'fire', power: 65, accuracy: 95, pp: 15, effect: '{"type":"burn","chance":10}', unlock_level: 3 },
+    { id: 'S13', name: '水之波动', type: 'water', power: 60, accuracy: 100, pp: 15, effect: null, unlock_level: 3 },
+    { id: 'S14', name: '飞叶快刀', type: 'grass', power: 60, accuracy: 95, pp: 15, effect: null, unlock_level: 3 },
+    { id: 'S15', name: '十万伏特', type: 'electric', power: 65, accuracy: 95, pp: 15, effect: '{"type":"paralyze","chance":10}', unlock_level: 3 },
+    { id: 'S16', name: '地震', type: 'ground', power: 70, accuracy: 100, pp: 10, effect: null, unlock_level: 3 },
+    { id: 'S17', name: '冰冻光线', type: 'ice', power: 65, accuracy: 95, pp: 15, effect: '{"type":"freeze","chance":10}', unlock_level: 3 },
+    { id: 'S18', name: '空气斩', type: 'flying', power: 60, accuracy: 95, pp: 15, effect: null, unlock_level: 3 },
+    { id: 'S19', name: '信号光束', type: 'bug', power: 60, accuracy: 100, pp: 15, effect: null, unlock_level: 3 },
+    // Tier 3 - Support (unlock_level 8)
+    { id: 'S20', name: '光墙', type: 'normal', power: 0, accuracy: 100, pp: 10, effect: '{"type":"defense_up","amount":0.5,"duration":3}', unlock_level: 8 },
+    { id: 'S21', name: '剑舞', type: 'normal', power: 0, accuracy: 100, pp: 10, effect: '{"type":"attack_up","amount":0.5,"duration":3}', unlock_level: 8 },
+    { id: 'S22', name: '催眠术', type: 'normal', power: 0, accuracy: 60, pp: 5, effect: '{"type":"sleep","duration":2}', unlock_level: 8 },
+    { id: 'S23', name: '治愈之愿', type: 'normal', power: 0, accuracy: 100, pp: 5, effect: '{"type":"heal","amount":0.3}', unlock_level: 8 },
+    // Tier 4 - Ultimate (unlock_level 15)
+    { id: 'S24', name: '大字爆炎', type: 'fire', power: 90, accuracy: 85, pp: 5, effect: '{"type":"burn","chance":20}', unlock_level: 15 },
+    { id: 'S25', name: '水炮', type: 'water', power: 90, accuracy: 85, pp: 5, effect: null, unlock_level: 15 },
+    { id: 'S26', name: '日光束', type: 'grass', power: 95, accuracy: 90, pp: 5, effect: '{"type":"charge","turns":1}', unlock_level: 15 },
+    { id: 'S27', name: '雷霆', type: 'electric', power: 90, accuracy: 85, pp: 5, effect: '{"type":"paralyze","chance":20}', unlock_level: 15 },
+    { id: 'S28', name: '暴风雪', type: 'ice', power: 90, accuracy: 85, pp: 5, effect: '{"type":"freeze","chance":20}', unlock_level: 15 },
+    { id: 'S29', name: '破坏光线', type: 'normal', power: 100, accuracy: 90, pp: 3, effect: '{"type":"recharge","turns":1}', unlock_level: 15 },
+  ]
+  const stmt = s.prepare('INSERT OR IGNORE INTO skills (id,name,type,power,accuracy,pp,effect,unlock_level) VALUES (?,?,?,?,?,?,?,?)')
+  for (const sk of skills) {
+    stmt.run(sk.id, sk.name, sk.type, sk.power, sk.accuracy, sk.pp, sk.effect, sk.unlock_level)
+  }
+}
+
+function seedSpeciesCatalog(s: any) {
+  const species = [
+    // Region 1 - 翠绿森林 (Grass/Bug)
+    { id: 1, name: '妙蛙种子', type1: 'grass', type2: null, base_power: 45, base_speed: 45, rarity: 2, region: 1, evolves_from: null, evolves_to: '[2]', evolution_level: 5, emoji: '🌿', skill1: 'S05', skill2: 'S14', skill3: 'S23', skill4: 'S26' },
+    { id: 2, name: '妙蛙草', type1: 'grass', type2: null, base_power: 65, base_speed: 50, rarity: 3, region: 1, evolves_from: 1, evolves_to: '[3]', evolution_level: 12, emoji: '🌿', skill1: 'S05', skill2: 'S14', skill3: 'S23', skill4: 'S26' },
+    { id: 3, name: '妙蛙花', type1: 'grass', type2: null, base_power: 90, base_speed: 55, rarity: 4, region: 1, evolves_from: 2, evolves_to: null, evolution_level: null, emoji: '🌿', skill1: 'S05', skill2: 'S14', skill3: 'S23', skill4: 'S26' },
+    { id: 10, name: '绿毛虫', type1: 'bug', type2: null, base_power: 25, base_speed: 30, rarity: 1, region: 1, evolves_from: null, evolves_to: '[11]', evolution_level: 3, emoji: '🐛', skill1: 'S10', skill2: 'S19', skill3: 'S20', skill4: 'S29' },
+    { id: 11, name: '铁甲蛹', type1: 'bug', type2: null, base_power: 35, base_speed: 25, rarity: 1, region: 1, evolves_from: 10, evolves_to: '[12]', evolution_level: 7, emoji: '🐛', skill1: 'S10', skill2: 'S19', skill3: 'S20', skill4: 'S29' },
+    { id: 12, name: '巴大蝶', type1: 'bug', type2: 'flying', base_power: 60, base_speed: 55, rarity: 2, region: 1, evolves_from: 11, evolves_to: null, evolution_level: null, emoji: '🦋', skill1: 'S10', skill2: 'S18', skill3: 'S22', skill4: 'S29' },
+    { id: 43, name: '走路草', type1: 'grass', type2: null, base_power: 40, base_speed: 35, rarity: 1, region: 1, evolves_from: null, evolves_to: '[44]', evolution_level: 6, emoji: '🌿', skill1: 'S05', skill2: 'S14', skill3: 'S22', skill4: 'S26' },
+    { id: 44, name: '臭臭花', type1: 'grass', type2: null, base_power: 60, base_speed: 40, rarity: 2, region: 1, evolves_from: 43, evolves_to: '[45]', evolution_level: 14, emoji: '🌸', skill1: 'S05', skill2: 'S14', skill3: 'S22', skill4: 'S26' },
+    { id: 45, name: '霸王花', type1: 'grass', type2: null, base_power: 85, base_speed: 45, rarity: 3, region: 1, evolves_from: 44, evolves_to: null, evolution_level: null, emoji: '🌺', skill1: 'S05', skill2: 'S14', skill3: 'S22', skill4: 'S26' },
+    { id: 69, name: '喇叭芽', type1: 'grass', type2: null, base_power: 38, base_speed: 35, rarity: 1, region: 1, evolves_from: null, evolves_to: '[70]', evolution_level: 6, emoji: '🌱', skill1: 'S05', skill2: 'S14', skill3: 'S21', skill4: 'S26' },
+    { id: 70, name: '口呆花', type1: 'grass', type2: null, base_power: 58, base_speed: 40, rarity: 2, region: 1, evolves_from: 69, evolves_to: '[71]', evolution_level: 14, emoji: '🌱', skill1: 'S05', skill2: 'S14', skill3: 'S21', skill4: 'S26' },
+    { id: 71, name: '大食花', type1: 'grass', type2: null, base_power: 82, base_speed: 45, rarity: 3, region: 1, evolves_from: 70, evolves_to: null, evolution_level: null, emoji: '🌱', skill1: 'S05', skill2: 'S14', skill3: 'S21', skill4: 'S26' },
+
+    // Region 2 - 火山熔岩 (Fire)
+    { id: 4, name: '小火龙', type1: 'fire', type2: null, base_power: 48, base_speed: 55, rarity: 2, region: 2, evolves_from: null, evolves_to: '[5]', evolution_level: 5, emoji: '🔥', skill1: 'S03', skill2: 'S12', skill3: 'S21', skill4: 'S24' },
+    { id: 5, name: '火恐龙', type1: 'fire', type2: null, base_power: 68, base_speed: 60, rarity: 3, region: 2, evolves_from: 4, evolves_to: '[6]', evolution_level: 12, emoji: '🔥', skill1: 'S03', skill2: 'S12', skill3: 'S21', skill4: 'S24' },
+    { id: 6, name: '喷火龙', type1: 'fire', type2: 'flying', base_power: 95, base_speed: 70, rarity: 4, region: 2, evolves_from: 5, evolves_to: null, evolution_level: null, emoji: '🔥', skill1: 'S03', skill2: 'S12', skill3: 'S09', skill4: 'S24' },
+    { id: 37, name: '六尾', type1: 'fire', type2: null, base_power: 42, base_speed: 55, rarity: 2, region: 2, evolves_from: null, evolves_to: '[38]', evolution_level: 8, emoji: '🦊', skill1: 'S03', skill2: 'S12', skill3: 'S22', skill4: 'S24' },
+    { id: 38, name: '九尾', type1: 'fire', type2: null, base_power: 78, base_speed: 65, rarity: 3, region: 2, evolves_from: 37, evolves_to: null, evolution_level: null, emoji: '🦊', skill1: 'S03', skill2: 'S12', skill3: 'S22', skill4: 'S24' },
+    { id: 58, name: '卡蒂狗', type1: 'fire', type2: null, base_power: 55, base_speed: 55, rarity: 2, region: 2, evolves_from: null, evolves_to: '[59]', evolution_level: 10, emoji: '🐕', skill1: 'S03', skill2: 'S12', skill3: 'S21', skill4: 'S24' },
+    { id: 59, name: '风速狗', type1: 'fire', type2: null, base_power: 88, base_speed: 75, rarity: 4, region: 2, evolves_from: 58, evolves_to: null, evolution_level: null, emoji: '🐕', skill1: 'S03', skill2: 'S12', skill3: 'S21', skill4: 'S24' },
+    { id: 77, name: '小火马', type1: 'fire', type2: null, base_power: 50, base_speed: 65, rarity: 2, region: 2, evolves_from: null, evolves_to: '[78]', evolution_level: 10, emoji: '🐴', skill1: 'S03', skill2: 'S12', skill3: 'S01', skill4: 'S24' },
+    { id: 78, name: '烈焰马', type1: 'fire', type2: null, base_power: 80, base_speed: 75, rarity: 3, region: 2, evolves_from: 77, evolves_to: null, evolution_level: null, emoji: '🐴', skill1: 'S03', skill2: 'S12', skill3: 'S01', skill4: 'S24' },
+
+    // Region 3 - 深蓝湖畔 (Water)
+    { id: 7, name: '杰尼龟', type1: 'water', type2: null, base_power: 46, base_speed: 43, rarity: 2, region: 3, evolves_from: null, evolves_to: '[8]', evolution_level: 5, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S20', skill4: 'S25' },
+    { id: 8, name: '卡咪龟', type1: 'water', type2: null, base_power: 66, base_speed: 50, rarity: 3, region: 3, evolves_from: 7, evolves_to: '[9]', evolution_level: 12, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S20', skill4: 'S25' },
+    { id: 9, name: '水箭龟', type1: 'water', type2: null, base_power: 92, base_speed: 58, rarity: 4, region: 3, evolves_from: 8, evolves_to: null, evolution_level: null, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S20', skill4: 'S25' },
+    { id: 54, name: '可达鸭', type1: 'water', type2: null, base_power: 44, base_speed: 45, rarity: 1, region: 3, evolves_from: null, evolves_to: '[55]', evolution_level: 8, emoji: '🦆', skill1: 'S04', skill2: 'S13', skill3: 'S22', skill4: 'S25' },
+    { id: 55, name: '哥达鸭', type1: 'water', type2: null, base_power: 75, base_speed: 60, rarity: 3, region: 3, evolves_from: 54, evolves_to: null, evolution_level: null, emoji: '🦆', skill1: 'S04', skill2: 'S13', skill3: 'S22', skill4: 'S25' },
+    { id: 60, name: '蚊香蝌蚪', type1: 'water', type2: null, base_power: 35, base_speed: 40, rarity: 1, region: 3, evolves_from: null, evolves_to: '[61]', evolution_level: 5, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S23', skill4: 'S25' },
+    { id: 61, name: '蚊香君', type1: 'water', type2: null, base_power: 55, base_speed: 50, rarity: 2, region: 3, evolves_from: 60, evolves_to: '[62]', evolution_level: 12, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S23', skill4: 'S25' },
+    { id: 62, name: '蚊香泳士', type1: 'water', type2: null, base_power: 80, base_speed: 55, rarity: 3, region: 3, evolves_from: 61, evolves_to: null, evolution_level: null, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S21', skill4: 'S25' },
+    { id: 120, name: '海星星', type1: 'water', type2: null, base_power: 48, base_speed: 50, rarity: 2, region: 3, evolves_from: null, evolves_to: '[121]', evolution_level: 10, emoji: '⭐', skill1: 'S04', skill2: 'S13', skill3: 'S23', skill4: 'S25' },
+    { id: 121, name: '宝石海星', type1: 'water', type2: null, base_power: 78, base_speed: 65, rarity: 3, region: 3, evolves_from: 120, evolves_to: null, evolution_level: null, emoji: '💎', skill1: 'S04', skill2: 'S13', skill3: 'S23', skill4: 'S25' },
+
+    // Region 4 - 雷鸣平原 (Electric/Fairy)
+    { id: 25, name: '皮卡丘', type1: 'electric', type2: null, base_power: 50, base_speed: 70, rarity: 2, region: 4, evolves_from: null, evolves_to: '[26]', evolution_level: 8, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S21', skill4: 'S27' },
+    { id: 26, name: '雷丘', type1: 'electric', type2: null, base_power: 80, base_speed: 75, rarity: 3, region: 4, evolves_from: 25, evolves_to: null, evolution_level: null, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S21', skill4: 'S27' },
+    { id: 81, name: '小磁怪', type1: 'electric', type2: null, base_power: 40, base_speed: 35, rarity: 1, region: 4, evolves_from: null, evolves_to: '[82]', evolution_level: 10, emoji: '🧲', skill1: 'S06', skill2: 'S15', skill3: 'S20', skill4: 'S27' },
+    { id: 82, name: '三合一磁怪', type1: 'electric', type2: null, base_power: 72, base_speed: 45, rarity: 3, region: 4, evolves_from: 81, evolves_to: null, evolution_level: null, emoji: '🧲', skill1: 'S06', skill2: 'S15', skill3: 'S20', skill4: 'S27' },
+    { id: 100, name: '霹雳电球', type1: 'electric', type2: null, base_power: 38, base_speed: 75, rarity: 1, region: 4, evolves_from: null, evolves_to: '[101]', evolution_level: 8, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S01', skill4: 'S27' },
+    { id: 101, name: '顽皮雷弹', type1: 'electric', type2: null, base_power: 68, base_speed: 80, rarity: 2, region: 4, evolves_from: 100, evolves_to: null, evolution_level: null, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S01', skill4: 'S27' },
+    { id: 125, name: '电击兽', type1: 'electric', type2: null, base_power: 72, base_speed: 65, rarity: 3, region: 4, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S21', skill4: 'S27' },
+    { id: 39, name: '胖丁', type1: 'fairy', type2: null, base_power: 42, base_speed: 30, rarity: 1, region: 4, evolves_from: null, evolves_to: '[40]', evolution_level: 8, emoji: '🎤', skill1: 'S11', skill2: 'S01', skill3: 'S22', skill4: 'S29' },
+    { id: 40, name: '胖可丁', type1: 'fairy', type2: null, base_power: 68, base_speed: 35, rarity: 2, region: 4, evolves_from: 39, evolves_to: null, evolution_level: null, emoji: '🎤', skill1: 'S11', skill2: 'S01', skill3: 'S22', skill4: 'S29' },
+    { id: 35, name: '皮皮', type1: 'fairy', type2: null, base_power: 40, base_speed: 35, rarity: 1, region: 4, evolves_from: null, evolves_to: '[36]', evolution_level: 8, emoji: '🧚', skill1: 'S11', skill2: 'S01', skill3: 'S23', skill4: 'S29' },
+    { id: 36, name: '皮可西', type1: 'fairy', type2: null, base_power: 72, base_speed: 40, rarity: 3, region: 4, evolves_from: 35, evolves_to: null, evolution_level: null, emoji: '🧚', skill1: 'S11', skill2: 'S01', skill3: 'S23', skill4: 'S29' },
+
+    // Region 5 - 冰雪山脉 (Ground/Ice)
+    { id: 27, name: '穿山鼠', type1: 'ground', type2: null, base_power: 42, base_speed: 55, rarity: 1, region: 5, evolves_from: null, evolves_to: '[28]', evolution_level: 8, emoji: '🌍', skill1: 'S07', skill2: 'S16', skill3: 'S21', skill4: 'S29' },
+    { id: 28, name: '穿山王', type1: 'ground', type2: null, base_power: 72, base_speed: 60, rarity: 2, region: 5, evolves_from: 27, evolves_to: null, evolution_level: null, emoji: '🌍', skill1: 'S07', skill2: 'S16', skill3: 'S21', skill4: 'S29' },
+    { id: 50, name: '地鼠', type1: 'ground', type2: null, base_power: 35, base_speed: 70, rarity: 1, region: 5, evolves_from: null, evolves_to: '[51]', evolution_level: 6, emoji: '🌍', skill1: 'S07', skill2: 'S16', skill3: 'S02', skill4: 'S29' },
+    { id: 51, name: '三地鼠', type1: 'ground', type2: null, base_power: 65, base_speed: 80, rarity: 2, region: 5, evolves_from: 50, evolves_to: null, evolution_level: null, emoji: '🌍', skill1: 'S07', skill2: 'S16', skill3: 'S02', skill4: 'S29' },
+    { id: 74, name: '小拳石', type1: 'ground', type2: null, base_power: 42, base_speed: 20, rarity: 1, region: 5, evolves_from: null, evolves_to: '[75]', evolution_level: 6, emoji: '🪨', skill1: 'S07', skill2: 'S16', skill3: 'S20', skill4: 'S29' },
+    { id: 75, name: '隆隆石', type1: 'ground', type2: null, base_power: 62, base_speed: 25, rarity: 2, region: 5, evolves_from: 74, evolves_to: '[76]', evolution_level: 14, emoji: '🪨', skill1: 'S07', skill2: 'S16', skill3: 'S20', skill4: 'S29' },
+    { id: 76, name: '隆隆岩', type1: 'ground', type2: null, base_power: 85, base_speed: 30, rarity: 3, region: 5, evolves_from: 75, evolves_to: null, evolution_level: null, emoji: '🪨', skill1: 'S07', skill2: 'S16', skill3: 'S20', skill4: 'S29' },
+    { id: 86, name: '小海狮', type1: 'water', type2: null, base_power: 48, base_speed: 40, rarity: 2, region: 5, evolves_from: null, evolves_to: '[87]', evolution_level: 10, emoji: '🦭', skill1: 'S04', skill2: 'S17', skill3: 'S23', skill4: 'S28' },
+    { id: 87, name: '白海狮', type1: 'water', type2: 'ice', base_power: 75, base_speed: 45, rarity: 3, region: 5, evolves_from: 86, evolves_to: null, evolution_level: null, emoji: '🦭', skill1: 'S04', skill2: 'S17', skill3: 'S23', skill4: 'S28' },
+    { id: 131, name: '拉普拉斯', type1: 'water', type2: 'ice', base_power: 88, base_speed: 50, rarity: 4, region: 5, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '🐉', skill1: 'S04', skill2: 'S17', skill3: 'S23', skill4: 'S28' },
+    { id: 144, name: '急冻鸟', type1: 'ice', type2: 'flying', base_power: 95, base_speed: 60, rarity: 5, region: 5, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '❄️', skill1: 'S08', skill2: 'S17', skill3: 'S18', skill4: 'S28' },
+
+    // Region 6 - 冠军之路 (Mixed/Legendary)
+    { id: 133, name: '伊布', type1: 'normal', type2: null, base_power: 46, base_speed: 55, rarity: 2, region: 6, evolves_from: null, evolves_to: '[134,135,136,471]', evolution_level: 8, emoji: '🦊', skill1: 'S01', skill2: 'S02', skill3: 'S21', skill4: 'S29' },
+    { id: 134, name: '水伊布', type1: 'water', type2: null, base_power: 78, base_speed: 55, rarity: 3, region: 6, evolves_from: 133, evolves_to: null, evolution_level: null, emoji: '💧', skill1: 'S04', skill2: 'S13', skill3: 'S21', skill4: 'S25' },
+    { id: 135, name: '雷伊布', type1: 'electric', type2: null, base_power: 78, base_speed: 70, rarity: 3, region: 6, evolves_from: 133, evolves_to: null, evolution_level: null, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S21', skill4: 'S27' },
+    { id: 136, name: '火伊布', type1: 'fire', type2: null, base_power: 78, base_speed: 55, rarity: 3, region: 6, evolves_from: 133, evolves_to: null, evolution_level: null, emoji: '🔥', skill1: 'S03', skill2: 'S12', skill3: 'S21', skill4: 'S24' },
+    { id: 471, name: '冰伊布', type1: 'ice', type2: null, base_power: 78, base_speed: 55, rarity: 3, region: 6, evolves_from: 133, evolves_to: null, evolution_level: null, emoji: '❄️', skill1: 'S08', skill2: 'S17', skill3: 'S21', skill4: 'S28' },
+    { id: 143, name: '卡比兽', type1: 'normal', type2: null, base_power: 88, base_speed: 20, rarity: 4, region: 6, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '😴', skill1: 'S01', skill2: 'S02', skill3: 'S23', skill4: 'S29' },
+    { id: 145, name: '闪电鸟', type1: 'electric', type2: 'flying', base_power: 95, base_speed: 75, rarity: 5, region: 6, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '⚡', skill1: 'S06', skill2: 'S15', skill3: 'S09', skill4: 'S27' },
+    { id: 146, name: '火焰鸟', type1: 'fire', type2: 'flying', base_power: 95, base_speed: 70, rarity: 5, region: 6, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '🔥', skill1: 'S03', skill2: 'S12', skill3: 'S09', skill4: 'S24' },
+    { id: 147, name: '迷你龙', type1: 'flying', type2: null, base_power: 50, base_speed: 45, rarity: 3, region: 6, evolves_from: null, evolves_to: '[148]', evolution_level: 10, emoji: '🐉', skill1: 'S09', skill2: 'S18', skill3: 'S21', skill4: 'S29' },
+    { id: 148, name: '哈克龙', type1: 'flying', type2: null, base_power: 75, base_speed: 55, rarity: 4, region: 6, evolves_from: 147, evolves_to: '[149]', evolution_level: 18, emoji: '🐉', skill1: 'S09', skill2: 'S18', skill3: 'S21', skill4: 'S29' },
+    { id: 149, name: '快龙', type1: 'flying', type2: null, base_power: 98, base_speed: 65, rarity: 5, region: 6, evolves_from: 148, evolves_to: null, evolution_level: null, emoji: '🐉', skill1: 'S09', skill2: 'S18', skill3: 'S21', skill4: 'S29' },
+    { id: 150, name: '超梦', type1: 'normal', type2: null, base_power: 100, base_speed: 80, rarity: 5, region: 6, evolves_from: null, evolves_to: null, evolution_level: null, emoji: '🧬', skill1: 'S01', skill2: 'S22', skill3: 'S21', skill4: 'S29' },
+  ]
+  const stmt = s.prepare(
+    'INSERT OR IGNORE INTO species_catalog (id,name,type1,type2,base_power,base_speed,rarity,region,evolves_from,evolves_to,evolution_level,emoji,skill1,skill2,skill3,skill4) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+  )
+  for (const sp of species) {
+    stmt.run(sp.id, sp.name, sp.type1, sp.type2, sp.base_power, sp.base_speed, sp.rarity, sp.region, sp.evolves_from, sp.evolves_to, sp.evolution_level, sp.emoji, sp.skill1, sp.skill2, sp.skill3, sp.skill4)
   }
 }
 
