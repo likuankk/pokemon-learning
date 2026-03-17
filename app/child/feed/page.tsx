@@ -87,13 +87,18 @@ export default function FeedPage() {
     setFeeding(null)
   }
 
-  const status = pokemon ? getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection) : 'good'
+  const status = pokemon ? getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection) : 'calm'
 
   const bgColors: Record<string, string> = {
-    energetic: 'from-yellow-50 via-amber-50 to-orange-50',
-    good:      'from-teal-50 via-cyan-50 to-emerald-50',
+    joyful:    'from-yellow-50 via-amber-50 to-orange-50',
+    happy:     'from-teal-50 via-cyan-50 to-emerald-50',
+    calm:      'from-sky-50 via-blue-50 to-cyan-50',
     tired:     'from-gray-50 via-slate-50 to-gray-100',
-    sad:       'from-gray-100 via-slate-100 to-gray-100',
+    sad:       'from-blue-50 via-indigo-50 to-blue-100',
+    anxious:   'from-yellow-50 via-orange-50 to-amber-50',
+    exhausted: 'from-gray-100 via-slate-100 to-gray-100',
+    lonely:    'from-indigo-50 via-slate-50 to-indigo-100',
+    sleeping:  'from-purple-50 via-indigo-50 to-purple-100',
   }
 
   return (
@@ -119,9 +124,13 @@ export default function FeedPage() {
                     {/* Aura */}
                     <div className="absolute inset-0 rounded-full"
                       style={{
-                        background: status === 'energetic'
+                        background: status === 'joyful'
                           ? 'radial-gradient(ellipse, rgba(251,191,36,0.35) 0%, transparent 70%)'
-                          : 'radial-gradient(ellipse, rgba(52,211,153,0.25) 0%, transparent 70%)',
+                          : status === 'happy'
+                          ? 'radial-gradient(ellipse, rgba(52,211,153,0.25) 0%, transparent 70%)'
+                          : status === 'sleeping'
+                          ? 'radial-gradient(ellipse, rgba(106,90,205,0.25) 0%, transparent 70%)'
+                          : 'radial-gradient(ellipse, rgba(135,206,235,0.2) 0%, transparent 70%)',
                         filter: 'blur(16px)',
                         transform: 'scale(1.2)',
                       }}

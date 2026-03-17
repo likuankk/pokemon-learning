@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { href: '/child/feed', label: '喂养宝可梦', emoji: '🍖' },
   { href: '/child/pokedex', label: '图鉴成就', emoji: '🏅' },
   { href: '/child/house', label: '小屋装饰', emoji: '🪑' },
+  { href: '/child/manage', label: '宝可梦管理', emoji: '📦' },
   { href: '/child/battle', label: '宝可梦战斗', emoji: '⚔️' },
   { href: '/child/letter', label: '宝可梦的信', emoji: '💌' },
 ]
@@ -78,13 +79,18 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
 
   const statusKey = pokemon
     ? getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection)
-    : 'good'
+    : 'calm'
 
   const statusBadgeStyle: Record<string, React.CSSProperties> = {
-    energetic: { background: 'linear-gradient(135deg, #fde68a, #fbbf24)', color: '#78350f', boxShadow: '0 2px 0 #b45309' },
-    good:      { background: 'linear-gradient(135deg, #a7f3d0, #34d399)', color: '#064e3b', boxShadow: '0 2px 0 #047857' },
+    joyful:    { background: 'linear-gradient(135deg, #fde68a, #fbbf24)', color: '#78350f', boxShadow: '0 2px 0 #b45309' },
+    happy:     { background: 'linear-gradient(135deg, #a7f3d0, #34d399)', color: '#064e3b', boxShadow: '0 2px 0 #047857' },
+    calm:      { background: 'linear-gradient(135deg, #bae6fd, #7dd3fc)', color: '#0c4a6e', boxShadow: '0 2px 0 #0369a1' },
     tired:     { background: 'linear-gradient(135deg, #e2e8f0, #cbd5e1)', color: '#334155', boxShadow: '0 2px 0 #94a3b8' },
-    sad:       { background: 'linear-gradient(135deg, #fecaca, #f87171)', color: '#7f1d1d', boxShadow: '0 2px 0 #b91c1c' },
+    sad:       { background: 'linear-gradient(135deg, #bfdbfe, #93c5fd)', color: '#1e3a5f', boxShadow: '0 2px 0 #3b82f6' },
+    anxious:   { background: 'linear-gradient(135deg, #fef08a, #fde047)', color: '#713f12', boxShadow: '0 2px 0 #ca8a04' },
+    exhausted: { background: 'linear-gradient(135deg, #d1d5db, #9ca3af)', color: '#1f2937', boxShadow: '0 2px 0 #6b7280' },
+    lonely:    { background: 'linear-gradient(135deg, #c7d2fe, #a5b4fc)', color: '#312e81', boxShadow: '0 2px 0 #6366f1' },
+    sleeping:  { background: 'linear-gradient(135deg, #ddd6fe, #c4b5fd)', color: '#4c1d95', boxShadow: '0 2px 0 #7c3aed' },
   }
 
   // 不在底部导航里的其他入口
@@ -108,7 +114,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
                 <div
                   className="absolute inset-0 rounded-full"
                   style={{
-                    background: statusKey === 'energetic'
+                    background: statusKey === 'joyful'
                       ? 'radial-gradient(ellipse, rgba(251,191,36,0.4) 0%, transparent 70%)'
                       : 'radial-gradient(ellipse, rgba(52,211,153,0.3) 0%, transparent 70%)',
                     filter: 'blur(8px)',
@@ -154,7 +160,7 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
                 style={{
                   fontFamily: "'ZCOOL KuaiLe', sans-serif",
                   fontSize: '1.1rem',
-                  ...(statusBadgeStyle[statusKey] || statusBadgeStyle.good),
+                  ...(statusBadgeStyle[statusKey] || statusBadgeStyle.calm),
                 }}
               >
                 {statusLabels[statusKey as keyof typeof statusLabels]}

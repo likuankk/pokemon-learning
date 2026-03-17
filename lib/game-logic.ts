@@ -7,7 +7,10 @@ export type ItemReward = {
   fragment: number  // 进化石碎片
 }
 
-export type PokemonStatus = 'energetic' | 'good' | 'tired' | 'sad'
+export type PokemonStatus = 'joyful' | 'happy' | 'calm' | 'tired' | 'sad' | 'anxious' | 'exhausted' | 'lonely' | 'sleeping'
+
+// Legacy alias for backward compatibility
+export type PokemonStatusLegacy = 'energetic' | 'good' | 'tired' | 'sad'
 
 // 奖励计算：根据质量评分(1-5)
 export function calculateRewards(qualityScore: number): ItemReward {
@@ -79,20 +82,44 @@ export function calculateStatUpdates(
   }
 }
 
-// 宝可梦状态判断
+// 宝可梦状态判断（9种状态，按优先级评估）
+// vitality = stamina/体力, wisdom = 智慧, affection = bond/亲密度
 export function getPokemonStatus(vitality: number, wisdom: number, affection: number): PokemonStatus {
-  const avg = (vitality + wisdom + affection) / 3
-  if (avg >= 80) return 'energetic'
-  if (avg >= 60) return 'good'
-  if (avg >= 40) return 'tired'
-  return 'sad'
+  // Priority 1: Sleeping (stamina critically low)
+  if (vitality <= 10) return 'sleeping'
+
+  // Priority 2: Exhausted (stamina very low)
+  if (vitality <= 15) return 'exhausted'
+
+  // Priority 3: Lonely (bond very low)
+  if (affection <= 20) return 'lonely'
+
+  // Priority 5: Tired (stamina low)
+  if (vitality <= 35) return 'tired'
+
+  // Priority 6: Sad (bond low, stamina okay)
+  if (affection <= 40 && vitality > 35) return 'sad'
+
+  // Priority 7: Joyful (all high)
+  if (vitality >= 75 && wisdom >= 60 && affection >= 70) return 'joyful'
+
+  // Priority 8: Happy (good overall)
+  if (vitality >= 50 && affection >= 50) return 'happy'
+
+  // Priority 9: Calm (default)
+  return 'calm'
 }
 
 export const statusLabels: Record<PokemonStatus, string> = {
-  energetic: '元气满满 ✨',
-  good: '精神良好 😊',
-  tired: '有点疲惫 😴',
-  sad: '需要关心 🥺',
+  joyful: '欢欣雀跃 ✨',
+  happy: '开心满足 😊',
+  calm: '平静专注 📖',
+  tired: '疲惫困倦 😴',
+  sad: '沮丧落寞 🥺',
+  anxious: '焦虑不安 😰',
+  exhausted: '精疲力竭 😵',
+  lonely: '孤独寂寞 😢',
+  sleeping: '进入睡眠 💤',
 }
 
 export const itemLabels: Record<string, string> = {
