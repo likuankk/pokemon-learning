@@ -397,6 +397,13 @@ function finishBattle(
       `UPDATE pokemons SET battle_exp = ?, battle_level = ?, battle_power = ?, defense = ?, hp = ?, last_updated = datetime('now') WHERE id = ?`
     ).run(levelResult.newExp, levelResult.newLevel, newBP, newDef, newHP, battle.playerPokemonId)
 
+    // Sync main level if battle_level exceeds it
+    try {
+      sqlite.prepare(
+        `UPDATE pokemons SET level = ? WHERE id = ? AND (level IS NULL OR level < ?)`
+      ).run(levelResult.newLevel, battle.playerPokemonId, levelResult.newLevel)
+    } catch (e) { /* ignore */ }
+
     // Unlock new skills if leveled up
     const newSkillSlots = getUnlockedSkillSlots(levelResult.newLevel)
     const skillFields = ['skill1', 'skill2', 'skill3', 'skill4'] as const

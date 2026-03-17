@@ -192,9 +192,9 @@ export default function EvolvePage() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="border-b-4 border-purple-200 px-8 py-6"
+      <div className="border-b-4 border-purple-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #faf5ff 0%, #ede9fe 100%)' }}>
-        <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#6b21a8' }}>
+        <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#6b21a8' }}>
           进化工坊 ✨
         </h1>
         <p className="text-purple-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
@@ -202,7 +202,7 @@ export default function EvolvePage() {
         </p>
       </div>
 
-      <div className="px-8 py-8 space-y-8">
+      <div className="px-4 md:px-8 py-8 space-y-8">
         {/* Current Pokemon + Evolution Chain */}
         <div className="bg-white rounded-3xl border-2 border-gray-200 p-8" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
           <h2 className="font-bold text-gray-800 mb-6" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>
@@ -210,7 +210,7 @@ export default function EvolvePage() {
           </h2>
 
           {/* Evolution Chain Visual */}
-          <div className="flex items-center justify-center gap-4 flex-wrap">
+          <div className="flex items-center justify-center gap-4 flex-wrap overflow-x-auto">
             {data.chain.stages.filter(s => !s.isBranch).map((stage, i, arr) => (
               <div key={stage.speciesId} className="flex items-center gap-4">
                 <motion.div
@@ -223,7 +223,7 @@ export default function EvolvePage() {
                   }`}
                   style={{
                     boxShadow: stage.isCurrent ? '0 4px 0 #9333ea, 0 8px 20px rgba(147,51,234,0.15)' : '0 3px 0 rgba(0,0,0,0.06)',
-                    minWidth: 140,
+                    minWidth: 100,
                   }}
                   whileHover={{ scale: 1.05 }}
                 >
@@ -308,7 +308,7 @@ export default function EvolvePage() {
         </div>
 
         {/* Evolution Requirements + Action */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Requirements */}
           <div className="bg-white rounded-3xl border-2 border-gray-200 p-7" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
             <h2 className="font-bold text-gray-800 mb-5" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>

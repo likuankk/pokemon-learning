@@ -48,11 +48,17 @@ export async function GET(request: NextRequest) {
     // Apply natural decay
     pokemon = applyNaturalDecay(pokemon, sqlite)
 
+    // Get all pokemons for this child (for team/collection display)
+    const allPokemons = sqlite.prepare('SELECT * FROM pokemons WHERE child_id = ?').all(childId) as any[]
+
     const inventory = sqlite.prepare(
       'SELECT * FROM inventory WHERE child_id = ?'
     ).all(childId)
 
     const status = getPokemonStatus(pokemon.vitality, pokemon.wisdom, pokemon.affection)
+
+    // Unify level display: use max of task-level and battle-level
+    const displayLevel = Math.max(pokemon.level || 1, pokemon.battle_level || 1)
 
     const totalTasks = sqlite.prepare(
       `SELECT COUNT(*) as total FROM tasks WHERE family_id = ?`
@@ -64,7 +70,8 @@ export async function GET(request: NextRequest) {
     ).get(getFamilyId(session)) as { count: number }
 
     return NextResponse.json({
-      pokemon: { ...pokemon, status },
+      pokemon: { ...pokemon, level: displayLevel, status },
+      allPokemons,
       inventory,
       todayProgress: {
         completed: completedTasks.count,

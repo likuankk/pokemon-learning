@@ -48,11 +48,11 @@ export default function LetterPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-teal-200 px-8 py-6"
+      <div className="border-b-4 border-teal-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>宝可梦的信 💌</h1>
+            <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', color: '#065f46' }}>宝可梦的信 💌</h1>
             <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
               来自你的宝可梦伙伴的鼓励信！
             </p>
@@ -68,7 +68,7 @@ export default function LetterPage() {
         </div>
       </div>
 
-      <div className="px-8 py-8">
+      <div className="px-4 md:px-8 py-8">
         {loading ? (
           <div className="text-center py-16 text-gray-400 text-2xl">加载中...</div>
         ) : (

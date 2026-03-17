@@ -19,7 +19,10 @@ export function middleware(request: NextRequest) {
   if (
     pathname === '/' ||
     pathname === '/auth' ||
+    pathname === '/onboarding' ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/onboarding') ||
+    pathname.startsWith('/api/pokemon') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon')
   ) {
@@ -39,6 +42,16 @@ export function middleware(request: NextRequest) {
     const url = request.nextUrl.clone()
     url.pathname = '/parent'
     return NextResponse.redirect(url)
+  }
+
+  // ── Onboarding guard for child users ──
+  if (pathname.startsWith('/child') && session.role === 'child') {
+    const onboardingDone = request.cookies.get('onboarding_completed')?.value
+    if (!onboardingDone) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
   }
 
   if (pathname.startsWith('/parent') && session.role !== 'parent') {

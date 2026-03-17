@@ -43,7 +43,7 @@ export default function AntiAddictionBanner() {
 
   if (!status || dismissed) return null
 
-  const { tier, isCurfew, todayMinutes, limitMinutes } = status
+  const { tier, isCurfew, totalMinutes, limitMinutes } = status
 
   if (tier === 'normal' && !isCurfew) return null
 
@@ -64,8 +64,8 @@ export default function AntiAddictionBanner() {
           {isCurfew
             ? '现在是休息时间（21:00-07:00），明天再来吧！'
             : tier === 'limit'
-            ? `今天已使用${todayMinutes}分钟，已达上限（${limitMinutes}分钟），休息一下吧！`
-            : `已使用${todayMinutes}分钟，注意休息哦～`
+            ? `今天已使用${totalMinutes}分钟，已达上限（${limitMinutes}分钟），休息一下吧！`
+            : `已使用${totalMinutes}分钟，注意休息哦～`
           }
         </p>
         {tier === 'warning' && (

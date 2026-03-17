@@ -81,16 +81,16 @@ export default function EditTaskPage() {
 
   return (
     <div className="min-h-full bg-gray-50">
-      <div className="border-b-4 border-indigo-200 px-8 py-6"
+      <div className="border-b-4 border-indigo-200 px-4 md:px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
         <Link href={`/parent/tasks/${taskId}`} className="text-indigo-400 hover:text-indigo-600 font-bold mb-2 flex items-center gap-2"
           style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}>
           ← 返回任务详情
         </Link>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>编辑任务 ✏️</h1>
+        <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>编辑任务 ✏️</h1>
       </div>
 
-      <div className="px-8 py-6">
+      <div className="px-4 md:px-8 py-6">
         <div className="flex gap-8">
           {/* Form */}
           <div className="flex-1">

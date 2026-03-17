@@ -131,6 +131,13 @@ export async function POST(
           childId
         )
 
+        // ── Sync battle_level if task level exceeds it ──────────────────────────
+        try {
+          sqlite.prepare(
+            `UPDATE pokemons SET battle_level = ? WHERE child_id = ? AND (battle_level IS NULL OR battle_level < ?)`
+          ).run(newLevel, childId, newLevel)
+        } catch (e) { /* battle_level column may not exist */ }
+
         // ── Inventory update ───────────────────────────────────────────────────
         const itemTypes = ['food', 'crystal', 'candy', 'fragment'] as const
         for (const itemType of itemTypes) {

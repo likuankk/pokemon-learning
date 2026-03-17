@@ -98,18 +98,18 @@ export default function FeedPage() {
 
   return (
     <div className={`min-h-full bg-gradient-to-br ${bgColors[status]}`}>
-      <div className="border-b-4 border-white/50 px-8 py-6"
+      <div className="border-b-4 border-white/50 px-4 md:px-8 py-6"
         style={{ background: 'rgba(255,255,255,0.5)', backdropFilter: 'blur(8px)' }}>
-        <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>喂养宝可梦 🍖</h1>
+        <h1 className="game-title-green leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#065f46' }}>喂养宝可梦 🍖</h1>
         <p className="text-emerald-600 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
           用道具让你的伙伴更强壮！
         </p>
       </div>
 
-      <div className="px-8 py-8">
-        <div className="flex gap-8">
+      <div className="px-4 md:px-8 py-8">
+        <div className="flex flex-col md:flex-row gap-8">
           {/* Left: Pokemon showcase */}
-          <div className="w-[400px] flex-shrink-0">
+          <div className="w-full md:w-[400px] md:flex-shrink-0">
             <div className="bg-white/70 backdrop-blur rounded-3xl p-8 flex flex-col items-center"
               style={{ boxShadow: '0 6px 0 rgba(0,0,0,0.08), 0 12px 24px rgba(0,0,0,0.08)' }}>
               {pokemon ? (
