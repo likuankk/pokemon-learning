@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getPokemonStatus, statusLabels, itemEmojis, itemLabels } from '@/lib/game-logic'
 import { useToast } from '@/components/ToastProvider'
+import { getSoundManager } from '@/lib/sound-manager'
 
 const HOME_SPRITE = (id: number) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
@@ -78,6 +79,13 @@ export default function FeedPage() {
         setTimeout(() => setFloatingTexts(prev => prev.filter(f => !newFloats.find(n => n.id === f.id))), 1500)
 
         showToast(`${pokemon?.name} 很开心！${ITEM_EFFECTS[itemType as keyof typeof ITEM_EFFECTS]?.desc}`, 'success', itemEmojis[itemType])
+
+        // Sound effects: feed chomp + delayed cry
+        const sm = getSoundManager()
+        sm.playFeedSound()
+        if (pokemon) {
+          setTimeout(() => sm.playCry(pokemon.species_id, { rate: 1.1, volume: 0.8 }), 500)
+        }
       } else {
         showToast(data.error || '喂食失败', 'error', '❌')
       }

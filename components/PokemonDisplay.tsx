@@ -16,6 +16,8 @@ interface Props {
   size?: SizeVariant
   /** @deprecated use size="large" */
   large?: boolean
+  /** 点击宝可梦时触发（播放叫声等） */
+  onPokemonClick?: () => void
 }
 
 const sizePx: Record<SizeVariant, number> = {
@@ -93,7 +95,7 @@ const defaultParticles: Partial<Record<PokemonStatus, ParticleConfig>> = {
 
 export default function PokemonDisplay({
   speciesId, name, vitality, wisdom, affection, level,
-  size, large = false,
+  size, large = false, onPokemonClick,
 }: Props) {
   const resolvedSize: SizeVariant = size ?? (large ? 'large' : 'medium')
   const imgSize = sizePx[resolvedSize]
@@ -140,7 +142,9 @@ export default function PokemonDisplay({
         {/* The Pokemon image */}
         <motion.div
           animate={animation}
-          className="relative z-10"
+          className={`relative z-10${onPokemonClick ? ' cursor-pointer' : ''}`}
+          onClick={onPokemonClick}
+          whileTap={onPokemonClick ? { scale: 0.92 } : undefined}
         >
           <img
             src={homeUrl}

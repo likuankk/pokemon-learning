@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Link from 'next/link'
 import { POKEMON_NAMES, POKEMON_TYPES } from '@/lib/game-logic'
+import { getSoundManager } from '@/lib/sound-manager'
 
 const HOME_SPRITE = (id: number) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${id}.png`
@@ -85,6 +86,16 @@ export default function EvolvePage() {
       if (res.ok && result.evolution) {
         setEvolutionResult(result.evolution)
         setShowAnimation(true)
+
+        // Evolution sound sequence
+        const sm = getSoundManager()
+        sm.playEvolveStart()
+        setTimeout(() => sm.playEvolveTransform(), 1200)
+        setTimeout(() => {
+          sm.playCry(result.evolution.to)
+          sm.playEvolveFanfare()
+        }, 2000)
+
         // Reload after animation
         setTimeout(() => {
           loadData()

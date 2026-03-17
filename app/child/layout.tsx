@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { ToastProvider } from '@/components/ToastProvider'
 import AntiAddictionBanner from '@/components/AntiAddictionBanner'
 import NotificationBell from '@/components/NotificationBell'
+import SoundToggle from '@/components/SoundToggle'
 import { useSession } from '@/components/SessionProvider'
 
 interface NavItem {
@@ -97,6 +98,10 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
   const moreNavItems = navItems.filter(
     item => !bottomNavItems.some(b => b.href === item.href)
   )
+
+  // Lock non-task pages when there are pending tasks
+  const isTaskPage = pathname === '/child/tasks' || pathname.startsWith('/child/tasks/')
+  const isLocked = pendingCount > 0 && !isTaskPage
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
@@ -245,11 +250,38 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto relative pb-20 md:pb-0">
-        <div className="absolute top-4 right-4 z-40">
+        <div className="absolute top-4 right-4 z-40 flex items-center gap-3">
+          <SoundToggle />
           <NotificationBell />
         </div>
         <ToastProvider>
-          {children}
+          {isLocked ? (
+            <div className="min-h-full flex flex-col items-center justify-center p-8">
+              <motion.div
+                className="text-center max-w-md"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <div className="text-8xl mb-6">🔒</div>
+                <h2 className="text-3xl font-bold text-gray-700 mb-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  先完成今日任务吧！
+                </h2>
+                <p className="text-xl text-gray-400 mb-6" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  还有 <span className="text-orange-500 font-bold">{pendingCount}</span> 个任务等你完成
+                </p>
+                <Link href="/child/tasks">
+                  <motion.button
+                    className="bg-gradient-to-r from-teal-400 to-emerald-500 text-white font-bold px-10 py-4 rounded-2xl text-xl shadow-xl"
+                    style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", boxShadow: '0 4px 0 #047857' }}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    📋 去完成任务
+                  </motion.button>
+                </Link>
+              </motion.div>
+            </div>
+          ) : children}
         </ToastProvider>
         <AntiAddictionBanner />
       </main>
