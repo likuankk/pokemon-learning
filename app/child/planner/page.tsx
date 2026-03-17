@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 
 interface Task {
@@ -30,19 +30,34 @@ export default function PlannerPage() {
   const [tasks, setTasks] = useState<Task[]>([])
   const [plan, setPlan] = useState<Record<string, number[]>>({ morning: [], afternoon: [], evening: [] })
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
 
+  const today = new Date().toISOString().split('T')[0]
+
+  // Load tasks + saved plan
   useEffect(() => {
-    fetch('/api/tasks?familyId=1')
-      .then(r => r.json())
-      .then(data => {
-        const pending = (data.tasks || []).filter(
-          (t: Task) => t.status === 'pending' || t.status === 'rejected'
-        )
-        setTasks(pending)
-        setLoading(false)
-      })
-  }, [])
+    Promise.all([
+      fetch('/api/tasks').then(r => r.json()),
+      fetch(`/api/planner?date=${today}`).then(r => r.json()),
+    ]).then(([taskData, planData]) => {
+      const pending = (taskData.tasks || []).filter(
+        (t: Task) => t.status === 'pending' || t.status === 'rejected'
+      )
+      setTasks(pending)
+      if (planData.plan) {
+        // Filter out task IDs that no longer exist in pending tasks
+        const pendingIds = new Set(pending.map((t: Task) => t.id))
+        const cleanPlan: Record<string, number[]> = { morning: [], afternoon: [], evening: [] }
+        for (const slot of ['morning', 'afternoon', 'evening']) {
+          cleanPlan[slot] = (planData.plan[slot] || []).filter((id: number) => pendingIds.has(id))
+        }
+        setPlan(cleanPlan)
+      }
+      setLoading(false)
+    })
+  }, [today])
 
   const getTasksForSlot = (slotId: string) =>
     plan[slotId].map(id => tasks.find(t => t.id === id)).filter(Boolean) as Task[]
@@ -60,24 +75,64 @@ export default function PlannerPage() {
     newPlan[slotId] = [...newPlan[slotId], taskId]
     setPlan(newPlan)
     setSelectedTask(null)
+    setSaved(false)
   }
 
   const removeFromSlot = (slotId: string, taskId: number) => {
     setPlan({ ...plan, [slotId]: plan[slotId].filter(id => id !== taskId) })
+    setSaved(false)
   }
 
   const getTotalMinutes = (slotId: string) =>
     getTasksForSlot(slotId).reduce((sum, t) => sum + t.estimated_minutes, 0)
+
+  const savePlan = useCallback(async () => {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/planner', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: today, plan }),
+      })
+      if (res.ok) {
+        setSaved(true)
+      }
+    } catch (err) {
+      console.error('Save plan error:', err)
+    } finally {
+      setSaving(false)
+    }
+  }, [today, plan])
 
   const unscheduled = getUnscheduledTasks()
 
   return (
     <div className="min-h-full bg-gray-50">
       {/* Header */}
-      <div className="border-b-4 border-teal-200 px-8 py-6"
+      <div className="border-b-4 border-teal-200 px-8 py-6 flex items-center justify-between"
         style={{ background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
-        <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>时间规划 🗓️</h1>
-        <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>合理安排时间，轻松完成任务！</p>
+        <div>
+          <h1 className="game-title-green leading-tight" style={{ fontSize: '3.5rem', color: '#065f46' }}>时间规划 🗓️</h1>
+          <p className="text-emerald-500 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>合理安排时间，轻松完成任务！</p>
+        </div>
+        <div className="flex items-center gap-4">
+          {!saved && (
+            <span className="text-amber-500 text-lg font-bold animate-pulse">未保存</span>
+          )}
+          <motion.button
+            onClick={savePlan}
+            disabled={saving || saved}
+            className={`px-8 py-3 rounded-2xl text-xl font-bold shadow-lg transition-all ${
+              saved
+                ? 'bg-green-100 text-green-600 border-2 border-green-200 cursor-default'
+                : 'bg-gradient-to-r from-emerald-400 to-teal-500 text-white border-2 border-emerald-300 hover:shadow-xl'
+            }`}
+            whileHover={!saved ? { scale: 1.05 } : {}}
+            whileTap={!saved ? { scale: 0.95 } : {}}
+          >
+            {saving ? '保存中...' : saved ? '✓ 已保存' : '💾 保存计划'}
+          </motion.button>
+        </div>
       </div>
 
       <div className="px-8 py-8 space-y-7">

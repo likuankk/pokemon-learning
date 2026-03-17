@@ -15,7 +15,7 @@ interface Task {
 
 interface Props {
   task: Task
-  onAction?: () => void
+  onAction?: (e?: React.MouseEvent) => void
   actionLabel?: string
   actionVariant?: 'primary' | 'success' | 'danger' | 'warning'
   showStatus?: boolean
@@ -112,7 +112,7 @@ export default function TaskCard({ task, onAction, actionLabel, actionVariant = 
 
       {onAction && actionLabel && (
         <button
-          onClick={onAction}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAction(e) }}
           disabled={disabled}
           className={`w-full rounded-xl text-white font-bold transition-all ${disabled ? 'opacity-50 cursor-not-allowed' : 'active:translate-y-1'}`}
           style={{

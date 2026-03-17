@@ -3,6 +3,9 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ToastProvider } from '@/components/ToastProvider'
+import NotificationBell from '@/components/NotificationBell'
+import { useSession } from '@/components/SessionProvider'
 
 interface NavItem {
   href: string
@@ -16,15 +19,20 @@ const navItems: NavItem[] = [
   { href: '/parent/tasks', label: '任务列表', emoji: '📚', exact: true },
   { href: '/parent/tasks/new', label: '创建任务', emoji: '➕' },
   { href: '/parent/review', label: '审核中心', emoji: '📝' },
+  { href: '/parent/stats', label: '学习统计', emoji: '📊' },
+  { href: '/parent/honor', label: '荣誉榜', emoji: '🏆' },
+  { href: '/parent/weekend', label: '周末挑战', emoji: '🎯' },
+  { href: '/parent/settings', label: '家庭设置', emoji: '⚙️' },
 ]
 
 export default function ParentLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { user } = useSession()
   const [submittedCount, setSubmittedCount] = useState(0)
 
   useEffect(() => {
     const load = () => {
-      fetch('/api/tasks?familyId=1&status=submitted')
+      fetch('/api/tasks?status=submitted')
         .then(r => r.json())
         .then(d => setSubmittedCount((d.tasks || []).length))
         .catch(() => {})
@@ -59,7 +67,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
             style={{ background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}>
             <span className="text-4xl">👩‍👦</span>
             <div>
-              <p className="game-label-white font-bold" style={{ fontSize: '1.5rem' }}>妈妈</p>
+              <p className="game-label-white font-bold" style={{ fontSize: '1.5rem' }}>{user?.name || '家长'}</p>
               <p className="text-indigo-300 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>家长身份</p>
             </div>
           </div>
@@ -111,23 +119,35 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
         {/* Bottom */}
         <div className="px-4 pb-8">
           <div className="border-t border-indigo-600/50 mb-3 pt-3">
-            <Link
-              href="/"
-              className="flex items-center gap-3 px-5 py-4 rounded-2xl text-indigo-300 hover:text-white transition-all font-bold"
+            <button
+              onClick={async () => {
+                await fetch('/api/auth', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'logout' }),
+                })
+                window.location.href = '/auth'
+              }}
+              className="flex items-center gap-3 px-5 py-4 rounded-2xl text-indigo-300 hover:text-white transition-all font-bold w-full text-left"
               style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.35rem' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.12)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
-              <span className="text-2xl">←</span>
-              <span>切换身份</span>
-            </Link>
+              <span className="text-2xl">🚪</span>
+              <span>退出登录</span>
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
+      <main className="flex-1 overflow-y-auto relative">
+        <div className="absolute top-4 right-4 z-40">
+          <NotificationBell />
+        </div>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
       </main>
     </div>
   )

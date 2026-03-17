@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { itemEmojis, itemLabels } from '@/lib/game-logic'
+import { useToast } from '@/components/ToastProvider'
 
 interface Task {
   id: number
@@ -22,6 +23,9 @@ interface ReviewResult {
     vitality: number; wisdom: number; affection: number
     gains: { vitality: number; wisdom: number; affection: number }
   } | null
+  levelUp: { from: number; to: number } | null
+  streakUpdate: { days: number; milestone?: string } | null
+  evolution: { from: number; to: number; fromStage: number; toStage: number } | null
 }
 
 const subjectColorMap: Record<string, string> = {
@@ -33,6 +37,7 @@ const subjectColorMap: Record<string, string> = {
 }
 
 export default function ReviewPage() {
+  const { showToast } = useToast()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -44,7 +49,7 @@ export default function ReviewPage() {
 
   const loadTasks = () => {
     setLoading(true)
-    fetch('/api/tasks?familyId=1&status=submitted')
+    fetch('/api/tasks?status=submitted')
       .then(r => r.json())
       .then(data => {
         const list = data.tasks || []
@@ -67,10 +72,22 @@ export default function ReviewPage() {
       const res = await fetch(`/api/tasks/${selectedTask.id}/review`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ qualityScore: score, reviewComment: comment, reviewStatus, childId: 2 }),
+        body: JSON.stringify({ qualityScore: score, reviewComment: comment, reviewStatus }),
       })
       const data = await res.json()
-      if (res.ok) { setResult(data); loadTasks() }
+      if (res.ok) {
+        setResult(data)
+        loadTasks()
+        if (data.levelUp) {
+          showToast(`🎉 宝可梦升级了！Lv.${data.levelUp.from} → Lv.${data.levelUp.to}`, 'reward', '⬆️')
+        }
+        if (data.streakUpdate?.milestone) {
+          showToast(`${data.streakUpdate.milestone} 连续${data.streakUpdate.days}天！`, 'reward', '🔥')
+        }
+        if (data.evolution) {
+          showToast(`✨ 宝可梦进化了！`, 'reward', '🌟')
+        }
+      }
     } catch (e) { console.error(e) }
     setSubmitting(false)
   }
@@ -138,9 +155,52 @@ export default function ReviewPage() {
             >
               <div className="text-9xl mb-6">{result.rewards ? '🎉' : '📋'}</div>
               <h2 className="text-4xl font-bold text-gray-800 mb-4">{result.message}</h2>
+              {result.levelUp && (
+                <motion.div
+                  className="mb-4 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-3xl px-10 py-5 text-white"
+                  initial={{ scale: 0 }} animate={{ scale: [0, 1.2, 1] }}
+                  transition={{ delay: 0.2, duration: 0.5 }}
+                  style={{ boxShadow: '0 6px 0 #b45309' }}
+                >
+                  <p className="font-bold text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '2rem' }}>
+                    ⬆️ 宝可梦升级了！
+                  </p>
+                  <p className="text-center mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem', opacity: 0.9 }}>
+                    Lv.{result.levelUp.from} → Lv.{result.levelUp.to}
+                  </p>
+                </motion.div>
+              )}
+              {result.streakUpdate && result.streakUpdate.days > 0 && (
+                <motion.div
+                  className="mb-4 bg-gradient-to-r from-orange-400 to-red-400 rounded-3xl px-10 py-4 text-white"
+                  initial={{ scale: 0 }} animate={{ scale: [0, 1.1, 1] }}
+                  transition={{ delay: 0.3, duration: 0.4 }}
+                  style={{ boxShadow: '0 4px 0 #b91c1c' }}
+                >
+                  <p className="font-bold text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>
+                    🔥 连续打卡 {result.streakUpdate.days} 天！
+                    {result.streakUpdate.milestone && ` ${result.streakUpdate.milestone}`}
+                  </p>
+                </motion.div>
+              )}
+              {result.evolution && (
+                <motion.div
+                  className="mb-4 bg-gradient-to-r from-purple-400 to-pink-400 rounded-3xl px-10 py-5 text-white"
+                  initial={{ scale: 0 }} animate={{ scale: [0, 1.2, 1] }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
+                  style={{ boxShadow: '0 6px 0 #7e22ce' }}
+                >
+                  <p className="font-bold text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '2rem' }}>
+                    ✨ 宝可梦进化了！
+                  </p>
+                  <p className="text-center mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.4rem', opacity: 0.9 }}>
+                    阶段 {result.evolution.fromStage} → 阶段 {result.evolution.toStage}
+                  </p>
+                </motion.div>
+              )}
               {result.rewards && (
                 <div className="mt-4 bg-yellow-50 border-2 border-yellow-200 rounded-3xl p-8 w-full max-w-lg">
-                  <p className="text-2xl text-gray-600 font-bold mb-5">小明获得的奖励</p>
+                  <p className="text-2xl text-gray-600 font-bold mb-5">孩子获得的奖励</p>
                   <div className="grid grid-cols-2 gap-4">
                     {Object.entries(result.rewards).filter(([, qty]) => qty > 0).map(([item, qty]) => (
                       <div key={item} className="bg-white rounded-2xl p-5 text-center border border-yellow-100">
@@ -246,7 +306,7 @@ export default function ReviewPage() {
                   <textarea
                     value={comment}
                     onChange={e => setComment(e.target.value)}
-                    placeholder="鼓励小明，让他更有动力..."
+                    placeholder="鼓励孩子，让 TA 更有动力..."
                     rows={3}
                     className="w-full border-2 border-gray-200 rounded-2xl px-5 py-4 text-gray-800 text-xl focus:outline-none focus:ring-4 focus:ring-indigo-300 resize-none"
                   />

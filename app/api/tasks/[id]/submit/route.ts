@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
+import { getSession, getChildId } from '@/lib/auth'
 
 export async function POST(
   request: NextRequest,
@@ -8,7 +9,8 @@ export async function POST(
   const { id } = await params
   try {
     const body = await request.json()
-    const { childId = 2 } = body
+    const session = await getSession()
+    const childId = body.childId || getChildId(session)
 
     const sqlite = (db as any).session.client
 
@@ -30,6 +32,25 @@ export async function POST(
 
     // Update task status
     sqlite.prepare(`UPDATE tasks SET status = 'submitted' WHERE id = ?`).run(parseInt(id))
+
+    // ── Notify parent about submission ───────────────────────────────────────
+    try {
+      const parent = sqlite.prepare(
+        `SELECT u.id FROM users u WHERE u.family_id = ? AND u.role = 'parent' LIMIT 1`
+      ).get(task.family_id) as { id: number } | undefined
+
+      if (parent) {
+        const childUser = sqlite.prepare('SELECT name FROM users WHERE id = ?').get(childId) as { name: string } | undefined
+        const childName = childUser?.name || '孩子'
+        sqlite.prepare(
+          'INSERT INTO notifications (user_id, type, title, message, data) VALUES (?, ?, ?, ?, ?)'
+        ).run(
+          parent.id, 'submission', '📋 新的待审核任务',
+          `${childName}提交了「${task.title}」，请审核`,
+          JSON.stringify({ taskId: parseInt(id) })
+        )
+      }
+    } catch { /* notification is non-critical */ }
 
     const submission = sqlite.prepare('SELECT * FROM submissions WHERE id = ?').get(result.lastInsertRowid)
     return NextResponse.json({ submission, message: '任务提交成功！等待家长审核' }, { status: 201 })

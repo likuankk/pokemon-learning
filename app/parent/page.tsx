@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
+import { itemEmojis, itemLabels } from '@/lib/game-logic'
+import { useToast } from '@/components/ToastProvider'
 
 interface Task {
   id: number
@@ -14,12 +16,20 @@ interface Task {
   estimated_minutes: number
 }
 
+const ITEM_TYPES = ['food', 'crystal', 'candy', 'fragment'] as const
+
 export default function ParentPage() {
+  const { showToast } = useToast()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
+  const [showRewardPanel, setShowRewardPanel] = useState(false)
+  const [rewardItem, setRewardItem] = useState<string>('food')
+  const [rewardQty, setRewardQty] = useState(1)
+  const [rewardMsg, setRewardMsg] = useState('')
+  const [sendingReward, setSendingReward] = useState(false)
 
   useEffect(() => {
-    fetch('/api/tasks?familyId=1')
+    fetch('/api/tasks')
       .then(r => r.json())
       .then(data => { setTasks(data.tasks || []); setLoading(false) })
   }, [])
@@ -29,13 +39,130 @@ export default function ParentPage() {
   const approved = tasks.filter(t => t.status === 'approved').length
   const total = tasks.length
 
+  const handleSendReward = async () => {
+    setSendingReward(true)
+    try {
+      const res = await fetch('/api/reward', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ itemType: rewardItem, quantity: rewardQty, message: rewardMsg }),
+      })
+      if (res.ok) {
+        showToast(`🎁 已发送 ${rewardQty} 个 ${itemLabels[rewardItem]}！`, 'reward', itemEmojis[rewardItem])
+        setShowRewardPanel(false)
+        setRewardMsg('')
+        setRewardQty(1)
+      } else {
+        showToast('发送失败，请重试', 'error', '❌')
+      }
+    } catch {
+      showToast('网络错误', 'error', '❌')
+    }
+    setSendingReward(false)
+  }
+
   return (
     <div className="min-h-full bg-gray-50">
       <div className="border-b-4 border-indigo-200 px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>今日概览 👩‍👦</h1>
-        <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>小明家的学习情况</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>今日概览 👩‍👦</h1>
+            <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>家庭学习情况</p>
+          </div>
+          <button
+            onClick={() => setShowRewardPanel(!showRewardPanel)}
+            className="bg-gradient-to-r from-pink-400 to-orange-400 text-white font-bold px-6 py-3 rounded-2xl shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem', boxShadow: '0 4px 0 #c2410c' }}
+          >
+            🎁 手动奖励
+          </button>
+        </div>
       </div>
+
+      {/* Manual reward panel */}
+      <AnimatePresence>
+        {showRewardPanel && (
+          <motion.div
+            className="border-b-4 border-orange-100 bg-orange-50 px-8 py-6"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <h3 className="font-bold text-orange-800 mb-4" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
+              🎁 给孩子发送奖励道具
+            </h3>
+            <div className="flex items-start gap-6">
+              {/* Item select */}
+              <div>
+                <p className="font-bold text-gray-600 mb-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>选择道具</p>
+                <div className="grid grid-cols-2 gap-3">
+                  {ITEM_TYPES.map(item => (
+                    <button
+                      key={item}
+                      onClick={() => setRewardItem(item)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-2xl border-2 font-bold transition-all ${
+                        rewardItem === item
+                          ? 'bg-orange-400 text-white border-orange-400'
+                          : 'bg-white text-gray-700 border-gray-200 hover:border-orange-300'
+                      }`}
+                      style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
+                    >
+                      <span className="text-2xl">{itemEmojis[item]}</span>
+                      {itemLabels[item]}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quantity */}
+              <div>
+                <p className="font-bold text-gray-600 mb-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>数量</p>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setRewardQty(Math.max(1, rewardQty - 1))}
+                    className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 text-2xl font-bold hover:bg-gray-50 transition-colors"
+                  >−</button>
+                  <span className="text-4xl font-bold text-orange-600 w-12 text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{rewardQty}</span>
+                  <button
+                    onClick={() => setRewardQty(Math.min(10, rewardQty + 1))}
+                    className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 text-2xl font-bold hover:bg-gray-50 transition-colors"
+                  >+</button>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="flex-1">
+                <p className="font-bold text-gray-600 mb-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>留言（可选）</p>
+                <input
+                  type="text"
+                  value={rewardMsg}
+                  onChange={e => setRewardMsg(e.target.value)}
+                  placeholder="加油哦，好好学习～"
+                  className="w-full border-2 border-orange-200 rounded-2xl px-4 py-3 text-gray-800 focus:outline-none focus:ring-4 focus:ring-orange-300"
+                  style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
+                />
+              </div>
+
+              {/* Send button */}
+              <div className="flex flex-col justify-end" style={{ paddingTop: 32 }}>
+                <motion.button
+                  onClick={handleSendReward}
+                  disabled={sendingReward}
+                  className="bg-gradient-to-r from-orange-400 to-pink-400 text-white font-bold px-8 py-3 rounded-2xl transition-all disabled:opacity-50"
+                  style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem', boxShadow: '0 4px 0 #c2410c' }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97, y: 2 }}
+                >
+                  {sendingReward ? '发送中...' : '💝 发送奖励'}
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="px-8 py-6">
         {/* Stats Row */}
@@ -77,7 +204,7 @@ export default function ParentPage() {
                   <span className="text-6xl">➕</span>
                   <div>
                     <div className="font-bold text-2xl">创建新任务</div>
-                    <div className="text-indigo-200 text-lg">给小明布置作业</div>
+                    <div className="text-indigo-200 text-lg">给孩子布置作业</div>
                   </div>
                 </motion.div>
               </Link>
@@ -113,15 +240,20 @@ export default function ParentPage() {
                 </motion.div>
               </Link>
 
-              <div className="bg-gradient-to-br from-pink-50 to-orange-50 border-2 border-pink-100 rounded-3xl p-7 h-44 flex flex-col justify-between">
-                <span className="text-6xl">🌟</span>
-                <div>
-                  <div className="font-bold text-gray-700 text-2xl">小明的宝可梦</div>
-                  <div className="text-gray-400 text-lg">
-                    {total > 0 ? `已完成 ${approved}/${total} 个任务` : '还没有任务哦'}
+              <Link href="/parent/stats">
+                <motion.div
+                  className="bg-gradient-to-br from-pink-50 to-orange-50 hover:from-pink-100 hover:to-orange-100 border-2 border-pink-100 rounded-3xl p-7 cursor-pointer h-44 flex flex-col justify-between"
+                  whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                >
+                  <span className="text-6xl">📊</span>
+                  <div>
+                    <div className="font-bold text-gray-700 text-2xl">学习统计</div>
+                    <div className="text-gray-400 text-lg">
+                      {total > 0 ? `已完成 ${approved}/${total} 个任务` : '还没有任务哦'}
+                    </div>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </Link>
             </div>
           </div>
 

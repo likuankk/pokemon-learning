@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
+import { useSession } from '@/components/SessionProvider'
 
 const STARTER_POKEMON = [
   { id: 1, name: '妙蛙种子', type: '草/毒' },
@@ -18,9 +19,17 @@ const HOME_SPRITE = (id: number) => `https://raw.githubusercontent.com/PokeAPI/s
 
 export default function HomePage() {
   const router = useRouter()
+  const { user, loading: sessionLoading } = useSession()
   const [showPokemonSelect, setShowPokemonSelect] = useState(false)
   const [selectedPokemon, setSelectedPokemon] = useState<typeof STARTER_POKEMON[0] | null>(null)
   const [loading, setLoading] = useState(false)
+
+  // Already logged in → redirect to role page
+  useEffect(() => {
+    if (!sessionLoading && user) {
+      router.replace(user.role === 'parent' ? '/parent' : '/child')
+    }
+  }, [user, sessionLoading, router])
 
   const handlePokemonSelect = async (pokemon: typeof STARTER_POKEMON[0]) => {
     setSelectedPokemon(pokemon)
@@ -29,7 +38,7 @@ export default function HomePage() {
       await fetch('/api/pokemon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ childId: 2, speciesId: pokemon.id, name: pokemon.name }),
+        body: JSON.stringify({ speciesId: pokemon.id, name: pokemon.name }),
       })
       router.push('/child')
     } catch {
@@ -212,7 +221,7 @@ export default function HomePage() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
         >
-          小明家 · Demo 版本
+          宝可梦学习乐园 · Demo 版本
         </motion.p>
       </div>
 

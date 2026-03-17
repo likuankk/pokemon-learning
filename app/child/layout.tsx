@@ -5,6 +5,10 @@ import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getPokemonStatus, statusLabels } from '@/lib/game-logic'
 import { motion } from 'framer-motion'
+import { ToastProvider } from '@/components/ToastProvider'
+import AntiAddictionBanner from '@/components/AntiAddictionBanner'
+import NotificationBell from '@/components/NotificationBell'
+import { useSession } from '@/components/SessionProvider'
 
 interface NavItem {
   href: string
@@ -16,7 +20,13 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: '/child', label: '宝可梦小屋', emoji: '🏠', exact: true },
   { href: '/child/tasks', label: '今日任务', emoji: '📋' },
+  { href: '/child/evolve', label: '进化工坊', emoji: '✨' },
   { href: '/child/planner', label: '时间规划', emoji: '🗓️' },
+  { href: '/child/feed', label: '喂养宝可梦', emoji: '🍖' },
+  { href: '/child/pokedex', label: '图鉴成就', emoji: '🏅' },
+  { href: '/child/house', label: '小屋装饰', emoji: '🪑' },
+  { href: '/child/battle', label: '宝可梦战斗', emoji: '⚔️' },
+  { href: '/child/letter', label: '宝可梦的信', emoji: '💌' },
 ]
 
 interface PokemonSummary {
@@ -33,16 +43,17 @@ const HOME_SPRITE = (id: number) =>
 
 export default function ChildLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const { user } = useSession()
   const [pokemon, setPokemon] = useState<PokemonSummary | null>(null)
   const [pendingCount, setPendingCount] = useState(0)
 
   useEffect(() => {
     const load = () => {
-      fetch('/api/pokemon?childId=2')
+      fetch('/api/pokemon')
         .then(r => r.json())
         .then(d => { if (d.pokemon) setPokemon(d.pokemon) })
         .catch(() => {})
-      fetch('/api/tasks?familyId=1&status=pending')
+      fetch('/api/tasks?status=pending')
         .then(r => r.json())
         .then(d => setPendingCount((d.tasks || []).length))
         .catch(() => {})
@@ -190,23 +201,36 @@ export default function ChildLayout({ children }: { children: React.ReactNode })
         {/* Bottom */}
         <div className="px-4 pb-8">
           <div className="border-t border-teal-600/50 mb-3 pt-3">
-            <Link
-              href="/"
-              className="flex items-center gap-3 px-5 py-4 rounded-2xl text-teal-300 hover:text-white transition-all font-bold"
+            <button
+              onClick={async () => {
+                await fetch('/api/auth', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ action: 'logout' }),
+                })
+                window.location.href = '/auth'
+              }}
+              className="flex items-center gap-3 px-5 py-4 rounded-2xl text-teal-300 hover:text-white transition-all font-bold w-full text-left"
               style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.35rem' }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.12)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
             >
-              <span className="text-2xl">←</span>
-              <span>切换身份</span>
-            </Link>
+              <span className="text-2xl">🚪</span>
+              <span>退出登录</span>
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
-        {children}
+      <main className="flex-1 overflow-y-auto relative">
+        <div className="absolute top-4 right-4 z-40">
+          <NotificationBell />
+        </div>
+        <ToastProvider>
+          {children}
+        </ToastProvider>
+        <AntiAddictionBanner />
       </main>
     </div>
   )

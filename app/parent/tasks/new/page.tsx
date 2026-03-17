@@ -2,10 +2,41 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { subjectColors } from '@/lib/game-logic'
 
 const SUBJECTS = ['语文', '数学', '英语', '科学', '其他']
+
+interface Template {
+  title: string
+  subject: string
+  description: string
+  difficulty: number
+  estimatedMinutes: number
+}
+
+const TASK_TEMPLATES: Template[] = [
+  { title: '语文生字抄写', subject: '语文', description: '抄写本课生字，每字写3遍，注意笔顺', difficulty: 2, estimatedMinutes: 20 },
+  { title: '课文朗读背诵', subject: '语文', description: '朗读课文3遍，尝试背诵重点段落', difficulty: 2, estimatedMinutes: 15 },
+  { title: '阅读理解练习', subject: '语文', description: '完成阅读理解题，注意答题格式', difficulty: 3, estimatedMinutes: 30 },
+  { title: '日记写作', subject: '语文', description: '写一篇日记，不少于100字', difficulty: 3, estimatedMinutes: 30 },
+  { title: '数学口算练习', subject: '数学', description: '完成口算练习题，计时完成', difficulty: 2, estimatedMinutes: 15 },
+  { title: '数学练习册', subject: '数学', description: '完成练习册指定页，检查答案', difficulty: 3, estimatedMinutes: 30 },
+  { title: '数学思维题', subject: '数学', description: '完成2道思维拓展题，写出解题过程', difficulty: 4, estimatedMinutes: 45 },
+  { title: '英语单词抄写', subject: '英语', description: '抄写本单元单词，每个写3遍并中文释义', difficulty: 2, estimatedMinutes: 20 },
+  { title: '英语课文朗读', subject: '英语', description: '朗读课文3遍，注意语音语调', difficulty: 2, estimatedMinutes: 15 },
+  { title: '英语听写练习', subject: '英语', description: '完成单词听写，对照订正', difficulty: 3, estimatedMinutes: 20 },
+  { title: '英语造句练习', subject: '英语', description: '用本单元单词造5个句子', difficulty: 3, estimatedMinutes: 25 },
+  { title: '科学实验记录', subject: '科学', description: '完成科学实验并填写观察记录表', difficulty: 3, estimatedMinutes: 30 },
+  { title: '科学概念复习', subject: '科学', description: '复习本章重要概念，整理笔记', difficulty: 2, estimatedMinutes: 20 },
+  { title: '数学应用题', subject: '数学', description: '完成5道应用题，要求写出算式和答句', difficulty: 4, estimatedMinutes: 40 },
+  { title: '语文造句练习', subject: '语文', description: '用指定词语造句，每个词语造2个句子', difficulty: 2, estimatedMinutes: 15 },
+  { title: '英语绘本阅读', subject: '英语', description: '阅读一本英语绘本，说出大意', difficulty: 2, estimatedMinutes: 20 },
+  { title: '数学图形练习', subject: '数学', description: '完成图形与几何相关练习', difficulty: 3, estimatedMinutes: 25 },
+  { title: '语文古诗背诵', subject: '语文', description: '背诵指定古诗，能默写', difficulty: 3, estimatedMinutes: 20 },
+  { title: '综合复习', subject: '其他', description: '复习本周所有科目重点内容', difficulty: 3, estimatedMinutes: 45 },
+  { title: '课外阅读', subject: '其他', description: '阅读课外书30分钟，记录好词好句', difficulty: 2, estimatedMinutes: 30 },
+]
 
 export default function NewTaskPage() {
   const router = useRouter()
@@ -19,6 +50,8 @@ export default function NewTaskPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [templateFilter, setTemplateFilter] = useState<string>('全部')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,12 +61,21 @@ export default function NewTaskPage() {
       const res = await fetch('/api/tasks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, familyId: 1, createdBy: 1 }),
+        body: JSON.stringify({ ...form }),
       })
       if (res.ok) { router.push('/parent/tasks') }
       else { const d = await res.json(); setError(d.error || '创建失败'); setLoading(false) }
     } catch { setError('网络错误，请重试'); setLoading(false) }
   }
+
+  const applyTemplate = (t: Template) => {
+    setForm(f => ({ ...f, title: t.title, subject: t.subject, description: t.description, difficulty: t.difficulty, estimatedMinutes: t.estimatedMinutes }))
+    setShowTemplates(false)
+  }
+
+  const filteredTemplates = templateFilter === '全部'
+    ? TASK_TEMPLATES
+    : TASK_TEMPLATES.filter(t => t.subject === templateFilter)
 
   const difficultyLabel = ['', '⭐ 简单', '⭐⭐ 较易', '⭐⭐⭐ 适中', '⭐⭐⭐⭐ 较难', '⭐⭐⭐⭐⭐ 困难'][form.difficulty]
 
@@ -41,9 +83,69 @@ export default function NewTaskPage() {
     <div className="min-h-full bg-gray-50">
       <div className="border-b-4 border-indigo-200 px-8 py-6"
         style={{ background: 'linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%)' }}>
-        <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>创建任务 ➕</h1>
-        <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>为小明布置一个新的学习任务</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="game-title-indigo leading-tight" style={{ fontSize: '3.5rem', color: '#4338ca' }}>创建任务 ➕</h1>
+            <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>为孩子布置一个新的学习任务</p>
+          </div>
+          <button
+            onClick={() => setShowTemplates(!showTemplates)}
+            className="bg-white border-2 border-indigo-300 hover:border-indigo-500 text-indigo-600 font-bold px-6 py-3 rounded-2xl transition-all flex items-center gap-2"
+            style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}
+          >
+            📚 使用模板
+          </button>
+        </div>
       </div>
+
+      {/* Template panel */}
+      <AnimatePresence>
+        {showTemplates && (
+          <motion.div
+            className="border-b-4 border-indigo-100 bg-indigo-50 px-8 py-5"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="flex items-center gap-3 mb-4 flex-wrap">
+              <span className="font-bold text-indigo-700" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}>按科目筛选：</span>
+              {['全部', ...SUBJECTS].map(s => (
+                <button key={s} onClick={() => setTemplateFilter(s)}
+                  className={`px-4 py-2 rounded-xl font-bold border-2 transition-all text-base ${
+                    templateFilter === s ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
+                  }`}
+                  style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  {s}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-4 gap-3">
+              {filteredTemplates.map((t, i) => (
+                <motion.button
+                  key={i}
+                  onClick={() => applyTemplate(t)}
+                  className="text-left bg-white border-2 border-indigo-100 hover:border-indigo-400 rounded-2xl p-4 transition-all"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <p className="font-bold text-gray-800 flex-1 leading-snug" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.05rem' }}>{t.title}</p>
+                    <span className={`text-xs px-2 py-0.5 rounded-full border font-bold flex-shrink-0 ${subjectColors[t.subject] || subjectColors['其他']}`}>
+                      {t.subject}
+                    </span>
+                  </div>
+                  <p className="text-gray-400 text-sm leading-snug" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{t.description.slice(0, 25)}...</p>
+                  <div className="flex gap-2 mt-2 text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.875rem' }}>
+                    <span>{'⭐'.repeat(t.difficulty)}</span>
+                    <span>⏱{t.estimatedMinutes}分</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="px-8 py-6">
         <div className="flex gap-8">
