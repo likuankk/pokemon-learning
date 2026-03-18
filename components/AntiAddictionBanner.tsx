@@ -8,36 +8,48 @@ export default function AntiAddictionBanner() {
   const [dismissed, setDismissed] = useState(false)
 
   useEffect(() => {
+    let sessionId: number | null = null
+
     const check = () => {
       fetch('/api/anti-addiction').then(r => r.json()).then(data => {
-        setStatus(data)
+        if (data && !data.error) setStatus(data)
       }).catch(() => {})
     }
-    check()
-    // Heartbeat every 60 seconds
-    const t = setInterval(() => {
-      fetch('/api/anti-addiction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'heartbeat' }),
-      }).then(r => r.json()).then(data => setStatus(data)).catch(() => {})
-    }, 60000)
 
-    // Start session
+    // Start session, then do initial check
     fetch('/api/anti-addiction', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'start' }),
+    }).then(r => r.json()).then(data => {
+      if (data?.sessionId) sessionId = data.sessionId
     }).catch(() => {})
+
+    check()
+
+    // Heartbeat every 60 seconds: update session duration, then re-fetch status
+    const t = setInterval(() => {
+      if (sessionId) {
+        fetch('/api/anti-addiction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'heartbeat', sessionId }),
+        }).then(() => check()).catch(() => {})
+      } else {
+        check()
+      }
+    }, 60000)
 
     return () => {
       clearInterval(t)
       // End session on unmount
-      fetch('/api/anti-addiction', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'end' }),
-      }).catch(() => {})
+      if (sessionId) {
+        fetch('/api/anti-addiction', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'end', sessionId }),
+        }).catch(() => {})
+      }
     }
   }, [])
 

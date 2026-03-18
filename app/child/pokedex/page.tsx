@@ -18,7 +18,8 @@ const CATEGORY_LABELS: Record<string, { label: string; icon: string }> = {
   subject: { label: '学科均衡', icon: '⚖️' },
   pokemon: { label: '宝可梦养成', icon: '✨' },
   time: { label: '时间管理', icon: '🗓️' },
-  collect: { label: '收集成就', icon: '🎒' },
+  family: { label: '亲子互动', icon: '💌' },
+  battle: { label: '战斗系统', icon: '⚔️' },
 }
 
 const TIER_COLORS = [

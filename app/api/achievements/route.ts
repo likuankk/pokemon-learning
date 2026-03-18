@@ -78,6 +78,21 @@ export async function GET(request: NextRequest) {
        WHERE t.family_id = ? AND s.child_id = ? AND s.review_comment IS NOT NULL AND s.review_comment != ''`
     ).get(familyId, childId) as any)?.c ?? 0
 
+    // Battle stats
+    const battleEnergy = sqlite.prepare('SELECT total_wins, total_battles FROM battle_energy WHERE child_id = ?').get(childId) as any
+    const totalWins = battleEnergy?.total_wins ?? 0
+    const totalBattles = battleEnergy?.total_battles ?? 0
+
+    // Captured species count (distinct species from battle logs with result='capture')
+    const capturedSpecies = (sqlite.prepare(
+      `SELECT COUNT(DISTINCT wild_species_id) as c FROM battle_logs WHERE child_id = ? AND result = 'capture'`
+    ).get(childId) as any)?.c ?? 0
+
+    // Boss defeated count
+    const bossDefeated = (sqlite.prepare(
+      `SELECT COUNT(*) as c FROM region_unlocks WHERE child_id = ? AND boss_defeated = 1`
+    ).get(childId) as any)?.c ?? 0
+
     // Count manual rewards (from notifications or reward API usage)
     const manualRewards = (sqlite.prepare(
       `SELECT COUNT(*) as c FROM notifications WHERE user_id = ? AND type = 'reward'`
@@ -347,6 +362,46 @@ export async function GET(request: NextRequest) {
         case 'weekend_challenge':
           met = weekendDone >= ach.condition_value
           break
+
+        // ── Battle achievements ───────────────────────────────────────────
+        case 'total_battles':
+          met = totalBattles >= ach.condition_value
+          break
+
+        case 'total_wins':
+          met = totalWins >= ach.condition_value
+          break
+
+        case 'captured_species':
+          met = capturedSpecies >= ach.condition_value
+          break
+
+        case 'boss_defeated':
+          met = bossDefeated >= ach.condition_value
+          break
+
+        case 'super_effective_wins':
+          // Approximate: use total wins as proxy (hard to track exact super-effective wins)
+          met = totalWins >= ach.condition_value
+          break
+
+        case 'legendary_captured': {
+          // Check if any captured pokemon has rarity >= 5
+          const legendaryCount = (sqlite.prepare(
+            `SELECT COUNT(*) as c FROM pokemons WHERE child_id = ? AND source = 'captured' AND species_id IN (SELECT id FROM species_catalog WHERE rarity >= 5)`
+          ).get(childId) as any)?.c ?? 0
+          met = legendaryCount >= ach.condition_value
+          break
+        }
+
+        case 'mewtwo_defeated': {
+          // Check if mewtwo (species 150) was defeated in battle logs
+          const mewtwoWins = (sqlite.prepare(
+            `SELECT COUNT(*) as c FROM battle_logs WHERE child_id = ? AND wild_species_id = 150 AND result = 'win'`
+          ).get(childId) as any)?.c ?? 0
+          met = mewtwoWins >= ach.condition_value
+          break
+        }
 
         default:
           break
