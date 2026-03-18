@@ -195,6 +195,19 @@ export default function BattlePage() {
         if (pt.wildHpAfter !== undefined) setWildHP(Math.max(0, pt.wildHpAfter))
       }
 
+      // Update PP locally after skill use
+      if (action === 'skill' && skillId && activePokemon) {
+        setActivePokemon(prev => {
+          if (!prev) return prev
+          return {
+            ...prev,
+            skills: prev.skills.map(s =>
+              s.id === skillId ? { ...s, currentPP: Math.max(0, s.currentPP - 1) } : s
+            )
+          }
+        })
+      }
+
       // Process wild turn
       if (data.wildTurn) {
         const wt = data.wildTurn
@@ -299,13 +312,13 @@ export default function BattlePage() {
 
   // ── Return to Map ──────────────────────────────────────────────────────
 
-  const returnToMap = () => {
+  const returnToMap = useCallback(() => {
     setPhase('map')
     setBattleData(null)
     setBattleResult(null)
     setBattleLog([])
     loadBattleStatus()
-  }
+  }, [loadBattleStatus])
 
   // ── Render ─────────────────────────────────────────────────────────────
 
@@ -748,7 +761,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
 function ResultView({ result, wild, pokemon, onReturn }: {
   result: any; wild: WildPokemon | null; pokemon: PokemonInfo | null; onReturn: () => void
 }) {
-  const [countdown, setCountdown] = useState(5)
+  const [countdown, setCountdown] = useState(8)
 
   useEffect(() => {
     if (!result) return
@@ -772,34 +785,87 @@ function ResultView({ result, wild, pokemon, onReturn }: {
   const isLose = result.battleStatus === 'lose'
   const isFlee = result.battleStatus === 'flee'
 
+  // Visual config for each result type
+  const resultConfig = isCaptured ? {
+    icon: '✨', title: `成功收服 ${wild?.name}！`, subtitle: '新伙伴加入了队伍！',
+    gradient: 'linear-gradient(135deg, rgba(168,85,247,0.4), rgba(236,72,153,0.3))',
+    border: 'rgba(168,85,247,0.6)', titleColor: '#e9d5ff', tag: '🎊 收服成功', tagBg: 'rgba(168,85,247,0.6)',
+  } : isWin ? {
+    icon: '🏆', title: '战斗胜利！', subtitle: `击败了野生 ${wild?.name}！`,
+    gradient: 'linear-gradient(135deg, rgba(234,179,8,0.4), rgba(245,158,11,0.3))',
+    border: 'rgba(234,179,8,0.6)', titleColor: '#fef08a', tag: '⚔️ 胜利', tagBg: 'rgba(234,179,8,0.6)',
+  } : isLose ? {
+    icon: '💔', title: '战斗失败...', subtitle: `${pokemon?.name || '宝可梦'}倒下了`,
+    gradient: 'linear-gradient(135deg, rgba(239,68,68,0.3), rgba(185,28,28,0.2))',
+    border: 'rgba(239,68,68,0.5)', titleColor: '#fca5a5', tag: '😢 失败', tagBg: 'rgba(239,68,68,0.5)',
+  } : {
+    icon: '🏃', title: '成功逃跑！', subtitle: '安全撤退了',
+    gradient: 'linear-gradient(135deg, rgba(156,163,175,0.3), rgba(107,114,128,0.2))',
+    border: 'rgba(156,163,175,0.5)', titleColor: '#d1d5db', tag: '🏃 逃跑', tagBg: 'rgba(156,163,175,0.5)',
+  }
+
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="flex flex-col items-center justify-center h-full p-6 text-white">
 
-      {/* Result Icon */}
+      {/* Result Banner */}
       <motion.div
-        initial={{ scale: 0 }} animate={{ scale: 1 }}
+        initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200 }}
-        className="text-6xl mb-4"
+        className="w-full max-w-sm rounded-3xl p-6 mb-5 text-center"
+        style={{ background: resultConfig.gradient, border: `2px solid ${resultConfig.border}` }}
       >
-        {isWin ? '🎉' : isCaptured ? '✨' : isLose ? '😢' : '🏃'}
+        {/* Status Tag */}
+        <motion.span
+          initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
+          className="inline-block px-4 py-1.5 rounded-full font-bold text-white text-sm mb-3"
+          style={{ background: resultConfig.tagBg, fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+        >
+          {resultConfig.tag}
+        </motion.span>
+
+        {/* Icon */}
+        <motion.div
+          initial={{ scale: 0 }} animate={{ scale: 1 }}
+          transition={{ type: 'spring', stiffness: 300, delay: 0.1 }}
+          className="text-7xl mb-3"
+        >
+          {resultConfig.icon}
+        </motion.div>
+
+        {/* Title */}
+        <h2 className="text-3xl font-bold mb-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", color: resultConfig.titleColor }}>
+          {resultConfig.title}
+        </h2>
+
+        {/* Subtitle */}
+        <p className="text-lg opacity-80" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          {resultConfig.subtitle}
+        </p>
+
+        {/* Capture rate info */}
+        {isCaptured && result.captureRate && (
+          <p className="text-sm mt-2 opacity-60" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            捕获率: {Math.round(result.captureRate * 100)}%
+          </p>
+        )}
       </motion.div>
 
-      <h2 className="text-3xl font-bold mb-2" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
-        {isWin ? '战斗胜利！' : isCaptured ? (result.captureSuccess ? `收服了 ${wild?.name}！` : '收服失败') : isLose ? '战斗失败...' : '成功逃跑'}
-      </h2>
-
+      {/* Additional message */}
       {result.message && (
-        <p className="text-gray-300 text-lg mb-4" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <motion.p
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
+          className="text-gray-300 text-lg mb-4 text-center max-w-sm" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+        >
           {result.message}
-        </p>
+        </motion.p>
       )}
 
       {/* Rewards */}
-      {isWin && result.rewards && (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="rounded-2xl p-4 mb-4 w-full max-w-sm" style={{ background: 'rgba(255,255,255,0.1)' }}>
-          <p className="font-bold mb-2 text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>获得奖励</p>
+      {(isWin || isCaptured) && result.rewards && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+          className="rounded-2xl p-4 mb-4 w-full max-w-sm" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
+          <p className="font-bold mb-2 text-center text-yellow-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>🎁 获得奖励</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span>⭐ 经验 +{result.rewards.exp}</span>
             <span>🍬 星星糖 +{result.rewards.candy}</span>
@@ -839,6 +905,17 @@ function ResultView({ result, wild, pokemon, onReturn }: {
             🏆 BOSS击败奖励！
           </p>
           <p className="text-sm text-gray-300 mt-1">{result.bossRewards.description}</p>
+        </motion.div>
+      )}
+
+      {/* Encouragement for loss */}
+      {isLose && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+          className="rounded-2xl p-4 mb-4 w-full max-w-sm text-center"
+          style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
+          <p className="font-bold text-blue-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            💪 多完成学习任务来变强吧！
+          </p>
         </motion.div>
       )}
 
