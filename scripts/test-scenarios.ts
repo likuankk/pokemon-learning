@@ -39,10 +39,10 @@ function calcBP(basePower: number, battleLevel: number) {
   return Math.round(basePower * (1 + (battleLevel - 1) * 0.08) * 10) / 10
 }
 function calcDef(basePower: number, battleLevel: number) {
-  return Math.round(basePower * 0.8 * (1 + (battleLevel - 1) * 0.06) * 10) / 10
+  return Math.round(basePower * 1.0 * (1 + (battleLevel - 1) * 0.08) * 10) / 10
 }
 function calcHP(basePower: number, battleLevel: number) {
-  return Math.round(basePower * 3 * (1 + (battleLevel - 1) * 0.1) * 10) / 10
+  return Math.round(basePower * 3.5 * (1 + (battleLevel - 1) * 0.12) * 10) / 10
 }
 
 const SKILL_UNLOCK: Record<number, number> = { 1: 1, 2: 3, 3: 8, 4: 15 }
@@ -128,6 +128,13 @@ function addSubmission(taskId: number, childId: number, status: string, comment?
   `).run(taskId, childId, status, comment ?? null, status === 'approved' ? 5 : status === 'partial' ? 3 : null)
 }
 
+function addQuizStats(childId: number, totalAnswered: number, totalCorrect: number, maxCombo: number) {
+  db.prepare(`
+    INSERT OR REPLACE INTO battle_quiz_stats (child_id, total_answered, total_correct, max_combo, updated_at)
+    VALUES (?, ?, ?, ?, datetime('now'))
+  `).run(childId, totalAnswered, totalCorrect, maxCombo)
+}
+
 // ── Clean all user data ───────────────────────────────────────────────────
 
 function cleanAll() {
@@ -136,7 +143,8 @@ function cleanAll() {
     'evolution_history', 'discovered_species', 'pokemons', 'submissions',
     'tasks', 'inventory', 'child_achievements', 'house_items',
     'notifications', 'pokemon_letters', 'weekend_challenges', 'session_logs',
-    'honor_records', 'daily_plans', 'onboarding', 'family_settings', 'users'
+    'honor_records', 'daily_plans', 'onboarding', 'family_settings',
+    'battle_quiz_stats', 'users'
   ]
   for (const t of tables) {
     db.prepare(`DELETE FROM ${t}`).run()
@@ -205,7 +213,7 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       // pending tasks (3)
       addTask(familyId, parentId, { title: '背诵古诗三首', subject: 'chinese', difficulty: 2, status: 'pending' })
       addTask(familyId, parentId, { title: '完成数学练习册P20-P22', subject: 'math', difficulty: 4, status: 'pending' })
-      addTask(familyId, parentId, { title: '英语单词听写', subject: 'english', difficulty: 2, status: 'pending' })
+      addTask(familyId, parentId, { title: '奥数思维训练', subject: 'math', difficulty: 3, status: 'pending' })
 
       // submitted tasks (2) - 待审核
       const t4 = addTask(familyId, parentId, { title: '写一篇日记(200字)', subject: 'chinese', difficulty: 3, status: 'submitted', daysAgo: 1 })
@@ -220,7 +228,7 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       addSubmission(t7, childId, 'approved', '正确率95%，非常棒！')
 
       // rejected task (1)
-      const t8 = addTask(familyId, parentId, { title: '英语作文：My Family', subject: 'english', difficulty: 4, status: 'rejected', daysAgo: 2 })
+      const t8 = addTask(familyId, parentId, { title: '数学应用题拓展', subject: 'math', difficulty: 4, status: 'rejected', daysAgo: 2 })
       addSubmission(t8, childId, 'rejected', '内容太少了，请补充更多细节')
 
       // partial tasks (2)
@@ -249,7 +257,7 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       // 5个已完成任务
       for (let i = 0; i < 5; i++) {
         const tid = addTask(familyId, parentId, {
-          title: `已完成任务${i + 1}`, subject: ['chinese', 'math', 'english', 'science', 'other'][i],
+          title: `已完成任务${i + 1}`, subject: ['chinese', 'math', 'math', 'science', 'other'][i],
           difficulty: 3, status: 'approved', daysAgo: i + 1
         })
         addSubmission(tid, childId, 'approved', '完成得不错！')
@@ -297,6 +305,9 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
           VALUES (?,1,?,?,1,?,?,?,datetime('now','-${i} hours'))`)
           .run(childId, [10, 43, 69, 10, 1][i], [2, 3, 2, 3, 4][i], i < 3 ? 'win' : 'lose', [4, 5, 3, 6, 5][i], i < 3 ? 14 : 0)
       }
+
+      // Quiz stats: 15 answered, 10 correct, max combo 4
+      addQuizStats(childId, 15, 10, 4)
     }
   },
 
@@ -333,6 +344,9 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       for (const sid of discovered) {
         db.prepare('INSERT OR IGNORE INTO discovered_species (child_id, species_id) VALUES (?,?)').run(childId, sid)
       }
+
+      // Quiz stats: 80 answered, 60 correct, max combo 8
+      addQuizStats(childId, 80, 60, 8)
     }
   },
 
@@ -376,6 +390,9 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       for (const sid of discovered) {
         db.prepare('INSERT OR IGNORE INTO discovered_species (child_id, species_id) VALUES (?,?)').run(childId, sid)
       }
+
+      // Quiz stats: 300 answered, 240 correct, max combo 15
+      addQuizStats(childId, 300, 240, 15)
     }
   },
 
@@ -420,7 +437,7 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       db.prepare('INSERT OR IGNORE INTO region_unlocks (child_id, region) VALUES (?,2)').run(childId)
 
       // 20 completed tasks across subjects
-      const subjects = ['chinese', 'math', 'english', 'science', 'other']
+      const subjects = ['chinese', 'math', 'math', 'science', 'other']
       for (let i = 0; i < 20; i++) {
         const tid = addTask(familyId, parentId, {
           title: `历史任务${i + 1}`, subject: subjects[i % 5],
@@ -478,7 +495,7 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       const taskConfigs = [
         { title: '背诵唐诗5首', subject: 'chinese', difficulty: 3, status: 'pending' },
         { title: '数学应用题', subject: 'math', difficulty: 4, status: 'pending' },
-        { title: '英语绘本阅读', subject: 'english', difficulty: 2, status: 'submitted', daysAgo: 0 },
+        { title: '奥数思维训练', subject: 'math', difficulty: 2, status: 'submitted', daysAgo: 0 },
         { title: '科学观察日记', subject: 'science', difficulty: 3, status: 'submitted', daysAgo: 0 },
       ]
       for (const tc of taskConfigs) {
@@ -487,7 +504,7 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       }
       // Completed tasks
       for (let i = 0; i < 15; i++) {
-        const subjects = ['chinese', 'math', 'english', 'science', 'other']
+        const subjects = ['chinese', 'math', 'math', 'science', 'other']
         const tid = addTask(familyId, parentId, {
           title: `已完成任务${i + 1}`, subject: subjects[i % 5],
           difficulty: (i % 3) + 2, status: 'approved', daysAgo: i + 1,
@@ -524,6 +541,9 @@ const SCENARIOS: Record<string, { desc: string; setup: () => void }> = {
       // Honor records
       db.prepare("INSERT INTO honor_records (child_id, metric, value, period) VALUES (?,?,?,?)").run(childId, 'weekly_tasks', 8, `${today}`)
       db.prepare("INSERT INTO honor_records (child_id, metric, value, period) VALUES (?,?,?,?)").run(childId, 'weekly_streak', 5, `${today}`)
+
+      // Quiz stats: 150 answered, 120 correct, max combo 12
+      addQuizStats(childId, 150, 120, 12)
     }
   },
 }

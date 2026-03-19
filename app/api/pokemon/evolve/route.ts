@@ -5,6 +5,7 @@ import {
   getEvolutionChainDisplay, POKEMON_NAMES, getBaseSpeciesId
 } from '@/lib/game-logic'
 import { getSession, getChildId } from '@/lib/auth'
+import { getUnlockedSkillSlots, calcBattlePower, calcDefense, calcHP } from '@/lib/battle-logic'
 
 // GET: get evolution status and progress
 export async function GET(request: NextRequest) {
@@ -174,6 +175,51 @@ export async function POST(request: NextRequest) {
        WHERE id = ?`
     ).run(nextSpeciesId, newName, newStage, pokemon.id)
 
+    // ── Reassign skills based on new species ────────────────────────────
+    const newSpeciesData = sqlite.prepare(
+      'SELECT skill1, skill2, skill3, skill4, base_power, base_speed FROM species_catalog WHERE id = ?'
+    ).get(nextSpeciesId) as any
+
+    const battleLevel = Math.max(pokemon.battle_level || 1, 1)
+    const unlockedSlots = getUnlockedSkillSlots(battleLevel)
+
+    // Get old skills for comparison
+    const oldSkillRows = sqlite.prepare(
+      'SELECT slot, skill_id FROM pokemon_skills WHERE pokemon_id = ?'
+    ).all(pokemon.id) as { slot: number; skill_id: string }[]
+    const oldSkillMap = new Map(oldSkillRows.map(r => [r.slot, r.skill_id]))
+
+    const newSkills: { name: string; type: string }[] = []
+    const skillFields = ['skill1', 'skill2', 'skill3', 'skill4'] as const
+
+    if (newSpeciesData) {
+      for (const slot of unlockedSlots) {
+        const newSkillId = newSpeciesData[skillFields[slot - 1]]
+        if (!newSkillId) continue
+
+        const skillInfo = sqlite.prepare('SELECT name, pp, type FROM skills WHERE id = ?').get(newSkillId) as any
+        if (!skillInfo) continue
+
+        // Replace skill in this slot, reset PP to full
+        sqlite.prepare(
+          'INSERT OR REPLACE INTO pokemon_skills (pokemon_id, skill_id, slot, current_pp) VALUES (?, ?, ?, ?)'
+        ).run(pokemon.id, newSkillId, slot, skillInfo.pp)
+
+        // Track newly learned skills (different from what was in this slot before)
+        if (oldSkillMap.get(slot) !== newSkillId) {
+          newSkills.push({ name: skillInfo.name, type: skillInfo.type })
+        }
+      }
+
+      // Update battle stats for new species base_power
+      const newBP = calcBattlePower(newSpeciesData.base_power, battleLevel)
+      const newDef = calcDefense(newSpeciesData.base_power, battleLevel)
+      const newHP = calcHP(newSpeciesData.base_power, battleLevel)
+      sqlite.prepare(
+        'UPDATE pokemons SET battle_power = ?, defense = ?, hp = ?, speed = ? WHERE id = ?'
+      ).run(Math.round(newBP * 10) / 10, Math.round(newDef * 10) / 10, Math.round(newHP * 10) / 10, newSpeciesData.base_speed, pokemon.id)
+    }
+
     // Record evolution history
     sqlite.prepare(
       `INSERT INTO evolution_history (child_id, from_species_id, to_species_id, from_stage, to_stage)
@@ -218,6 +264,7 @@ export async function POST(request: NextRequest) {
         fromStage: currentStage,
         toStage: newStage,
       },
+      newSkills,
     })
   } catch (error) {
     console.error('POST /api/pokemon/evolve error:', error)

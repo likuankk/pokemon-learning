@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useToast } from '@/components/ToastProvider'
 
@@ -27,11 +27,12 @@ interface WildPokemon {
   speciesId: number; name: string; emoji: string; type1: string; type2: string | null
   level: number; hp: number; maxHp: number; battlePower: number; rarity: number
   skills: { id: string; name: string; type: string; power: number }[]
+  weakTo?: string[]; resistTo?: string[]
 }
 
 interface BattleData {
   battleId: string; wild: WildPokemon; myPokemon: PokemonInfo
-  energyRemaining: number; isBoss: boolean; bossType?: string
+  energyRemaining: number; isBoss: boolean; bossType?: string; region?: number
 }
 
 interface TeamMember {
@@ -88,18 +89,29 @@ export default function BattlePage() {
   // Result state
   const [battleResult, setBattleResult] = useState<any>(null)
 
+  // Quiz state
+  const [quizQuestion, setQuizQuestion] = useState<any>(null)
+  const [quizPhase, setQuizPhase] = useState<'none' | 'answering' | 'result'>('none')
+  const [quizAnswer, setQuizAnswer] = useState<{ correct: boolean; fast: boolean } | null>(null)
+  const [quizCombo, setQuizCombo] = useState(0)
+  const [quizTimer, setQuizTimer] = useState(0)
+
+  // Tactic state
+  const [showTactics, setShowTactics] = useState(false)
+  const [canTactic, setCanTactic] = useState(false)
+
   // ── Load Data ──────────────────────────────────────────────────────────
 
   const loadBattleStatus = useCallback(async () => {
     try {
       const res = await fetch('/api/battle')
       const data = await res.json()
-      setEnergy(data.energy)
-      setRegions(data.regions)
-      setActivePokemon(data.activePokemon)
-      setBalls(data.balls)
-      setPokedex(data.pokedex)
-      setTeam(data.team)
+      if (data.energy) setEnergy(data.energy)
+      if (data.regions) setRegions(data.regions)
+      setActivePokemon(data.activePokemon ?? null)
+      if (data.balls) setBalls(data.balls)
+      if (data.pokedex) setPokedex(data.pokedex)
+      if (data.team) setTeam(data.team)
     } catch (e) {
       console.error('Failed to load battle status:', e)
     } finally {
@@ -130,7 +142,7 @@ export default function BattlePage() {
       const data = await res.json()
       if (!res.ok) { showToast(data.error, 'error'); return }
 
-      setBattleData(data)
+      setBattleData({ ...data, region: regionId })
       setPlayerHP(data.myPokemon.hp)
       setPlayerMaxHP(data.myPokemon.hp)
       setWildHP(data.wild.hp)
@@ -138,10 +150,18 @@ export default function BattlePage() {
       setBattleLog([`遇到了野生 ${data.wild.name}！`])
       setRoundNum(0)
       setEnergy(prev => ({ ...prev, current: data.energyRemaining }))
+      setQuizCombo(0)
+      setQuizAnswer(null)
+      setQuizPhase('none')
+      setCanTactic(false)
+      setShowTactics(false)
       setPhase('encounter')
 
-      // Short delay then go to battle
-      setTimeout(() => setPhase('battle'), 1500)
+      // Short delay then go to battle, loading quiz first
+      setTimeout(async () => {
+        await fetchQuiz(regionId)
+        setPhase('battle')
+      }, 1500)
     } catch (e) {
       showToast('遭遇失败', 'error')
     } finally {
@@ -149,29 +169,88 @@ export default function BattlePage() {
     }
   }
 
+  // ── Fetch Quiz ────────────────────────────────────────────────────────
+  const fetchQuiz = async (regionId: number) => {
+    try {
+      const res = await fetch(`/api/quiz?region=${regionId}`)
+      if (res.ok) {
+        const data = await res.json()
+        setQuizQuestion(data)
+        setQuizPhase('answering')
+        setQuizAnswer(null)
+        setQuizTimer(30)
+      }
+    } catch {
+      // Quiz failed to load, skip it
+      setQuizPhase('none')
+    }
+  }
+
   // ── Battle Action ──────────────────────────────────────────────────────
 
-  const doBattleAction = async (action: string, skillId?: string, ballType?: string) => {
-    if (!battleData || actionLoading) return
+  const doBattleAction = async (action: string, skillId?: string, ballType?: string, tactic?: string) => {
+    if (!battleData || actionLoading || battleResult) return
     setActionLoading(true)
     try {
+      const reqBody: any = { battleId: battleData.battleId, action, skillId, ballType, tactic }
+
+      // Include quiz result for skill actions
+      if (action === 'skill' && quizAnswer !== null) {
+        reqBody.quizCorrect = quizAnswer.correct
+        reqBody.quizFast = quizAnswer.fast
+      }
+
       const res = await fetch('/api/battle/action', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ battleId: battleData.battleId, action, skillId, ballType }),
+        body: JSON.stringify(reqBody),
       })
       const data = await res.json()
       if (!res.ok) { showToast(data.error, 'error'); setActionLoading(false); return }
 
       const newLog: string[] = []
 
+      // Process tactic used
+      if (data.tacticUsed) {
+        newLog.push(`${data.tacticUsed.emoji} 使用战术：${data.tacticUsed.label}！`)
+        if (data.healed) {
+          newLog.push(`💊 回复了 ${data.healed} HP！`)
+        }
+      }
+
+      // Process quiz bonus info
+      if (data.quizBonus?.label) {
+        newLog.push(data.quizBonus.label)
+      }
+      if (data.quizBonus?.combo !== undefined) {
+        setQuizCombo(data.quizBonus.combo)
+      }
+
       // Process capture attempt
       if (data.captureAttempt) {
         if (data.captureAttempt.success) {
           newLog.push(`收服成功！`)
         } else {
-          newLog.push(`精灵球未能收服...`)
+          newLog.push(`精灵球未能收服...（捕获率 ${Math.round(data.captureAttempt.rate * 100)}%）`)
         }
+        // Update ball count locally
+        if (data.captureAttempt.ballType) {
+          setBalls(prev => ({
+            ...prev,
+            [data.captureAttempt.ballType]: Math.max(0, (prev[data.captureAttempt.ballType] || 0) - 1)
+          }))
+        }
+      }
+
+      // Capture success (direct return from server, no captureAttempt field)
+      if (data.battleStatus === 'captured' && data.captureSuccess) {
+        if (ballType) {
+          setBalls(prev => ({
+            ...prev,
+            [ballType]: Math.max(0, (prev[ballType] || 0) - 1)
+          }))
+        }
+        newLog.push(`✨ 成功收服了 ${battleData.wild.name}！`)
       }
 
       // Process player turn
@@ -234,10 +313,27 @@ export default function BattlePage() {
       setRoundNum(data.roundNumber || roundNum + 1)
       setBattleLog(prev => [...prev, ...newLog])
 
+      // Update tactic availability
+      if (data.canUseTactic !== undefined) {
+        setCanTactic(data.canUseTactic)
+      }
+
       // Check battle end
       if (data.battleStatus === 'win' || data.battleStatus === 'lose' || data.battleStatus === 'flee' || data.battleStatus === 'captured') {
         setBattleResult(data)
+        setActionLoading(true) // Keep buttons disabled until phase switches
+        setQuizPhase('none')
         setTimeout(() => setPhase('result'), 800)
+        return // Skip finally's setActionLoading(false)
+      }
+
+      // Load next quiz for next round
+      setQuizAnswer(null)
+      setQuizPhase('none')
+      setShowTactics(false)
+      if (battleData) {
+        // Small delay then show quiz
+        setTimeout(() => fetchQuiz(battleData.region || 1), 300)
       }
     } catch (e) {
       showToast('行动失败', 'error')
@@ -346,7 +442,13 @@ export default function BattlePage() {
           <BattleView key="battle" battleData={battleData} activePokemon={activePokemon}
             playerHP={playerHP} playerMaxHP={playerMaxHP} wildHP={wildHP} wildMaxHP={wildMaxHP}
             battleLog={battleLog} roundNum={roundNum} balls={balls}
-            onAction={doBattleAction} actionLoading={actionLoading} />
+            onAction={doBattleAction} actionLoading={actionLoading}
+            quizQuestion={quizQuestion} quizPhase={quizPhase} quizCombo={quizCombo}
+            quizTimer={quizTimer}
+            onQuizAnswer={(correct: boolean, fast: boolean) => { setQuizAnswer({ correct, fast }); setQuizPhase('result') }}
+            onQuizSkip={() => { setQuizAnswer(null); setQuizPhase('none') }}
+            canTactic={canTactic} showTactics={showTactics} setShowTactics={setShowTactics}
+          />
         )}
 
         {phase === 'result' && (
@@ -561,12 +663,19 @@ function EncounterView({ wild, isBoss }: { wild: WildPokemon; isBoss: boolean })
 // ════════════════════════════════════════════════════════════════════════════
 
 function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, wildMaxHP,
-  battleLog, roundNum, balls, onAction, actionLoading }: {
+  battleLog, roundNum, balls, onAction, actionLoading,
+  quizQuestion, quizPhase, quizCombo, quizTimer,
+  onQuizAnswer, onQuizSkip,
+  canTactic, showTactics, setShowTactics }: {
   battleData: BattleData; activePokemon: PokemonInfo
   playerHP: number; playerMaxHP: number; wildHP: number; wildMaxHP: number
   battleLog: string[]; roundNum: number; balls: Record<string, number>
-  onAction: (action: string, skillId?: string, ballType?: string) => void
+  onAction: (action: string, skillId?: string, ballType?: string, tactic?: string) => void
   actionLoading: boolean
+  quizQuestion: any; quizPhase: 'none' | 'answering' | 'result'; quizCombo: number; quizTimer: number
+  onQuizAnswer: (correct: boolean, fast: boolean) => void
+  onQuizSkip: () => void
+  canTactic: boolean; showTactics: boolean; setShowTactics: (v: boolean) => void
 }) {
   const [showBalls, setShowBalls] = useState(false)
   const [wildShake, setWildShake] = useState(false)
@@ -624,9 +733,27 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="text-center text-gray-400 text-sm mb-2" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
-        {battleData.isBoss ? '🔥 ' : ''}第 {roundNum} 回合
+      {/* Header with combo */}
+      <div className="flex items-center justify-between text-sm mb-2">
+        <span className="text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          {battleData.isBoss ? '🔥 ' : ''}第 {roundNum} 回合
+        </span>
+        {quizCombo >= 2 && (
+          <motion.span
+            key={quizCombo}
+            initial={{ scale: 1.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="px-3 py-1 rounded-full text-xs font-bold"
+            style={{
+              background: quizCombo >= 10 ? 'linear-gradient(135deg, #F59E0B, #EF4444)' :
+                quizCombo >= 5 ? 'rgba(234,179,8,0.4)' : 'rgba(168,85,247,0.4)',
+              color: quizCombo >= 10 ? '#fff' : quizCombo >= 5 ? '#FEF08A' : '#E9D5FF',
+              fontFamily: "'ZCOOL KuaiLe', sans-serif",
+            }}
+          >
+            🔥 {quizCombo}连击
+          </motion.span>
+        )}
       </div>
 
       {/* Wild Pokemon */}
@@ -649,6 +776,16 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
               {wild.type2 && <TypeBadge type={wild.type2} small />}
             </div>
             <HPBar current={wildHP} max={wildMaxHP} />
+            {wild.weakTo && wild.weakTo.length > 0 && (
+              <div className="flex items-center gap-1 mt-1 flex-wrap">
+                <span className="text-red-400 text-xs">🎯弱点:</span>
+                {wild.weakTo.map((t: string) => (
+                  <span key={t} className="text-xs px-1.5 py-0.5 rounded" style={{ background: `${TYPE_COLORS[t] || '#6B7280'}44`, color: TYPE_COLORS[t] || '#6B7280' }}>
+                    {TYPE_NAMES[t] || t}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </motion.div>
@@ -692,63 +829,117 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
         ))}
       </div>
 
+      {/* Quiz Overlay */}
+      <AnimatePresence>
+        {quizPhase === 'answering' && quizQuestion && (
+          <QuizOverlay question={quizQuestion} timer={quizTimer} onAnswer={onQuizAnswer} onSkip={onQuizSkip} />
+        )}
+      </AnimatePresence>
+
       {/* Action Panel */}
       <div className="space-y-2">
-        {/* Skills */}
-        <div className="grid grid-cols-2 gap-2">
-          {activePokemon.skills.map(skill => (
-            <button key={skill.id}
-              onClick={() => onAction('skill', skill.id)}
-              disabled={actionLoading || skill.currentPP <= 0}
-              className="p-3 rounded-xl text-white font-bold text-left disabled:opacity-40 transition hover:brightness-110"
-              style={{
-                background: `linear-gradient(135deg, ${TYPE_COLORS[skill.type] || '#6B7280'}88, ${TYPE_COLORS[skill.type] || '#6B7280'}44)`,
-                border: `1px solid ${TYPE_COLORS[skill.type] || '#6B7280'}66`,
-                fontFamily: "'ZCOOL KuaiLe', sans-serif",
-              }}
-            >
-              <span className="text-base">{skill.name}</span>
-              <div className="flex justify-between text-xs mt-0.5 opacity-80">
-                <span>威力 {skill.power || '-'}</span>
-                <span>PP {skill.currentPP}/{skill.pp}</span>
-              </div>
-            </button>
-          ))}
-        </div>
+        {/* Tactic chooser (shows every 3 rounds) */}
+        {canTactic && !showTactics && quizPhase !== 'answering' && (
+          <motion.button
+            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+            onClick={() => setShowTactics(true)}
+            className="w-full p-3 rounded-xl font-bold text-white text-center transition hover:brightness-110"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+          >
+            ⚡ 可以选择战术！点击查看
+          </motion.button>
+        )}
 
-        {/* Capture & Flee */}
-        <div className="flex gap-2">
-          {!showBalls ? (
-            <button onClick={() => setShowBalls(true)} disabled={actionLoading}
-              className="flex-1 p-3 rounded-xl font-bold text-white transition hover:brightness-110"
-              style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
-              🔴 投精灵球
+        {showTactics && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="grid grid-cols-2 gap-2">
+            {([
+              { type: 'all_out', emoji: '🗡️', label: '全力进攻', desc: '伤害+50%，防御-30%' },
+              { type: 'defend', emoji: '🛡️', label: '防御反击', desc: '防御+50%，伤害-20%' },
+              { type: 'charge', emoji: '🔄', label: '蓄力', desc: '本回合不攻击，下回合×2' },
+              { type: 'heal', emoji: '💊', label: '恢复', desc: '回复25%HP' },
+            ] as const).map(t => (
+              <button key={t.type}
+                onClick={() => { onAction('tactic', undefined, undefined, t.type); setShowTactics(false) }}
+                disabled={actionLoading}
+                className="p-3 rounded-xl text-white font-bold text-left disabled:opacity-40 transition hover:brightness-110"
+                style={{ background: 'rgba(139,92,246,0.3)', border: '1px solid rgba(139,92,246,0.5)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+              >
+                <span className="text-base">{t.emoji} {t.label}</span>
+                <p className="text-xs mt-0.5 opacity-70">{t.desc}</p>
+              </button>
+            ))}
+            <button onClick={() => setShowTactics(false)}
+              className="col-span-2 p-2 rounded-xl text-gray-400 text-sm hover:text-white transition"
+              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              跳过战术，直接使用技能
             </button>
-          ) : (
-            <div className="flex-1 flex gap-1">
-              {(['pokeball', 'greatball', 'ultraball', 'masterball'] as const).map(bt => {
-                const names: Record<string, string> = { pokeball: '精灵球', greatball: '超级球', ultraball: '高级球', masterball: '大师球' }
-                const emojis: Record<string, string> = { pokeball: '🔴', greatball: '🔵', ultraball: '🟡', masterball: '🟣' }
-                const qty = balls[bt] || 0
-                return qty > 0 ? (
-                  <button key={bt} onClick={() => { onAction('capture', undefined, bt); setShowBalls(false) }}
-                    disabled={actionLoading}
-                    className="flex-1 p-2 rounded-lg font-bold text-white text-xs transition hover:brightness-110"
-                    style={{ background: 'rgba(239,68,68,0.5)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
-                    {emojis[bt]} {names[bt]} ×{qty}
-                  </button>
-                ) : null
-              })}
-              <button onClick={() => setShowBalls(false)}
-                className="px-2 rounded-lg text-gray-400 hover:text-white text-sm">✕</button>
+          </motion.div>
+        )}
+
+        {/* Skills - only show when not in quiz and not choosing tactics */}
+        {!showTactics && quizPhase !== 'answering' && (
+          <>
+            <div className="grid grid-cols-2 gap-2">
+              {activePokemon.skills.map(skill => (
+                <button key={skill.id}
+                  onClick={() => onAction('skill', skill.id)}
+                  disabled={actionLoading || skill.currentPP <= 0}
+                  className="p-3 rounded-xl text-white font-bold text-left disabled:opacity-40 transition hover:brightness-110"
+                  style={{
+                    background: `linear-gradient(135deg, ${TYPE_COLORS[skill.type] || '#6B7280'}88, ${TYPE_COLORS[skill.type] || '#6B7280'}44)`,
+                    border: `1px solid ${TYPE_COLORS[skill.type] || '#6B7280'}66`,
+                    fontFamily: "'ZCOOL KuaiLe', sans-serif",
+                  }}
+                >
+                  <span className="text-base">{skill.name}</span>
+                  <div className="flex justify-between text-xs mt-0.5 opacity-80">
+                    <span>威力 {skill.power || '-'}</span>
+                    <span>PP {skill.currentPP}/{skill.pp}</span>
+                  </div>
+                </button>
+              ))}
             </div>
-          )}
-          <button onClick={() => onAction('flee')} disabled={actionLoading}
-            className="px-6 p-3 rounded-xl font-bold text-gray-300 transition hover:text-white"
-            style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
-            🏃 逃跑
-          </button>
-        </div>
+
+            {/* Capture & Flee */}
+            <div className="flex gap-2">
+              {!showBalls ? (
+                <button onClick={() => setShowBalls(true)} disabled={actionLoading}
+                  className="flex-1 p-3 rounded-xl font-bold text-white transition hover:brightness-110"
+                  style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  🔴 投精灵球
+                </button>
+              ) : (
+                <div className="flex-1 flex gap-1 items-center">
+                  {(['pokeball', 'greatball', 'ultraball', 'masterball'] as const).map(bt => {
+                    const names: Record<string, string> = { pokeball: '精灵球', greatball: '超级球', ultraball: '高级球', masterball: '大师球' }
+                    const emojis: Record<string, string> = { pokeball: '🔴', greatball: '🔵', ultraball: '🟡', masterball: '🟣' }
+                    const qty = balls[bt] || 0
+                    return qty > 0 ? (
+                      <button key={bt} onClick={() => { onAction('capture', undefined, bt); setShowBalls(false) }}
+                        disabled={actionLoading}
+                        className="flex-1 p-2 rounded-lg font-bold text-white text-xs transition hover:brightness-110"
+                        style={{ background: 'rgba(239,68,68,0.5)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                        {emojis[bt]} {names[bt]} ×{qty}
+                      </button>
+                    ) : null
+                  })}
+                  {Object.values(balls).every(qty => !qty || qty <= 0) && (
+                    <span className="text-gray-400 text-xs flex-1 text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                      没有精灵球了！去商店购买吧
+                    </span>
+                  )}
+                  <button onClick={() => setShowBalls(false)}
+                    className="px-2 rounded-lg text-gray-400 hover:text-white text-sm">✕</button>
+                </div>
+              )}
+              <button onClick={() => onAction('flee')} disabled={actionLoading}
+                className="px-6 p-3 rounded-xl font-bold text-gray-300 transition hover:text-white"
+                style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                🏃 逃跑
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </motion.div>
   )
@@ -762,18 +953,22 @@ function ResultView({ result, wild, pokemon, onReturn }: {
   result: any; wild: WildPokemon | null; pokemon: PokemonInfo | null; onReturn: () => void
 }) {
   const [countdown, setCountdown] = useState(8)
+  const countdownRef = useRef(countdown)
 
   useEffect(() => {
     if (!result) return
+    countdownRef.current = 8
+    setCountdown(8)
     const timer = setInterval(() => {
-      setCountdown(prev => {
-        if (prev <= 1) {
-          clearInterval(timer)
-          onReturn()
-          return 0
-        }
-        return prev - 1
-      })
+      countdownRef.current -= 1
+      const next = countdownRef.current
+      if (next <= 0) {
+        clearInterval(timer)
+        setCountdown(0)
+        onReturn()
+      } else {
+        setCountdown(next)
+      }
     }, 1000)
     return () => clearInterval(timer)
   }, [result, onReturn])
@@ -905,6 +1100,31 @@ function ResultView({ result, wild, pokemon, onReturn }: {
             🏆 BOSS击败奖励！
           </p>
           <p className="text-sm text-gray-300 mt-1">{result.bossRewards.description}</p>
+        </motion.div>
+      )}
+
+      {/* Quiz Stats */}
+      {result.quizStats && result.quizStats.totalAnswered > 0 && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
+          className="rounded-2xl p-4 mb-4 w-full max-w-sm"
+          style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
+          <p className="font-bold mb-2 text-center text-indigo-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            📝 答题统计
+          </p>
+          <div className="grid grid-cols-2 gap-2 text-sm text-gray-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            <span>📊 答题数: {result.quizStats.totalAnswered}</span>
+            <span>✅ 正确数: {result.quizStats.totalCorrect}</span>
+            <span>🎯 正确率: {Math.round((result.quizStats.totalCorrect / result.quizStats.totalAnswered) * 100)}%</span>
+            <span>🔥 最高连击: {result.quizStats.maxCombo || 0}</span>
+          </div>
+          {result.quizStats.maxCombo >= 5 && (
+            <motion.p
+              initial={{ scale: 0.9 }} animate={{ scale: 1 }}
+              className="text-center mt-2 text-yellow-300 font-bold text-sm"
+              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              🌟 学霸加成！知识就是力量！
+            </motion.p>
+          )}
         </motion.div>
       )}
 
@@ -1172,6 +1392,204 @@ function ShopView({ balls, onBuy, onBack }: {
           🟣 大师球无法购买，只能通过击败最终BOSS获得（100%收服率）
         </p>
       </div>
+    </motion.div>
+  )
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// QUIZ OVERLAY
+// ════════════════════════════════════════════════════════════════════════════
+
+function QuizOverlay({ question, timer, onAnswer, onSkip }: {
+  question: { id: number; subject: string; question: string; options: string[]; timeLimit: number; category?: string; difficulty: number }
+  timer: number
+  onAnswer: (correct: boolean, fast: boolean) => void
+  onSkip: () => void
+}) {
+  const QUIZ_FAST_TIME = 30 // 30 seconds = fast answer threshold
+  const [elapsed, setElapsed] = useState(0)
+  const [selected, setSelected] = useState<number | null>(null)
+  const [correctIdx, setCorrectIdx] = useState<number | null>(null)
+  const [answered, setAnswered] = useState(false)
+  const startTimeRef = useRef(Date.now())
+  const rafRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    startTimeRef.current = Date.now()
+    setElapsed(0)
+    setSelected(null)
+    setCorrectIdx(null)
+    setAnswered(false)
+
+    const tick = () => {
+      const elapsedSec = (Date.now() - startTimeRef.current) / 1000
+      setElapsed(elapsedSec)
+      rafRef.current = requestAnimationFrame(tick)
+    }
+    rafRef.current = requestAnimationFrame(tick)
+
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [question.id, timer])
+
+  // No auto-skip - player can take as long as they want
+
+  const handleAnswer = async (idx: number) => {
+    if (answered) return
+    setAnswered(true)
+    setSelected(idx)
+    if (rafRef.current) cancelAnimationFrame(rafRef.current)
+
+    const elapsedSec = (Date.now() - startTimeRef.current) / 1000
+    const fast = elapsedSec <= QUIZ_FAST_TIME // within 30s = fast (1.5x), over 30s = slow (1.2x)
+
+    try {
+      const res = await fetch('/api/quiz', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questionId: question.id, answerIndex: idx }),
+      })
+      const data = await res.json()
+      setCorrectIdx(data.correctIndex)
+
+      // Show result briefly then callback
+      setTimeout(() => {
+        onAnswer(data.correct, fast)
+      }, 1200)
+    } catch {
+      // On error, treat as skipped
+      setTimeout(() => onSkip(), 500)
+    }
+  }
+
+  const isFast = elapsed <= QUIZ_FAST_TIME
+  const timePct = isFast ? Math.max(0, (1 - elapsed / QUIZ_FAST_TIME) * 100) : 0
+  const timeColor = isFast ? (timePct > 50 ? '#22C55E' : '#EAB308') : '#EF4444'
+
+  const subjectEmoji: Record<string, string> = {
+    '数学': '🔢', '语文': '📖', '科学': '🔬',
+  }
+
+  const diffStars = '★'.repeat(question.difficulty) + '☆'.repeat(Math.max(0, 3 - question.difficulty))
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="absolute inset-0 z-40 flex flex-col"
+      style={{ background: 'linear-gradient(180deg, #1e293b, #0f172a)' }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-2xl">{subjectEmoji[question.subject] || '📝'}</span>
+          <span className="text-indigo-300 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+            {question.subject}{question.category ? ` · ${question.category}` : ''}
+          </span>
+          <span className="text-gray-500 text-sm">{diffStars}</span>
+        </div>
+        <button onClick={onSkip} className="text-gray-500 hover:text-gray-300 px-3 py-2 rounded-xl"
+          style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
+          跳过 ⏭️
+        </button>
+      </div>
+
+      {/* Timer bar - smooth, shows 30s fast-answer window */}
+      <div className="px-4">
+        <div className="h-2.5 rounded-full mb-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+          <div
+            className="h-full rounded-full"
+            style={{ background: timeColor, width: `${timePct}%`, transition: 'width 0.1s linear, background 0.3s ease' }}
+          />
+        </div>
+
+        {/* Timer text */}
+        <div className="text-center mb-3">
+          <span
+            className="font-bold"
+            style={{ color: timeColor, fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
+          >
+            {isFast ? `⚡ 快速作答 ${Math.ceil(QUIZ_FAST_TIME - elapsed)}秒 → 伤害1.5倍！` : '⏱️ 正确作答 → 伤害1.2倍'}
+          </span>
+        </div>
+      </div>
+
+      {/* Question - large and prominent */}
+      <div className="flex-1 flex flex-col px-4 overflow-auto">
+        <div className="rounded-2xl p-5 mb-4" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <p className="text-white leading-relaxed" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.4rem' }}>
+            {question.question}
+          </p>
+        </div>
+
+        {/* Options - large buttons */}
+        <div className="space-y-3 flex-1">
+          {question.options.map((opt, idx) => {
+            const labels = ['A', 'B', 'C', 'D']
+            let bg = 'rgba(255,255,255,0.08)'
+            let border = 'rgba(255,255,255,0.15)'
+            let textColor = '#e2e8f0'
+
+            if (answered) {
+              if (idx === correctIdx) {
+                bg = 'rgba(34,197,94,0.3)'
+                border = 'rgba(34,197,94,0.7)'
+                textColor = '#86efac'
+              } else if (idx === selected && idx !== correctIdx) {
+                bg = 'rgba(239,68,68,0.3)'
+                border = 'rgba(239,68,68,0.7)'
+                textColor = '#fca5a5'
+              }
+            }
+
+            return (
+              <motion.button
+                key={idx}
+                whileTap={!answered ? { scale: 0.97 } : {}}
+                onClick={() => handleAnswer(idx)}
+                disabled={answered}
+                className="w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 disabled:cursor-default"
+                style={{
+                  background: bg,
+                  border: `2px solid ${border}`,
+                  color: textColor,
+                  fontFamily: "'ZCOOL KuaiLe', sans-serif",
+                }}
+              >
+                <span className="w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0"
+                  style={{ background: 'rgba(99,102,241,0.3)', color: '#a5b4fc', fontSize: '1.2rem' }}>
+                  {labels[idx]}
+                </span>
+                <span style={{ fontSize: '1.2rem' }}>{opt}</span>
+                {answered && idx === correctIdx && <span className="ml-auto text-2xl">✅</span>}
+                {answered && idx === selected && idx !== correctIdx && <span className="ml-auto text-2xl">❌</span>}
+              </motion.button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Answer feedback */}
+      <AnimatePresence>
+        {answered && correctIdx !== null && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="px-4 py-4 text-center"
+          >
+            {selected === correctIdx ? (
+              <span className="text-green-400 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
+                ✨ 回答正确！攻击力提升！
+              </span>
+            ) : (
+              <span className="text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+                😅 答错了，正确答案是 {['A','B','C','D'][correctIdx]}
+              </span>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

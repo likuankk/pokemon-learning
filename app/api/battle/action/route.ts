@@ -5,8 +5,8 @@ import {
   calculateDamage, wildAIChooseSkill, applyStatusDamage, canAct,
   attemptCapture, calculateBattleRewards, checkBattleLevelUp,
   getUnlockedSkillSlots, calcBattlePower, calcDefense, calcHP,
-  BOSS_REWARDS,
-  type PokemonType, type ActiveStatus, type BallType, type BattleState
+  BOSS_REWARDS, getQuizBonus, canUseTactic, TACTICS,
+  type PokemonType, type ActiveStatus, type BallType, type BattleState, type TacticType
 } from '@/lib/battle-logic'
 import { activeBattles } from '../encounter/route'
 
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const session = await getSession()
     const childId = getChildId(session)
-    const { battleId, action, skillId, ballType } = body
+    const { battleId, action, skillId, ballType, quizCorrect, quizFast, tactic } = body
     const sqlite = (db as any).session.client
 
     // Get battle state
@@ -159,6 +159,68 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // ── TACTIC ─────────────────────────────────────────────────
+    if (action === 'tactic') {
+      if (!tactic || !TACTICS[tactic as TacticType]) {
+        return NextResponse.json({ error: '无效的战术' }, { status: 400 })
+      }
+      const tacticType = tactic as TacticType
+      const tacticEffect = TACTICS[tacticType]
+
+      battle.activeTactic = tacticType
+      battle.tacticTurnsLeft = 1
+
+      const tacticResult: any = { roundNumber: battle.round, battleStatus: 'ongoing' }
+      tacticResult.tacticUsed = { type: tacticType, label: tacticEffect.label, emoji: tacticEffect.emoji }
+
+      // Handle heal tactic immediately
+      if (tacticEffect.healPercent > 0) {
+        const healAmt = Math.round(battle.playerMaxHP * tacticEffect.healPercent)
+        battle.playerHP = Math.min(battle.playerMaxHP, battle.playerHP + healAmt)
+        tacticResult.healed = healAmt
+      }
+
+      // Handle charge tactic - store power for next round
+      if (tacticEffect.storedPower > 0) {
+        battle.storedPower = tacticEffect.storedPower
+      }
+
+      // Wild pokemon still attacks
+      const wildSkill = wildAIChooseSkill(
+        battle.wild.skills, battle.wild.level,
+        battle.playerType1, battle.playerType2,
+        battle.wild.hp, battle.wild.maxHp
+      )
+
+      // Apply tactic defense modifier
+      const tacticDefMult = tacticEffect.defenseMult
+      const wildDmg = calculateDamage(
+        battle.wild.battlePower, wildSkill.power, wildSkill.type,
+        wildSkill.accuracy,
+        battle.playerDefense * tacticDefMult,
+        battle.playerType1, battle.playerType2,
+        0, battle.wildAttackBuff, battle.playerDefenseBuff,
+      )
+      battle.playerHP = Math.max(0, battle.playerHP - wildDmg.damage)
+
+      tacticResult.wildTurn = {
+        action: 'skill', skillName: wildSkill.name, skillType: wildSkill.type,
+        damage: wildDmg.damage, effectiveness: wildDmg.effectiveness,
+        missed: wildDmg.missed, playerHpAfter: battle.playerHP,
+      }
+
+      if (battle.playerHP <= 0) {
+        return finishBattle(battle, tacticResult, 'lose', sqlite, childId)
+      }
+
+      tacticResult.playerHP = battle.playerHP
+      tacticResult.playerMaxHP = battle.playerMaxHP
+      tacticResult.wildHP = battle.wild.hp
+      tacticResult.wildMaxHP = battle.wild.maxHp
+
+      return NextResponse.json(tacticResult)
+    }
+
     // ── SKILL ───────────────────────────────────────────────────
     if (action === 'skill') {
       const playerSkill = battle.playerSkills.find(s => s.id === skillId)
@@ -167,6 +229,36 @@ export async function POST(request: NextRequest) {
       }
       if (playerSkill.currentPP <= 0) {
         return NextResponse.json({ error: '技能PP不足' }, { status: 400 })
+      }
+
+      // ── Quiz bonus processing ──
+      let quizBonus = { damageMultiplier: 1.0, label: '', comboCount: battle.quizCombo }
+      if (quizCorrect !== undefined) {
+        battle.quizTotalAnswered++
+        if (quizCorrect) battle.quizTotalCorrect++
+        quizBonus = getQuizBonus(!!quizCorrect, !!quizFast, battle.quizCombo)
+        battle.quizCombo = quizBonus.comboCount
+        if (battle.quizCombo > battle.quizMaxCombo) battle.quizMaxCombo = battle.quizCombo
+        if (!quizCorrect) battle.quizCombo = 0
+      }
+      result.quizBonus = { multiplier: quizBonus.damageMultiplier, label: quizBonus.label, combo: battle.quizCombo }
+
+      // ── Stored power from charge tactic ──
+      let storedPowerMult = 1.0
+      if (battle.storedPower > 0) {
+        storedPowerMult = battle.storedPower
+        battle.storedPower = 0
+      }
+
+      // ── Active tactic modifier ──
+      let tacticAttackMult = 1.0
+      let tacticDefenseMult = 1.0
+      if (battle.activeTactic && battle.tacticTurnsLeft > 0) {
+        const t = TACTICS[battle.activeTactic]
+        tacticAttackMult = t.attackMult || 1.0
+        tacticDefenseMult = t.defenseMult || 1.0
+        battle.tacticTurnsLeft--
+        if (battle.tacticTurnsLeft <= 0) battle.activeTactic = null
       }
 
       // Decrease buffs
@@ -241,13 +333,15 @@ export async function POST(request: NextRequest) {
         }
 
         const dmg = calculateDamage(
-          battle.playerBP, playerSkill.power, playerSkill.type as PokemonType,
+          battle.playerBP * tacticAttackMult, playerSkill.power, playerSkill.type as PokemonType,
           playerSkill.accuracy,
           battle.wild.defense,
           battle.wild.type1, battle.wild.type2,
           0, battle.playerAttackBuff, battle.wildDefenseBuff,
         )
-        battle.wild.hp = Math.max(0, battle.wild.hp - dmg.damage)
+        // Apply quiz bonus and stored power
+        const finalDamage = Math.max(1, Math.round(dmg.damage * quizBonus.damageMultiplier * storedPowerMult))
+        battle.wild.hp = Math.max(0, battle.wild.hp - finalDamage)
 
         // Check if skill applies status
         if (effect && dmg.damage > 0) {
@@ -260,7 +354,7 @@ export async function POST(request: NextRequest) {
           action: 'skill',
           skillName: playerSkill.name,
           skillType: playerSkill.type,
-          damage: dmg.damage,
+          damage: finalDamage,
           effectiveness: dmg.effectiveness,
           critical: dmg.critical,
           missed: dmg.missed,
@@ -303,7 +397,7 @@ export async function POST(request: NextRequest) {
         const wildDmg = calculateDamage(
           battle.wild.battlePower, wildSkill.power, wildSkill.type,
           wildSkill.accuracy,
-          battle.playerDefense,
+          battle.playerDefense * tacticDefenseMult,
           battle.playerType1, battle.playerType2,
           0, battle.wildAttackBuff, battle.playerDefenseBuff,
         )
@@ -356,6 +450,8 @@ export async function POST(request: NextRequest) {
       result.wildMaxHP = battle.wild.maxHp
       result.playerStatus = battle.playerStatus
       result.wildStatus = battle.wildStatus
+      result.canUseTactic = canUseTactic(battle.round + 1)
+      result.quizCombo = battle.quizCombo
 
       return NextResponse.json(result)
     }
@@ -423,9 +519,6 @@ function finishBattle(
 
     // Add rewards to inventory
     if (rewards.candy > 0) {
-      sqlite.prepare(`INSERT INTO inventory (child_id, item_type, quantity) VALUES (?, 'candy', ?) ON CONFLICT(child_id, item_type) DO UPDATE SET quantity = quantity + ?`)
-        .run(childId, rewards.candy, rewards.candy)
-      // Fallback: ensure inventory row exists
       const candyInv = sqlite.prepare("SELECT id FROM inventory WHERE child_id = ? AND item_type = 'candy'").get(childId)
       if (!candyInv) {
         sqlite.prepare("INSERT INTO inventory (child_id, item_type, quantity) VALUES (?, 'candy', ?)").run(childId, rewards.candy)
@@ -490,6 +583,26 @@ function finishBattle(
     result.newSkills = newSkills
     result.bossRewards = bossRewards
     result.message = '战斗胜利！'
+    result.quizStats = {
+      totalAnswered: battle.quizTotalAnswered,
+      totalCorrect: battle.quizTotalCorrect,
+      maxCombo: battle.quizMaxCombo,
+      accuracy: battle.quizTotalAnswered > 0 ? Math.round(battle.quizTotalCorrect / battle.quizTotalAnswered * 100) : 0,
+    }
+
+    // Update quiz stats in DB
+    if (battle.quizTotalAnswered > 0) {
+      sqlite.prepare(`
+        INSERT INTO battle_quiz_stats (child_id, total_answered, total_correct, max_combo)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(child_id) DO UPDATE SET
+          total_answered = total_answered + ?,
+          total_correct = total_correct + ?,
+          max_combo = MAX(max_combo, ?),
+          updated_at = datetime('now')
+      `).run(childId, battle.quizTotalAnswered, battle.quizTotalCorrect, battle.quizMaxCombo,
+             battle.quizTotalAnswered, battle.quizTotalCorrect, battle.quizMaxCombo)
+    }
   } else {
     // Loss
     sqlite.prepare(

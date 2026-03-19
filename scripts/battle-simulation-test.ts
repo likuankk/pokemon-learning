@@ -23,6 +23,11 @@ import {
   generateWildLevel,
   generateWildSkills,
   weightedRandomSpecies,
+  getQuizBonus,
+  getQuizDifficultyForRegion,
+  canUseTactic,
+  getTypeWeaknesses,
+  TACTICS,
   REGIONS,
   REGION_BOSSES,
   BOSS_REWARDS,
@@ -31,6 +36,7 @@ import {
   type WildPokemon,
   type BattleState,
   type BallType,
+  type TacticType,
 } from '../lib/battle-logic'
 
 // ── Test Infrastructure ─────────────────────────────────────────────────────
@@ -496,6 +502,15 @@ function createBattleState(wild: WildPokemon, isBoss = false, bossType?: 'elite'
     isBoss,
     bossType,
     status: 'ongoing',
+    // Knowledge system
+    quizCombo: 0,
+    quizTotalCorrect: 0,
+    quizTotalAnswered: 0,
+    quizMaxCombo: 0,
+    // Tactic system
+    activeTactic: null,
+    tacticTurnsLeft: 0,
+    storedPower: 0,
   }
 }
 
@@ -1117,6 +1132,138 @@ async function runTests() {
     assert(REGIONS.length === 6, '6 regions defined')
     assert(REGIONS[0].unlockWins === 0, 'Region 1 requires 0 wins')
     assert(REGIONS[5].unlockWins === 80, 'Region 6 requires 80 wins')
+  }
+
+  // ── Step 16: Quiz knowledge system ────────────────────────────────────────
+  section('Step 16: Quiz knowledge system')
+  {
+    // Test quiz bonus calculation
+    const bonusCorrectFast = getQuizBonus(true, true, 0)
+    assert(bonusCorrectFast.damageMultiplier === 1.5, 'Correct+fast = 1.5x damage', `got ${bonusCorrectFast.damageMultiplier}`)
+    assert(bonusCorrectFast.comboCount === 1, 'Correct answer increments combo to 1')
+
+    const bonusCorrectSlow = getQuizBonus(true, false, 0)
+    assert(bonusCorrectSlow.damageMultiplier === 1.2, 'Correct+slow = 1.2x damage', `got ${bonusCorrectSlow.damageMultiplier}`)
+
+    const bonusWrong = getQuizBonus(false, false, 5)
+    assert(bonusWrong.damageMultiplier === 1.0, 'Wrong answer = 1.0x (no bonus)', `got ${bonusWrong.damageMultiplier}`)
+    assert(bonusWrong.comboCount === 0, 'Wrong answer resets combo to 0')
+
+    // Combo bonuses
+    const combo2 = getQuizBonus(true, true, 1) // will become combo 2
+    assert(combo2.comboCount === 2, 'Combo increments: 1 → 2')
+    assert(combo2.damageMultiplier > 1.5, 'Combo 2 has higher multiplier than base', `got ${combo2.damageMultiplier}`)
+
+    const combo5 = getQuizBonus(true, true, 4) // will become combo 5
+    assert(combo5.comboCount === 5, 'Combo increments: 4 → 5')
+    assert(combo5.damageMultiplier >= 1.5 * 1.35, 'Combo 5 has +35% bonus', `got ${combo5.damageMultiplier}`)
+
+    const combo10 = getQuizBonus(true, true, 9) // will become combo 10
+    assert(combo10.comboCount === 10, 'Combo increments: 9 → 10')
+    assert(combo10.damageMultiplier >= 1.5 * 1.5, 'Combo 10 has +50% bonus', `got ${combo10.damageMultiplier}`)
+
+    log('📝', `Quiz bonus examples: fast+correct=${bonusCorrectFast.damageMultiplier}x, combo5=${combo5.damageMultiplier.toFixed(2)}x, combo10=${combo10.damageMultiplier.toFixed(2)}x`)
+
+    // Test quiz difficulty for regions
+    const diff1 = getQuizDifficultyForRegion(1)
+    assert(diff1.gradeMin === 3, 'Region 1: grade min = 3', `got ${diff1.gradeMin}`)
+    assert(diff1.difficulty === 1, 'Region 1: difficulty = 1', `got ${diff1.difficulty}`)
+
+    const diff3 = getQuizDifficultyForRegion(3)
+    assert(diff3.gradeMin === 3, 'Region 3: grade min = 3', `got ${diff3.gradeMin}`)
+    assert(diff3.gradeMax === 6, 'Region 3: grade max = 6', `got ${diff3.gradeMax}`)
+    assert(diff3.difficulty === 2, 'Region 3: difficulty = 2', `got ${diff3.difficulty}`)
+
+    const diff5 = getQuizDifficultyForRegion(5)
+    assert(diff5.gradeMin === 5, 'Region 5: grade min = 5', `got ${diff5.gradeMin}`)
+    assert(diff5.difficulty === 3, 'Region 5: difficulty = 3', `got ${diff5.difficulty}`)
+
+    log('📝', `Quiz difficulty: R1=${JSON.stringify(diff1)}, R3=${JSON.stringify(diff3)}, R5=${JSON.stringify(diff5)}`)
+
+    // Test quiz questions exist in DB
+    const quizCount = (sqlite.prepare('SELECT COUNT(*) as c FROM quiz_questions').get() as any)?.c
+    if (quizCount > 0) {
+      assert(quizCount >= 50, 'Quiz bank has at least 50 questions', `got ${quizCount}`)
+
+      // Check grade range
+      const minGrade = (sqlite.prepare('SELECT MIN(grade_min) as v FROM quiz_questions').get() as any).v
+      assert(minGrade >= 3, 'Quiz min grade is 3 or higher', `got ${minGrade}`)
+
+      // Check subjects
+      const subjects = sqlite.prepare('SELECT DISTINCT subject FROM quiz_questions').all() as any[]
+      const subjectList = subjects.map((s: any) => s.subject)
+      assert(subjectList.includes('数学'), 'Quiz has math questions')
+      assert(subjectList.includes('语文'), 'Quiz has Chinese questions')
+      // English questions removed - quiz now focuses on math olympiad
+
+      // Check categories for advanced questions
+      const olympiad = (sqlite.prepare("SELECT COUNT(*) as c FROM quiz_questions WHERE category = '奥数思维'").get() as any).c
+      const reading = (sqlite.prepare("SELECT COUNT(*) as c FROM quiz_questions WHERE category = '阅读理解'").get() as any).c
+      log('📝', `Quiz bank: ${quizCount} total, 奥数=${olympiad}, 阅读理解=${reading}, subjects: ${subjectList.join(',')}`)
+    } else {
+      skip('Quiz DB check', 'No quiz questions in test DB (seeded by main DB only)')
+    }
+
+    // Test battle_quiz_stats table
+    sqlite.prepare(`
+      INSERT OR REPLACE INTO battle_quiz_stats (child_id, total_answered, total_correct, max_combo, updated_at)
+      VALUES (?, 20, 15, 6, datetime('now'))
+    `).run(testChildId)
+    const quizStats = sqlite.prepare('SELECT * FROM battle_quiz_stats WHERE child_id = ?').get(testChildId) as any
+    assert(quizStats !== undefined, 'Quiz stats row created')
+    assert(quizStats.total_answered === 20, 'Quiz stats: 20 answered')
+    assert(quizStats.total_correct === 15, 'Quiz stats: 15 correct')
+    assert(quizStats.max_combo === 6, 'Quiz stats: max combo 6')
+  }
+
+  // ── Step 17: Tactic system ────────────────────────────────────────────────
+  section('Step 17: Tactic system')
+  {
+    // Test tactic availability (every 3 rounds)
+    assert(canUseTactic(3) === true, 'Tactic available at round 3')
+    assert(canUseTactic(6) === true, 'Tactic available at round 6')
+    assert(canUseTactic(9) === true, 'Tactic available at round 9')
+    assert(canUseTactic(1) === false, 'Tactic NOT available at round 1')
+    assert(canUseTactic(2) === false, 'Tactic NOT available at round 2')
+    assert(canUseTactic(4) === false, 'Tactic NOT available at round 4')
+
+    // Test tactic effects
+    const allOut = TACTICS.all_out
+    assert(allOut.attackMult === 1.5, 'All-out attack: 1.5x attack')
+    assert(allOut.defenseMult === 0.7, 'All-out attack: 0.7x defense')
+    assert(allOut.skipAttack === false, 'All-out attack: does NOT skip')
+
+    const defend = TACTICS.defend
+    assert(defend.attackMult === 0.8, 'Defend: 0.8x attack')
+    assert(defend.defenseMult === 1.5, 'Defend: 1.5x defense')
+
+    const charge = TACTICS.charge
+    assert(charge.skipAttack === true, 'Charge: skips attack')
+    assert(charge.storedPower === 2.0, 'Charge: stores 2.0x power')
+
+    const heal = TACTICS.heal
+    assert(heal.healPercent === 0.25, 'Heal: restores 25% HP')
+    assert(heal.skipAttack === true, 'Heal: skips attack')
+
+    log('📝', `Tactics: all_out(${allOut.attackMult}x atk), defend(${defend.defenseMult}x def), charge(${charge.storedPower}x stored), heal(${heal.healPercent * 100}% HP)`)
+  }
+
+  // ── Step 18: Type weakness display ────────────────────────────────────────
+  section('Step 18: Type weakness display system')
+  {
+    const fireWeakness = getTypeWeaknesses('fire', null)
+    assert(fireWeakness.weakTo.includes('water'), 'Fire is weak to water', `weakTo: ${fireWeakness.weakTo.join(',')}`)
+    assert(fireWeakness.weakTo.includes('ground'), 'Fire is weak to ground')
+    assert(fireWeakness.resistTo.includes('grass'), 'Fire resists grass', `resistTo: ${fireWeakness.resistTo.join(',')}`)
+
+    const grassWaterWeakness = getTypeWeaknesses('grass', 'water' as PokemonType)
+    log('📝', `Grass/Water weakTo: ${grassWaterWeakness.weakTo.join(',')} resistTo: ${grassWaterWeakness.resistTo.join(',')}`)
+
+    const electricWeakness = getTypeWeaknesses('electric', null)
+    assert(electricWeakness.weakTo.includes('ground'), 'Electric is weak to ground')
+    assert(electricWeakness.resistTo.includes('water'), 'Electric resists water (offensive)')
+
+    log('📝', `Type weakness system working for all tested types`)
   }
 
   // ── Summary ────────────────────────────────────────────────────────────────

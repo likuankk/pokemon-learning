@@ -51,11 +51,11 @@ export function calcBattlePower(basePower: number, battleLevel: number): number 
 }
 
 export function calcDefense(basePower: number, battleLevel: number): number {
-  return Math.round(basePower * 0.8 * (1 + (battleLevel - 1) * 0.06) * 10) / 10
+  return Math.round(basePower * 1.0 * (1 + (battleLevel - 1) * 0.08) * 10) / 10
 }
 
 export function calcHP(basePower: number, battleLevel: number): number {
-  return Math.round(basePower * 3 * (1 + (battleLevel - 1) * 0.1) * 10) / 10
+  return Math.round(basePower * 3.5 * (1 + (battleLevel - 1) * 0.12) * 10) / 10
 }
 
 // ── Battle Level / Exp ──────────────────────────────────────────────────────
@@ -467,6 +467,97 @@ export interface BattleState {
   isBoss: boolean
   bossType?: 'elite' | 'boss'
   status: 'ongoing' | 'win' | 'lose' | 'flee' | 'captured'
+  // Knowledge system
+  quizCombo: number
+  quizTotalCorrect: number
+  quizTotalAnswered: number
+  quizMaxCombo: number
+  // Tactic system
+  activeTactic: TacticType | null
+  tacticTurnsLeft: number
+  storedPower: number  // For charge tactic
+}
+
+// ── Knowledge Quiz System ──────────────────────────────────────────────────
+
+export interface QuizBonus {
+  damageMultiplier: number
+  label: string
+  comboCount: number
+}
+
+export function getQuizBonus(correct: boolean, fast: boolean, combo: number): QuizBonus {
+  if (!correct) {
+    return { damageMultiplier: 0.7, label: '😅 答错了，攻击力下降…', comboCount: 0 }
+  }
+  // fast = answered within 30s → 1.5x, slow = over 30s → 1.2x
+  let mult = fast ? 1.5 : 1.2
+  // Combo bonus
+  let comboBonus = 0
+  const newCombo = combo + 1
+  if (newCombo >= 10) comboBonus = 0.5
+  else if (newCombo >= 5) comboBonus = 0.35
+  else if (newCombo >= 3) comboBonus = 0.2
+  else if (newCombo >= 2) comboBonus = 0.1
+
+  mult += comboBonus
+
+  let label = fast ? '⚡ 快速答对！' : '✅ 答对了！'
+  if (newCombo >= 10) label = '🌟 学霸模式！' + newCombo + '连击！'
+  else if (newCombo >= 5) label = '⚡ 知识就是力量！' + newCombo + '连击！'
+  else if (newCombo >= 3) label = '🔥 太棒了！' + newCombo + '连击！'
+  else if (newCombo >= 2) label = '👍 不错！' + newCombo + '连击！'
+
+  return { damageMultiplier: mult, label, comboCount: newCombo }
+}
+
+// Region → quiz difficulty mapping
+export function getQuizDifficultyForRegion(regionId: number): { gradeMin: number; gradeMax: number; difficulty: number } {
+  if (regionId <= 2) return { gradeMin: 3, gradeMax: 4, difficulty: 1 }
+  if (regionId <= 4) return { gradeMin: 3, gradeMax: 6, difficulty: 2 }
+  return { gradeMin: 5, gradeMax: 6, difficulty: 3 }
+}
+
+// ── Tactic System ──────────────────────────────────────────────────────────
+
+export type TacticType = 'all_out' | 'defend' | 'charge' | 'heal'
+
+export interface TacticEffect {
+  attackMult: number
+  defenseMult: number
+  healPercent: number
+  skipAttack: boolean
+  storedPower: number
+  label: string
+  emoji: string
+}
+
+export const TACTICS: Record<TacticType, TacticEffect> = {
+  all_out: { attackMult: 1.5, defenseMult: 0.7, healPercent: 0, skipAttack: false, storedPower: 0, label: '全力进攻', emoji: '🗡️' },
+  defend: { attackMult: 0.8, defenseMult: 1.5, healPercent: 0, skipAttack: false, storedPower: 0, label: '防御反击', emoji: '🛡️' },
+  charge: { attackMult: 0, defenseMult: 1.0, healPercent: 0, skipAttack: true, storedPower: 2.0, label: '蓄力', emoji: '🔄' },
+  heal: { attackMult: 0, defenseMult: 1.0, healPercent: 0.25, skipAttack: true, storedPower: 0, label: '恢复', emoji: '💊' },
+}
+
+export function canUseTactic(round: number): boolean {
+  // Can use tactic every 3 rounds (round 3, 6, 9...)
+  return round > 0 && round % 3 === 0
+}
+
+// ── Type weakness info for UI ──────────────────────────────────────────────
+
+export function getTypeWeaknesses(type1: PokemonType, type2?: PokemonType | null): { weakTo: PokemonType[]; resistTo: PokemonType[] } {
+  const allTypes: PokemonType[] = ['fire', 'water', 'grass', 'electric', 'ground', 'ice', 'flying', 'bug', 'normal', 'fairy']
+  const weakTo: PokemonType[] = []
+  const resistTo: PokemonType[] = []
+
+  for (const atk of allTypes) {
+    const eff = getTypeEffectiveness(atk, type1, type2)
+    if (eff > 1.2) weakTo.push(atk)
+    else if (eff < 0.8) resistTo.push(atk)
+  }
+
+  return { weakTo, resistTo }
 }
 
 // Generate unique battle ID

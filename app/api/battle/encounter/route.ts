@@ -4,12 +4,17 @@ import { getSession, getChildId } from '@/lib/auth'
 import {
   generateBattleId, generateWildLevel, generateWildSkills, weightedRandomSpecies,
   calcBattlePower, calcDefense, calcHP, REGIONS, REGION_BOSSES,
+  getTypeWeaknesses,
   type PokemonType, type WildPokemon, type BattleState
 } from '@/lib/battle-logic'
 
 // In-memory battle states (server-side)
-// In production, this would be stored in Redis or similar
-const activeBattles = new Map<string, BattleState>()
+// Use globalThis to persist across HMR / module re-evaluations in Next.js dev
+const globalKey = '__pokemon_activeBattles__'
+if (!(globalThis as any)[globalKey]) {
+  ;(globalThis as any)[globalKey] = new Map<string, BattleState>()
+}
+const activeBattles: Map<string, BattleState> = (globalThis as any)[globalKey]
 
 // Export for use by action endpoint
 export { activeBattles }
@@ -187,12 +192,24 @@ export async function POST(request: NextRequest) {
       isBoss,
       bossType,
       status: 'ongoing',
+      // Knowledge system
+      quizCombo: 0,
+      quizTotalCorrect: 0,
+      quizTotalAnswered: 0,
+      quizMaxCombo: 0,
+      // Tactic system
+      activeTactic: null,
+      tacticTurnsLeft: 0,
+      storedPower: 0,
     }
 
     activeBattles.set(battleId, battleState)
 
     // Record discovery
     sqlite.prepare('INSERT OR IGNORE INTO discovered_species (child_id, species_id) VALUES (?, ?)').run(childId, wild.speciesId)
+
+    // Get type weakness info for UI
+    const wildWeakness = getTypeWeaknesses(wild.type1, wild.type2)
 
     return NextResponse.json({
       battleId,
@@ -208,6 +225,8 @@ export async function POST(request: NextRequest) {
         battlePower: wild.battlePower,
         rarity: wild.rarity,
         skills: wild.skills.map(s => ({ id: s.id, name: s.name, type: s.type, power: s.power })),
+        weakTo: wildWeakness.weakTo,
+        resistTo: wildWeakness.resistTo,
       },
       myPokemon: {
         id: activePokemon.id,

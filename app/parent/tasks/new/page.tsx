@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { subjectColors } from '@/lib/game-logic'
@@ -8,35 +8,16 @@ import { subjectColors } from '@/lib/game-logic'
 const SUBJECTS = ['语文', '数学', '英语', '科学', '其他']
 
 interface Template {
+  id: number
+  familyId: number
   title: string
   subject: string
   description: string
   difficulty: number
   estimatedMinutes: number
+  isBuiltin: boolean
+  sortOrder: number
 }
-
-const TASK_TEMPLATES: Template[] = [
-  { title: '语文生字抄写', subject: '语文', description: '抄写本课生字，每字写3遍，注意笔顺', difficulty: 2, estimatedMinutes: 20 },
-  { title: '课文朗读背诵', subject: '语文', description: '朗读课文3遍，尝试背诵重点段落', difficulty: 2, estimatedMinutes: 15 },
-  { title: '阅读理解练习', subject: '语文', description: '完成阅读理解题，注意答题格式', difficulty: 3, estimatedMinutes: 30 },
-  { title: '日记写作', subject: '语文', description: '写一篇日记，不少于100字', difficulty: 3, estimatedMinutes: 30 },
-  { title: '数学口算练习', subject: '数学', description: '完成口算练习题，计时完成', difficulty: 2, estimatedMinutes: 15 },
-  { title: '数学练习册', subject: '数学', description: '完成练习册指定页，检查答案', difficulty: 3, estimatedMinutes: 30 },
-  { title: '数学思维题', subject: '数学', description: '完成2道思维拓展题，写出解题过程', difficulty: 4, estimatedMinutes: 45 },
-  { title: '英语单词抄写', subject: '英语', description: '抄写本单元单词，每个写3遍并中文释义', difficulty: 2, estimatedMinutes: 20 },
-  { title: '英语课文朗读', subject: '英语', description: '朗读课文3遍，注意语音语调', difficulty: 2, estimatedMinutes: 15 },
-  { title: '英语听写练习', subject: '英语', description: '完成单词听写，对照订正', difficulty: 3, estimatedMinutes: 20 },
-  { title: '英语造句练习', subject: '英语', description: '用本单元单词造5个句子', difficulty: 3, estimatedMinutes: 25 },
-  { title: '科学实验记录', subject: '科学', description: '完成科学实验并填写观察记录表', difficulty: 3, estimatedMinutes: 30 },
-  { title: '科学概念复习', subject: '科学', description: '复习本章重要概念，整理笔记', difficulty: 2, estimatedMinutes: 20 },
-  { title: '数学应用题', subject: '数学', description: '完成5道应用题，要求写出算式和答句', difficulty: 4, estimatedMinutes: 40 },
-  { title: '语文造句练习', subject: '语文', description: '用指定词语造句，每个词语造2个句子', difficulty: 2, estimatedMinutes: 15 },
-  { title: '英语绘本阅读', subject: '英语', description: '阅读一本英语绘本，说出大意', difficulty: 2, estimatedMinutes: 20 },
-  { title: '数学图形练习', subject: '数学', description: '完成图形与几何相关练习', difficulty: 3, estimatedMinutes: 25 },
-  { title: '语文古诗背诵', subject: '语文', description: '背诵指定古诗，能默写', difficulty: 3, estimatedMinutes: 20 },
-  { title: '综合复习', subject: '其他', description: '复习本周所有科目重点内容', difficulty: 3, estimatedMinutes: 45 },
-  { title: '课外阅读', subject: '其他', description: '阅读课外书30分钟，记录好词好句', difficulty: 2, estimatedMinutes: 30 },
-]
 
 export default function NewTaskPage() {
   const router = useRouter()
@@ -52,6 +33,29 @@ export default function NewTaskPage() {
   const [error, setError] = useState('')
   const [showTemplates, setShowTemplates] = useState(false)
   const [templateFilter, setTemplateFilter] = useState<string>('全部')
+  const [templates, setTemplates] = useState<Template[]>([])
+  const [templatesLoading, setTemplatesLoading] = useState(false)
+  const [savingTemplate, setSavingTemplate] = useState(false)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+
+  const loadTemplates = useCallback(async () => {
+    setTemplatesLoading(true)
+    try {
+      const res = await fetch('/api/templates')
+      if (res.ok) {
+        const data = await res.json()
+        setTemplates(data.templates || [])
+      }
+    } catch {
+      // ignore
+    } finally {
+      setTemplatesLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadTemplates()
+  }, [loadTemplates])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,9 +77,40 @@ export default function NewTaskPage() {
     setShowTemplates(false)
   }
 
-  const filteredTemplates = templateFilter === '全部'
-    ? TASK_TEMPLATES
-    : TASK_TEMPLATES.filter(t => t.subject === templateFilter)
+  const handleSaveAsTemplate = async () => {
+    if (!form.title.trim()) { setError('请先填写标题再保存模板'); return }
+    setSavingTemplate(true); setError('')
+    try {
+      const res = await fetch('/api/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          subject: form.subject,
+          description: form.description,
+          difficulty: form.difficulty,
+          estimatedMinutes: form.estimatedMinutes,
+        }),
+      })
+      if (res.ok) {
+        setSaveSuccess(true)
+        setTimeout(() => setSaveSuccess(false), 2000)
+        loadTemplates()
+      } else {
+        const d = await res.json()
+        setError(d.error || '保存模板失败')
+      }
+    } catch {
+      setError('网络错误')
+    } finally {
+      setSavingTemplate(false)
+    }
+  }
+
+  const customTemplates = templates.filter(t => !t.isBuiltin)
+  const builtinTemplates = templates.filter(t => t.isBuiltin)
+  const filterTemplates = (list: Template[]) =>
+    templateFilter === '全部' ? list : list.filter(t => t.subject === templateFilter)
 
   const difficultyLabel = ['', '⭐ 简单', '⭐⭐ 较易', '⭐⭐⭐ 适中', '⭐⭐⭐⭐ 较难', '⭐⭐⭐⭐⭐ 困难'][form.difficulty]
 
@@ -88,13 +123,22 @@ export default function NewTaskPage() {
             <h1 className="game-title-indigo leading-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 3.5rem)', color: '#4338ca' }}>创建任务 ➕</h1>
             <p className="text-indigo-400 mt-2 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>为孩子布置一个新的学习任务</p>
           </div>
-          <button
-            onClick={() => setShowTemplates(!showTemplates)}
-            className="bg-white border-2 border-indigo-300 hover:border-indigo-500 text-indigo-600 font-bold px-6 py-3 rounded-2xl transition-all flex items-center gap-2"
-            style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}
-          >
-            📚 使用模板
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={() => router.push('/parent/templates')}
+              className="bg-white border-2 border-purple-300 hover:border-purple-500 text-purple-600 font-bold px-5 py-3 rounded-2xl transition-all flex items-center gap-2"
+              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.15rem' }}
+            >
+              ⚙️ 管理模板
+            </button>
+            <button
+              onClick={() => setShowTemplates(!showTemplates)}
+              className="bg-white border-2 border-indigo-300 hover:border-indigo-500 text-indigo-600 font-bold px-6 py-3 rounded-2xl transition-all flex items-center gap-2"
+              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.25rem' }}
+            >
+              📚 使用模板
+            </button>
+          </div>
         </div>
       </div>
 
@@ -120,29 +164,41 @@ export default function NewTaskPage() {
                 </button>
               ))}
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {filteredTemplates.map((t, i) => (
-                <motion.button
-                  key={i}
-                  onClick={() => applyTemplate(t)}
-                  className="text-left bg-white border-2 border-indigo-100 hover:border-indigo-400 rounded-2xl p-4 transition-all"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <p className="font-bold text-gray-800 flex-1 leading-snug" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.05rem' }}>{t.title}</p>
-                    <span className={`text-xs px-2 py-0.5 rounded-full border font-bold flex-shrink-0 ${subjectColors[t.subject] || subjectColors['其他']}`}>
-                      {t.subject}
-                    </span>
+
+            {templatesLoading ? (
+              <div className="text-center py-8 text-indigo-400 font-bold text-xl">加载模板中...</div>
+            ) : (
+              <>
+                {/* Custom templates section */}
+                {customTemplates.length > 0 && (
+                  <div className="mb-5">
+                    <h3 className="font-bold text-purple-600 mb-3 flex items-center gap-2" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+                      ⭐ 我的模板
+                    </h3>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      {filterTemplates(customTemplates).map(t => (
+                        <TemplateCard key={t.id} template={t} onApply={applyTemplate} isCustom />
+                      ))}
+                    </div>
+                    {filterTemplates(customTemplates).length === 0 && (
+                      <p className="text-gray-400 text-center py-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>该科目下没有自定义模板</p>
+                    )}
                   </div>
-                  <p className="text-gray-400 text-sm leading-snug" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{t.description.slice(0, 25)}...</p>
-                  <div className="flex gap-2 mt-2 text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.875rem' }}>
-                    <span>{'⭐'.repeat(t.difficulty)}</span>
-                    <span>⏱{t.estimatedMinutes}分</span>
+                )}
+
+                {/* Builtin templates section */}
+                <div>
+                  <h3 className="font-bold text-indigo-600 mb-3 flex items-center gap-2" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+                    📚 系统模板
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {filterTemplates(builtinTemplates).map(t => (
+                      <TemplateCard key={t.id} template={t} onApply={applyTemplate} />
+                    ))}
                   </div>
-                </motion.button>
-              ))}
-            </div>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -249,13 +305,28 @@ export default function NewTaskPage() {
 
               {error && <p className="text-red-500 text-xl bg-red-50 rounded-xl px-5 py-3 font-semibold">{error}</p>}
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-5 rounded-2xl transition-colors disabled:opacity-50 text-2xl"
-              >
-                {loading ? '发布中...' : '发布任务 🚀'}
-              </button>
+              <div className="flex gap-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-5 rounded-2xl transition-colors disabled:opacity-50 text-2xl"
+                >
+                  {loading ? '发布中...' : '发布任务 🚀'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveAsTemplate}
+                  disabled={savingTemplate}
+                  className={`px-8 py-5 rounded-2xl font-bold text-xl border-2 transition-all ${
+                    saveSuccess
+                      ? 'bg-green-100 border-green-400 text-green-600'
+                      : 'bg-purple-50 border-purple-300 hover:border-purple-500 text-purple-600'
+                  }`}
+                  style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+                >
+                  {saveSuccess ? '✅ 已保存' : savingTemplate ? '保存中...' : '💾 存为模板'}
+                </button>
+              </div>
             </form>
           </div>
 
@@ -295,5 +366,33 @@ export default function NewTaskPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+function TemplateCard({ template: t, onApply, isCustom }: { template: Template; onApply: (t: Template) => void; isCustom?: boolean }) {
+  return (
+    <motion.button
+      onClick={() => onApply(t)}
+      className="text-left bg-white border-2 border-indigo-100 hover:border-indigo-400 rounded-2xl p-4 transition-all"
+      whileHover={{ scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <p className="font-bold text-gray-800 flex-1 leading-snug" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.05rem' }}>{t.title}</p>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          {isCustom && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-purple-100 text-purple-500 border border-purple-200 font-bold">自定义</span>
+          )}
+          <span className={`text-xs px-2 py-0.5 rounded-full border font-bold ${subjectColors[t.subject] || subjectColors['其他']}`}>
+            {t.subject}
+          </span>
+        </div>
+      </div>
+      <p className="text-gray-400 text-sm leading-snug" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{t.description?.slice(0, 25)}...</p>
+      <div className="flex gap-2 mt-2 text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.875rem' }}>
+        <span>{'⭐'.repeat(t.difficulty)}</span>
+        <span>⏱{t.estimatedMinutes}分</span>
+      </div>
+    </motion.button>
   )
 }

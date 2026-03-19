@@ -57,6 +57,7 @@ export default function EvolvePage() {
   const [currentPokemonId, setCurrentPokemonId] = useState<number | null>(null)
   const [evolutionResult, setEvolutionResult] = useState<{
     from: number; to: number; fromName: string; toName: string
+    newSkills?: { name: string; type: string }[]
   } | null>(null)
 
   const loadData = (pokemonId?: number) => {
@@ -84,7 +85,10 @@ export default function EvolvePage() {
       })
       const result = await res.json()
       if (res.ok && result.evolution) {
-        setEvolutionResult(result.evolution)
+        setEvolutionResult({
+          ...result.evolution,
+          newSkills: result.newSkills || [],
+        })
         setShowAnimation(true)
 
         // Evolution sound sequence
@@ -99,7 +103,7 @@ export default function EvolvePage() {
         // Reload after animation
         setTimeout(() => {
           loadData()
-        }, 4000)
+        }, 5000)
       }
     } catch (e) {
       console.error(e)
@@ -162,6 +166,7 @@ export default function EvolvePage() {
                 animate={{ scale: [0, 3, 1], opacity: [0, 1, 0] }}
                 transition={{ delay: 1.2, duration: 1.5 }}
                 className="absolute inset-0 flex items-center justify-center"
+                style={{ pointerEvents: 'none' }}
               >
                 <div className="w-40 h-40 rounded-full"
                   style={{ background: 'radial-gradient(circle, rgba(251,191,36,0.8) 0%, rgba(147,51,234,0.4) 50%, transparent 70%)' }} />
@@ -200,12 +205,54 @@ export default function EvolvePage() {
                 </motion.p>
               </motion.div>
 
+              {/* New Skills Display */}
+              {evolutionResult.newSkills && evolutionResult.newSkills.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 3.4 }}
+                  className="mt-4 px-6 py-4 rounded-2xl"
+                  style={{ background: 'rgba(147,51,234,0.15)', border: '1px solid rgba(147,51,234,0.3)' }}
+                >
+                  <p className="font-bold text-purple-300 mb-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>
+                    🎯 习得新技能！
+                  </p>
+                  <div className="flex gap-2 flex-wrap justify-center">
+                    {evolutionResult.newSkills.map(skill => {
+                      const typeColors: Record<string, string> = {
+                        fire: '#EF4444', water: '#3B82F6', grass: '#22C55E', electric: '#EAB308',
+                        ground: '#A16207', ice: '#06B6D4', flying: '#8B5CF6', bug: '#84CC16',
+                        normal: '#6B7280', fairy: '#EC4899',
+                      }
+                      const color = typeColors[skill.type] || '#6B7280'
+                      return (
+                        <motion.span
+                          key={skill.name}
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ delay: 3.6, type: 'spring', stiffness: 300 }}
+                          className="px-4 py-1.5 rounded-full font-bold text-white text-sm"
+                          style={{
+                            background: `${color}cc`,
+                            border: `1px solid ${color}`,
+                            fontFamily: "'ZCOOL KuaiLe', sans-serif",
+                            boxShadow: `0 2px 8px ${color}44`,
+                          }}
+                        >
+                          {skill.name}
+                        </motion.span>
+                      )
+                    })}
+                  </div>
+                </motion.div>
+              )}
+
               <motion.button
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 3.5 }}
+                transition={{ delay: 4.0 }}
                 onClick={() => setShowAnimation(false)}
-                className="mt-8 bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-4 rounded-2xl text-xl transition-all"
+                className="mt-8 bg-purple-500 hover:bg-purple-600 text-white font-bold px-8 py-4 rounded-2xl text-xl transition-all relative z-10"
                 style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", boxShadow: '0 4px 0 #6b21a8' }}
               >
                 太棒了！
