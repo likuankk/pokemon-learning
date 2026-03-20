@@ -1,6 +1,7 @@
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import path from 'path'
+import fs from 'fs'
 import * as schema from './schema'
 
 const DB_PATH = path.join(process.cwd(), 'pokemon.db')
@@ -808,139 +809,12 @@ function seedTaskTemplates(s: any) {
 }
 
 function seedQuizQuestions(s: any) {
-  const questions = [
-    // ══════════════════════════════════════════════════════════
-    // ── 数学奥数 3-4年级 难度2（奥数入门）──────────────────────
-    // ══════════════════════════════════════════════════════════
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '找规律：2, 6, 12, 20, ?, 42', a: '30', b: '28', c: '32', d: '26', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '用1、2、3、4四个数字组成最大的四位数减去最小的四位数等于？', a: '3087', b: '3078', c: '3333', d: '2222', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '一根绳子对折3次后剪一刀，能剪成几段？', a: '9段', b: '8段', c: '7段', d: '6段', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '鸡兔同笼：共10个头，26条腿，兔有几只？', a: '3', b: '4', c: '5', d: '6', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '一个数除以5余3，除以7余2，这个数最小是多少？', a: '23', b: '18', c: '33', d: '28', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '3个人3天修3米路，9个人9天修多少米路？', a: '27米', b: '9米', c: '81米', d: '18米', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '小明比爸爸小28岁，5年后爸爸的年龄是小明的3倍，小明今年几岁？', a: '9岁', b: '10岁', c: '8岁', d: '11岁', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '一只蜗牛从10米深的井底往上爬，白天爬3米，晚上滑2米，几天能出井？', a: '8天', b: '10天', c: '9天', d: '7天', correct: 0, time: 18, cat: '奥数' },
-    // 新增 3-4年级 奥数
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '时钟3点整时，时针和分针成多少度角？', a: '90度', b: '60度', c: '120度', d: '180度', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '一个三角形三个内角之和是多少度？', a: '180度', b: '360度', c: '90度', d: '270度', correct: 0, time: 10, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '甲有36块糖，乙有12块糖，甲给乙多少块两人一样多？', a: '12块', b: '24块', c: '18块', d: '6块', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '把一张纸对折再对折，打开后有几个折痕？', a: '3个', b: '2个', c: '4个', d: '1个', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '10个小朋友站成一排，从左往右数小红排第4，从右往左数小红排第几？', a: '第7', b: '第6', c: '第8', d: '第5', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '一根铁丝围成正方形边长6cm，如果围成等边三角形边长是多少？', a: '8cm', b: '6cm', c: '10cm', d: '12cm', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '找规律：1, 1, 2, 3, 5, 8, ?', a: '13', b: '11', c: '12', d: '10', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '5只猫5分钟抓5只老鼠，100只猫100分钟抓多少只老鼠？', a: '2000只', b: '100只', c: '500只', d: '10000只', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '一个笼子里有若干只鸡和兔，共35个头，94条腿，兔有几只？', a: '12只', b: '23只', c: '15只', d: '10只', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 2, q: '把20分成两个数的和，使它们的积最大，这两个数分别是？', a: '10和10', b: '15和5', c: '12和8', d: '11和9', correct: 0, time: 15, cat: '奥数' },
-
-    // ── 数学奥数 3-4年级 难度3（奥数进阶）──────────────────────
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '一个四位数ABAB能被7整除也能被13整除，这个四位数最小是？', a: '1001', b: '1313', c: '2002', d: '1414', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '有1分、2分、5分硬币共20枚合计40分，5分硬币最多有几枚？', a: '4枚', b: '6枚', c: '5枚', d: '3枚', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '甲乙丙三人年龄之和是42，甲比乙大4岁，乙比丙大2岁，丙几岁？', a: '12岁', b: '14岁', c: '10岁', d: '16岁', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '将1~10这10个数填入○中使等式成立：○+○+○+○+○=○+○+○+○+○，每边之和是？', a: '27.5', b: '27', c: '28', d: '25', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '一楼到五楼要走80级台阶，那一楼到十楼要走多少级？', a: '180级', b: '160级', c: '200级', d: '140级', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '甲乙二人分别从AB两地同时出发相向而行，第一次相遇时甲走了全程的2/5，两人各到对方出发点后返回，第二次相遇时甲又走了多少全程？', a: '4/5', b: '3/5', c: '1/2', d: '2/3', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '数列：3, 7, 15, 31, 63, 下一个数是？', a: '127', b: '95', c: '125', d: '100', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 3, gmax: 4, diff: 3, q: '一次考试共20题，做对一题得5分，做错一题扣2分，小明得了58分，他做对了几题？', a: '14题', b: '12题', c: '16题', d: '15题', correct: 0, time: 18, cat: '奥数' },
-
-    // ══════════════════════════════════════════════════════════
-    // ── 数学奥数 5-6年级 难度2（奥数基础）──────────────────────
-    // ══════════════════════════════════════════════════════════
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '1+2+3+...+100 = ?', a: '5050', b: '5000', c: '5100', d: '4950', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '一个两位数，十位上的数是个位上的2倍，两数之和为9，这个数是？', a: '63', b: '42', c: '84', d: '36', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '甲比乙多25%，那乙比甲少百分之几？', a: '20%', b: '25%', c: '15%', d: '30%', correct: 0, time: 15, cat: '奥数' },
-    // 新增 5-6年级 难度2 奥数
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '一个数除以3余1，除以5余2，除以7余3，这个数最小是？', a: '52', b: '37', c: '22', d: '67', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '三个连续偶数之和为78，中间那个数是？', a: '26', b: '24', c: '28', d: '30', correct: 0, time: 12, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '100以内所有3的倍数之和是多少？', a: '1683', b: '1650', c: '1700', d: '1600', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '一个长方形周长48cm，长是宽的2倍，面积是多少？', a: '128cm²', b: '96cm²', c: '144cm²', d: '64cm²', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '甲乙两人共有180元，甲给乙30元后两人一样多，甲原来有多少元？', a: '120元', b: '90元', c: '150元', d: '100元', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '从1到100的自然数中，数字"1"一共出现了多少次？', a: '21次', b: '20次', c: '19次', d: '11次', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '一批货物，第一天运走1/3，第二天运走余下的1/2，还剩全部的几分之几？', a: '1/3', b: '1/6', c: '1/4', d: '1/2', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 2, q: '一个正方体展开图有几个面？', a: '6个', b: '4个', c: '8个', d: '12个', correct: 0, time: 10, cat: '奥数' },
-
-    // ── 数学奥数 5-6年级 难度3（奥数挑战）──────────────────────
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一列火车通过400米大桥用25秒，通过100米隧道用10秒，火车速度和车长？', a: '车长100米，速度20m/s', b: '车长50米，速度18m/s', c: '车长200米，速度25m/s', d: '车长150米，速度22m/s', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '甲乙两地相距360km，快车3小时到，慢车6小时到，相向而行几小时相遇？', a: '2小时', b: '3小时', c: '1.5小时', d: '4小时', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一个水池有进水管和排水管。单开进水管5小时灌满，单开排水管8小时排完。同时打开几小时灌满？', a: '40/3小时', b: '13小时', c: '10小时', d: '6.5小时', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '把1~9填入九宫格使每行每列对角线之和为15，中间那个数是？', a: '5', b: '4', c: '6', d: '3', correct: 0, time: 12, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '用6根火柴最多能摆成几个等边三角形？', a: '4个', b: '2个', c: '3个', d: '6个', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一堆苹果，第一天卖一半多1个，第二天卖余下一半多1个，还剩1个，原来多少个？', a: '10个', b: '8个', c: '12个', d: '9个', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一根木头锯成5段需要20分钟，锯成10段需要多少分钟？', a: '45分钟', b: '40分钟', c: '50分钟', d: '35分钟', correct: 0, time: 15, cat: '奥数' },
-    // 新增 5-6年级 难度3 奥数
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一个数的3倍减去5等于这个数的2倍加上7，这个数是？', a: '12', b: '8', c: '10', d: '6', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '甲乙丙三人赛跑，甲跑100米的时间乙跑90米，乙跑100米的时间丙跑80米，甲跑100米时丙跑了多少米？', a: '72米', b: '70米', c: '80米', d: '75米', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '在100到999之间，各位数字之和为5的三位数有几个？', a: '15个', b: '10个', c: '12个', d: '20个', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一件工作甲单独做要10天，乙单独做要15天，两人合做几天完成？', a: '6天', b: '5天', c: '8天', d: '7天', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '把一个分数的分子加上3，分数值等于1/2；分母减去5，分数值等于1/3。原来的分数是？', a: '2/13', b: '3/10', c: '1/8', d: '4/15', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '有5个数的平均数是8，去掉一个数后平均数变为7，去掉的数是？', a: '12', b: '10', c: '11', d: '9', correct: 0, time: 15, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一个两位数，交换个位和十位上的数字后得到的新数比原数大27，原数个位与十位的差是？', a: '3', b: '2', c: '4', d: '5', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '在自然数1~100中，能被2或3整除但不能被6整除的数有几个？', a: '50个', b: '33个', c: '67个', d: '17个', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '甲乙两个水管同时开，6小时灌满水池。甲管单独开10小时灌满，乙管单独开几小时灌满？', a: '15小时', b: '12小时', c: '20小时', d: '18小时', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一列数：1/2, 2/3, 3/5, 5/8, 8/13, 下一个数是？', a: '13/21', b: '11/18', c: '10/15', d: '13/20', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '小明走一段路，去时速度4km/h，回来时速度6km/h，来回平均速度是多少？', a: '4.8km/h', b: '5km/h', c: '5.5km/h', d: '4.5km/h', correct: 0, time: 18, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一个圆形跑道周长400米，甲乙同时同地同向出发，甲速度5m/s，乙速度3m/s，几秒后第一次相遇？', a: '200秒', b: '100秒', c: '400秒', d: '133秒', correct: 0, time: 20, cat: '奥数' },
-    { subject: '数学', gmin: 5, gmax: 6, diff: 3, q: '一个长方体，如果高增加2cm，就变成正方体，表面积增加了56cm²，原来长方体的表面积是？', a: '142cm²', b: '150cm²', c: '120cm²', d: '168cm²', correct: 0, time: 20, cat: '奥数' },
-
-    // ══════════════════════════════════════════════════════════
-    // ── 语文 3-4年级 难度1 ──────────────────────────────────
-    // ══════════════════════════════════════════════════════════
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"守株待兔"这个成语的意思是？', a: '比喻不劳而获、心存侥幸', b: '守护兔子', c: '等待好运', d: '坚持不懈', correct: 0, time: 10, cat: '成语' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"春眠不觉晓"的下一句是？', a: '处处闻啼鸟', b: '花落知多少', c: '夜来风雨声', d: '春去花还在', correct: 0, time: 8, cat: '古诗' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"欲穷千里目"的下一句是？', a: '更上一层楼', b: '一览众山小', c: '白日依山尽', d: '黄河入海流', correct: 0, time: 8, cat: '古诗' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"画蛇添足"比喻什么？', a: '做了多余的事反而不好', b: '画画技术高超', c: '小心翼翼', d: '锦上添花', correct: 0, time: 10, cat: '成语' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"海"字的部首是什么？', a: '氵（三点水）', b: '每', c: '母', d: '亻', correct: 0, time: 8, cat: '汉字' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"举头望明月"的下一句是？', a: '低头思故乡', b: '疑是地上霜', c: '床前明月光', d: '遍插茱萸少一人', correct: 0, time: 8, cat: '古诗' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"望梅止渴"中的主人公是谁？', a: '曹操', b: '刘备', c: '诸葛亮', d: '孙权', correct: 0, time: 10, cat: '成语' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"千里之行"的下一句是？', a: '始于足下', b: '不积小流', c: '功在不舍', d: '在于坚持', correct: 0, time: 8, cat: '成语' },
-
-    // ── 语文 3-4年级 难度2（阅读理解）──────────────────────────
-    { subject: '语文', gmin: 3, gmax: 4, diff: 2, q: '"塞翁失马"的故事告诉我们什么道理？', a: '祸福可以互相转化', b: '丢了马很可惜', c: '要珍惜财物', d: '不要养马', correct: 0, time: 12, cat: '阅读理解' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 2, q: '"此地无银三百两"隐含的意思是？', a: '想隐瞒反而暴露了', b: '这里没有银子', c: '银子只有三百两', d: '地下有宝藏', correct: 0, time: 12, cat: '阅读理解' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 2, q: '"纸上谈兵"的赵括为什么失败了？', a: '只懂理论不懂实战', b: '兵力不够', c: '武器不好', d: '天气原因', correct: 0, time: 12, cat: '阅读理解' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 2, q: '下列哪个不是鲁迅先生的作品？', a: '《骆驼祥子》', b: '《朝花夕拾》', c: '《呐喊》', d: '《故乡》', correct: 0, time: 12, cat: '文学' },
-
-    // ── 语文 5-6年级 难度2 ──────────────────────────────────
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '"山重水复疑无路"的下一句是？', a: '柳暗花明又一村', b: '轻舟已过万重山', c: '一片孤城万仞山', d: '烟花三月下扬州', correct: 0, time: 8, cat: '古诗' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '"沁园春·雪"的作者是？', a: '毛泽东', b: '苏轼', c: '辛弃疾', d: '李白', correct: 0, time: 8, cat: '文学' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '"感时花溅泪，恨别鸟惊心"运用了什么修辞手法？', a: '拟人', b: '比喻', c: '夸张', d: '排比', correct: 0, time: 12, cat: '修辞' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '"不入虎穴，焉得虎子"表达的意思是？', a: '不冒险就不能取得成功', b: '不能去危险的地方', c: '老虎很危险', d: '要保护虎子', correct: 0, time: 10, cat: '阅读理解' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '《水浒传》中外号"智多星"的是？', a: '吴用', b: '宋江', c: '林冲', d: '武松', correct: 0, time: 10, cat: '文学' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '下列句子中，"把"字句使用正确的是？', a: '他把作业做完了', b: '他把很高兴', c: '作业把他做', d: '把天气很好', correct: 0, time: 10, cat: '语法' },
-
-    // ── 语文 5-6年级 难度3（深度阅读理解）──────────────────────
-    { subject: '语文', gmin: 5, gmax: 6, diff: 3, q: '"世界上最远的距离，不是生与死，而是我站在你面前，你却不知道我爱你。"这句话运用了什么手法？', a: '对比/反衬', b: '比喻', c: '排比', d: '夸张', correct: 0, time: 15, cat: '阅读理解' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 3, q: '"出师未捷身先死，长使英雄泪满襟"写的是谁？', a: '诸葛亮', b: '关羽', c: '岳飞', d: '曹操', correct: 0, time: 12, cat: '古诗' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 3, q: '《西游记》中"三打白骨精"体现了孙悟空什么品质？', a: '明辨是非、坚持正义', b: '武功高强', c: '脾气暴躁', d: '不听师命', correct: 0, time: 15, cat: '阅读理解' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 3, q: '"横看成岭侧成峰"说明了什么哲理？', a: '看问题的角度不同结论不同', b: '山很高', c: '要多爬山', d: '庐山很美', correct: 0, time: 12, cat: '阅读理解' },
-
-    // ── 科学 3-4年级 难度1 ──────────────────────────────────
-    { subject: '科学', gmin: 3, gmax: 4, diff: 1, q: '水的三种状态是？', a: '固态、液态、气态', b: '冷、热、温', c: '干、湿、冰', d: '快、慢、停', correct: 0, time: 10, cat: '物理' },
-    { subject: '科学', gmin: 3, gmax: 4, diff: 1, q: '植物通过什么进行光合作用？', a: '叶子', b: '根', c: '花', d: '果实', correct: 0, time: 8, cat: '生物' },
-    { subject: '科学', gmin: 3, gmax: 4, diff: 1, q: '地球绕太阳公转一圈需要多长时间？', a: '一年', b: '一天', c: '一个月', d: '一周', correct: 0, time: 8, cat: '天文' },
-    { subject: '科学', gmin: 3, gmax: 4, diff: 1, q: '磁铁同极相遇会怎样？', a: '互相排斥', b: '互相吸引', c: '没有反应', d: '消失', correct: 0, time: 8, cat: '物理' },
-    { subject: '科学', gmin: 3, gmax: 4, diff: 1, q: '人体最大的器官是什么？', a: '皮肤', b: '心脏', c: '肝脏', d: '肺', correct: 0, time: 8, cat: '生物' },
-
-    // ── 科学 5-6年级 难度2 ──────────────────────────────────
-    { subject: '科学', gmin: 5, gmax: 6, diff: 2, q: '声音在哪种介质中传播最快？', a: '固体', b: '液体', c: '气体', d: '真空', correct: 0, time: 10, cat: '物理' },
-    { subject: '科学', gmin: 5, gmax: 6, diff: 2, q: '月食发生时，地球在太阳和月球之间的什么位置？', a: '中间', b: '最远处', c: '旁边', d: '上方', correct: 0, time: 12, cat: '天文' },
-    { subject: '科学', gmin: 5, gmax: 6, diff: 2, q: '以下哪种能源是可再生的？', a: '太阳能', b: '煤炭', c: '石油', d: '天然气', correct: 0, time: 10, cat: '常识' },
-    { subject: '科学', gmin: 5, gmax: 6, diff: 2, q: '杠杆原理中，要省力应该把支点放在哪里？', a: '靠近重物', b: '靠近手', c: '中间', d: '最远处', correct: 0, time: 12, cat: '物理' },
-    { subject: '科学', gmin: 5, gmax: 6, diff: 2, q: '人体血液循环的中心器官是？', a: '心脏', b: '大脑', c: '肝脏', d: '肺', correct: 0, time: 8, cat: '生物' },
-    { subject: '科学', gmin: 5, gmax: 6, diff: 2, q: '彩虹是由什么现象形成的？', a: '光的折射和反射', b: '光的直线传播', c: '光的吸收', d: '光的衍射', correct: 0, time: 10, cat: '物理' },
-
-    // ── 语文 补充题──────────────────────────────────
-    { subject: '语文', gmin: 3, gmax: 6, diff: 1, q: '"日出江花红胜火"的下一句是？', a: '春来江水绿如蓝', b: '能不忆江南', c: '风景旧曾谙', d: '江南好', correct: 0, time: 8, cat: '古诗' },
-    { subject: '语文', gmin: 3, gmax: 6, diff: 1, q: '"破釜沉舟"的主人公是谁？', a: '项羽', b: '刘邦', c: '韩信', d: '张良', correct: 0, time: 10, cat: '成语' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 2, q: '"但愿人长久，千里共婵娟"中"婵娟"指的是？', a: '月亮', b: '美女', c: '太阳', d: '星星', correct: 0, time: 10, cat: '古诗' },
-    { subject: '语文', gmin: 5, gmax: 6, diff: 3, q: '鲁迅说"横眉冷对千夫指，俯首甘为孺子牛"，"孺子牛"体现了什么精神？', a: '甘愿为人民服务的精神', b: '耕牛精神', c: '反抗精神', d: '谦虚谨慎', correct: 0, time: 15, cat: '阅读理解' },
-    { subject: '语文', gmin: 4, gmax: 6, diff: 2, q: '"刻舟求剑"讽刺的是什么人？', a: '不知变通的人', b: '爱护武器的人', c: '善于思考的人', d: '勤劳勇敢的人', correct: 0, time: 10, cat: '阅读理解' },
-    { subject: '语文', gmin: 3, gmax: 4, diff: 1, q: '"两岸猿声啼不住"的下一句是？', a: '轻舟已过万重山', b: '千里江陵一日还', c: '朝辞白帝彩云间', d: '黄河之水天上来', correct: 0, time: 8, cat: '古诗' },
-  ]
-
+  const jsonPath = path.join(__dirname, 'quiz-questions.json')
+  const quizQuestions: { subject: string; gmin: number; gmax: number; diff: number; q: string; a: string; b: string; c: string; d: string; correct: number; time: number; cat: string }[] = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
   const stmt = s.prepare(
     'INSERT INTO quiz_questions (subject, grade_min, grade_max, difficulty, question, option_a, option_b, option_c, option_d, correct_index, time_limit, category) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
   )
-  for (const q of questions) {
+  for (const q of quizQuestions) {
     stmt.run(q.subject, q.gmin, q.gmax, q.diff, q.q, q.a, q.b, q.c, q.d, q.correct, q.time, q.cat)
   }
 }

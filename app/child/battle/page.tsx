@@ -96,6 +96,9 @@ export default function BattlePage() {
   const [quizCombo, setQuizCombo] = useState(0)
   const [quizTimer, setQuizTimer] = useState(0)
 
+  // Pending skill (user clicked a skill, quiz is shown, after answering auto-attack)
+  const [pendingSkillId, setPendingSkillId] = useState<string | null>(null)
+
   // Tactic state
   const [showTactics, setShowTactics] = useState(false)
   const [canTactic, setCanTactic] = useState(false)
@@ -153,13 +156,13 @@ export default function BattlePage() {
       setQuizCombo(0)
       setQuizAnswer(null)
       setQuizPhase('none')
+      setPendingSkillId(null)
       setCanTactic(false)
       setShowTactics(false)
       setPhase('encounter')
 
-      // Short delay then go to battle, loading quiz first
-      setTimeout(async () => {
-        await fetchQuiz(regionId)
+      // Short delay then go to battle (no quiz preload — quiz shows after clicking a skill)
+      setTimeout(() => {
         setPhase('battle')
       }, 1500)
     } catch (e) {
@@ -188,16 +191,17 @@ export default function BattlePage() {
 
   // ── Battle Action ──────────────────────────────────────────────────────
 
-  const doBattleAction = async (action: string, skillId?: string, ballType?: string, tactic?: string) => {
+  const doBattleAction = async (action: string, skillId?: string, ballType?: string, tactic?: string, directQuizResult?: { correct: boolean; fast: boolean } | null) => {
     if (!battleData || actionLoading || battleResult) return
     setActionLoading(true)
     try {
       const reqBody: any = { battleId: battleData.battleId, action, skillId, ballType, tactic }
 
-      // Include quiz result for skill actions
-      if (action === 'skill' && quizAnswer !== null) {
-        reqBody.quizCorrect = quizAnswer.correct
-        reqBody.quizFast = quizAnswer.fast
+      // Include quiz result for skill actions (prefer direct param, fallback to state)
+      const qr = directQuizResult !== undefined ? directQuizResult : quizAnswer
+      if (action === 'skill' && qr !== null && qr !== undefined) {
+        reqBody.quizCorrect = qr.correct
+        reqBody.quizFast = qr.fast
       }
 
       const res = await fetch('/api/battle/action', {
@@ -327,14 +331,12 @@ export default function BattlePage() {
         return // Skip finally's setActionLoading(false)
       }
 
-      // Load next quiz for next round
+      // Load next quiz for next round — no longer auto-fetch;
+      // quiz will be fetched when user clicks a skill
       setQuizAnswer(null)
       setQuizPhase('none')
+      setPendingSkillId(null)
       setShowTactics(false)
-      if (battleData) {
-        // Small delay then show quiz
-        setTimeout(() => fetchQuiz(battleData.region || 1), 300)
-      }
     } catch (e) {
       showToast('行动失败', 'error')
     } finally {
@@ -445,8 +447,37 @@ export default function BattlePage() {
             onAction={doBattleAction} actionLoading={actionLoading}
             quizQuestion={quizQuestion} quizPhase={quizPhase} quizCombo={quizCombo}
             quizTimer={quizTimer}
-            onQuizAnswer={(correct: boolean, fast: boolean) => { setQuizAnswer({ correct, fast }); setQuizPhase('result') }}
-            onQuizSkip={() => { setQuizAnswer(null); setQuizPhase('none') }}
+            onQuizAnswer={(correct: boolean, fast: boolean) => {
+              const quizResult = { correct, fast }
+              setQuizAnswer(quizResult)
+              setQuizPhase('result')
+              // Auto-execute the pending skill after quiz answer
+              if (pendingSkillId) {
+                const sid = pendingSkillId
+                setPendingSkillId(null)
+                setTimeout(() => {
+                  doBattleAction('skill', sid, undefined, undefined, quizResult)
+                }, 800)
+              }
+            }}
+            onQuizSkip={() => {
+              setQuizAnswer(null)
+              setQuizPhase('none')
+              // Auto-execute the pending skill even when skipped (no quiz bonus)
+              if (pendingSkillId) {
+                const sid = pendingSkillId
+                setPendingSkillId(null)
+                setTimeout(() => {
+                  doBattleAction('skill', sid, undefined, undefined, null)
+                }, 300)
+              }
+            }}
+            onSkillClick={async (skillId: string) => {
+              setPendingSkillId(skillId)
+              // Fetch quiz and show it
+              await fetchQuiz(battleData.region || 1)
+            }}
+            pendingSkillId={pendingSkillId}
             canTactic={canTactic} showTactics={showTactics} setShowTactics={setShowTactics}
           />
         )}
@@ -665,7 +696,7 @@ function EncounterView({ wild, isBoss }: { wild: WildPokemon; isBoss: boolean })
 function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, wildMaxHP,
   battleLog, roundNum, balls, onAction, actionLoading,
   quizQuestion, quizPhase, quizCombo, quizTimer,
-  onQuizAnswer, onQuizSkip,
+  onQuizAnswer, onQuizSkip, onSkillClick, pendingSkillId,
   canTactic, showTactics, setShowTactics }: {
   battleData: BattleData; activePokemon: PokemonInfo
   playerHP: number; playerMaxHP: number; wildHP: number; wildMaxHP: number
@@ -675,6 +706,8 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
   quizQuestion: any; quizPhase: 'none' | 'answering' | 'result'; quizCombo: number; quizTimer: number
   onQuizAnswer: (correct: boolean, fast: boolean) => void
   onQuizSkip: () => void
+  onSkillClick: (skillId: string) => void
+  pendingSkillId: string | null
   canTactic: boolean; showTactics: boolean; setShowTactics: (v: boolean) => void
 }) {
   const [showBalls, setShowBalls] = useState(false)
@@ -839,7 +872,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
       {/* Action Panel */}
       <div className="space-y-2">
         {/* Tactic chooser (shows every 3 rounds) */}
-        {canTactic && !showTactics && quizPhase !== 'answering' && (
+        {canTactic && !showTactics && quizPhase !== 'answering' && !pendingSkillId && (
           <motion.button
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             onClick={() => setShowTactics(true)}
@@ -876,13 +909,13 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
           </motion.div>
         )}
 
-        {/* Skills - only show when not in quiz and not choosing tactics */}
-        {!showTactics && quizPhase !== 'answering' && (
+        {/* Skills - only show when not in quiz, not choosing tactics, and no pending skill */}
+        {!showTactics && quizPhase !== 'answering' && !pendingSkillId && (
           <>
             <div className="grid grid-cols-2 gap-2">
               {activePokemon.skills.map(skill => (
                 <button key={skill.id}
-                  onClick={() => onAction('skill', skill.id)}
+                  onClick={() => onSkillClick(skill.id)}
                   disabled={actionLoading || skill.currentPP <= 0}
                   className="p-3 rounded-xl text-white font-bold text-left disabled:opacity-40 transition hover:brightness-110"
                   style={{
