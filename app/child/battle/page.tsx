@@ -451,13 +451,13 @@ export default function BattlePage() {
               const quizResult = { correct, fast }
               setQuizAnswer(quizResult)
               setQuizPhase('result')
-              // Auto-execute the pending skill after quiz answer
+              // Auto-execute the pending skill after quiz + explanation
               if (pendingSkillId) {
                 const sid = pendingSkillId
                 setPendingSkillId(null)
                 setTimeout(() => {
                   doBattleAction('skill', sid, undefined, undefined, quizResult)
-                }, 800)
+                }, 300)
               }
             }}
             onQuizSkip={() => {
@@ -528,7 +528,7 @@ function MapView({ energy, regions, activePokemon, balls, pokedex, team, onEncou
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <h1 className="text-3xl font-bold text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           ⚔️ 宝可梦战斗
         </h1>
         <div className="flex items-center gap-4">
@@ -547,7 +547,7 @@ function MapView({ energy, regions, activePokemon, balls, pokedex, team, onEncou
           <img src={HOME_SPRITE(activePokemon.speciesId)} alt={activePokemon.name} width={80} height={80}
             style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
           <div>
-            <p className="text-white font-bold text-xl" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            <p className="text-white font-bold text-xl" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
               {activePokemon.name}
               <span className="ml-2 text-teal-300 text-lg">Lv.{activePokemon.battleLevel}</span>
             </p>
@@ -562,12 +562,12 @@ function MapView({ energy, regions, activePokemon, balls, pokedex, team, onEncou
           <div className="ml-auto flex gap-2">
             <button onClick={onShop}
               className="px-4 py-2 rounded-xl font-bold text-white hover:opacity-80 transition"
-              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
               🛒 商店
             </button>
             <button onClick={onTeam}
               className="px-4 py-2 rounded-xl font-bold text-white hover:opacity-80 transition"
-              style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
               🎒 队伍
             </button>
           </div>
@@ -592,7 +592,7 @@ function MapView({ energy, regions, activePokemon, balls, pokedex, team, onEncou
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{region.emoji}</span>
                   <div>
-                    <p className="text-white font-bold text-lg" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    <p className="text-white font-bold text-lg" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                       {region.name}
                     </p>
                     <p className="text-gray-400 text-sm">
@@ -610,26 +610,26 @@ function MapView({ energy, regions, activePokemon, balls, pokedex, team, onEncou
                     <>
                       <button onClick={() => onEncounter(region.id)} disabled={actionLoading || energy.current < 1}
                         className="px-5 py-3 rounded-xl font-bold text-white disabled:opacity-40 transition hover:brightness-110"
-                        style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                        style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                         ⚔️ 战斗
                       </button>
                       {!region.eliteDefeated && (
                         <button onClick={() => onEncounter(region.id, false, true)} disabled={actionLoading || energy.current < 1}
                           className="px-4 py-3 rounded-xl font-bold text-white disabled:opacity-40 transition hover:brightness-110"
-                          style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.85rem' }}>
+                          style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '0.85rem' }}>
                           精英
                         </button>
                       )}
                       {region.eliteDefeated && !region.bossDefeated && (
                         <button onClick={() => onEncounter(region.id, true)} disabled={actionLoading || energy.current < 1}
                           className="px-4 py-3 rounded-xl font-bold text-white disabled:opacity-40 transition hover:brightness-110"
-                          style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)', fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.85rem' }}>
+                          style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '0.85rem' }}>
                           BOSS
                         </button>
                       )}
                     </>
                   ) : (
-                    <span className="px-5 py-3 rounded-xl font-bold text-gray-500" style={{ background: 'rgba(255,255,255,0.05)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    <span className="px-5 py-3 rounded-xl font-bold text-gray-500" style={{ background: 'rgba(255,255,255,0.05)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                       🔒 需{region.unlockWins}胜
                     </span>
                   )}
@@ -646,7 +646,7 @@ function MapView({ energy, regions, activePokemon, balls, pokedex, team, onEncou
         <span>🔵 超级球 ×{balls.greatball || 0}</span>
         <span>🟡 高级球 ×{balls.ultraball || 0}</span>
         <span>🟣 大师球 ×{balls.masterball || 0}</span>
-        <button onClick={onPokedex} className="ml-auto hover:text-white transition cursor-pointer" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <button onClick={onPokedex} className="ml-auto hover:text-white transition cursor-pointer" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           📖 图鉴 {pokedex.discovered}/{pokedex.total}
         </button>
       </div>
@@ -674,7 +674,7 @@ function EncounterView({ wild, isBoss }: { wild: WildPokemon; isBoss: boolean })
       <motion.p
         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
         className="text-2xl font-bold mt-4"
-        style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+        style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}
       >
         {isBoss ? '🔥 ' : ''}野生 {wild.name} 出现了！
       </motion.p>
@@ -757,7 +757,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
             style={{
               background: effectText.includes('拔群') ? 'linear-gradient(135deg, #EF4444, #F97316)' : 'rgba(107,114,128,0.8)',
               color: 'white',
-              fontFamily: "'ZCOOL KuaiLe', sans-serif",
+              fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
               textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
             }}
           >
@@ -768,7 +768,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
 
       {/* Header with combo */}
       <div className="flex items-center justify-between text-sm mb-2">
-        <span className="text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <span className="text-gray-400" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           {battleData.isBoss ? '🔥 ' : ''}第 {roundNum} 回合
         </span>
         {quizCombo >= 2 && (
@@ -781,7 +781,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
               background: quizCombo >= 10 ? 'linear-gradient(135deg, #F59E0B, #EF4444)' :
                 quizCombo >= 5 ? 'rgba(234,179,8,0.4)' : 'rgba(168,85,247,0.4)',
               color: quizCombo >= 10 ? '#fff' : quizCombo >= 5 ? '#FEF08A' : '#E9D5FF',
-              fontFamily: "'ZCOOL KuaiLe', sans-serif",
+              fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
             }}
           >
             🔥 {quizCombo}连击
@@ -801,7 +801,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
             style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-white font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              <span className="text-white font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                 野生 {wild.name}
               </span>
               <span className="text-gray-400 text-sm">Lv.{wild.level}</span>
@@ -824,7 +824,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
       </motion.div>
 
       {/* VS divider */}
-      <div className="text-center text-gray-600 text-xs mb-2" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+      <div className="text-center text-gray-600 text-xs mb-2" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
         ─── ⚔️ VS ⚔️ ───
       </div>
 
@@ -840,7 +840,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
             style={{ filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.5))' }} />
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-white font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              <span className="text-white font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                 {activePokemon.name}
               </span>
               <span className="text-teal-300 text-sm">Lv.{activePokemon.battleLevel}</span>
@@ -856,7 +856,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
       <div className="flex-1 rounded-xl p-3 mb-3 overflow-y-auto max-h-32" style={{ background: 'rgba(0,0,0,0.3)' }}>
         {battleLog.slice(-5).map((log, i) => (
           <motion.p key={i} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
-            className="text-gray-300 text-sm mb-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            className="text-gray-300 text-sm mb-1" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             {log}
           </motion.p>
         ))}
@@ -877,7 +877,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             onClick={() => setShowTactics(true)}
             className="w-full p-3 rounded-xl font-bold text-white text-center transition hover:brightness-110"
-            style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, #6D28D9)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}
           >
             ⚡ 可以选择战术！点击查看
           </motion.button>
@@ -895,7 +895,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
                 onClick={() => { onAction('tactic', undefined, undefined, t.type); setShowTactics(false) }}
                 disabled={actionLoading}
                 className="p-3 rounded-xl text-white font-bold text-left disabled:opacity-40 transition hover:brightness-110"
-                style={{ background: 'rgba(139,92,246,0.3)', border: '1px solid rgba(139,92,246,0.5)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+                style={{ background: 'rgba(139,92,246,0.3)', border: '1px solid rgba(139,92,246,0.5)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}
               >
                 <span className="text-base">{t.emoji} {t.label}</span>
                 <p className="text-xs mt-0.5 opacity-70">{t.desc}</p>
@@ -903,7 +903,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
             ))}
             <button onClick={() => setShowTactics(false)}
               className="col-span-2 p-2 rounded-xl text-gray-400 text-sm hover:text-white transition"
-              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
               跳过战术，直接使用技能
             </button>
           </motion.div>
@@ -921,7 +921,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
                   style={{
                     background: `linear-gradient(135deg, ${TYPE_COLORS[skill.type] || '#6B7280'}88, ${TYPE_COLORS[skill.type] || '#6B7280'}44)`,
                     border: `1px solid ${TYPE_COLORS[skill.type] || '#6B7280'}66`,
-                    fontFamily: "'ZCOOL KuaiLe', sans-serif",
+                    fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
                   }}
                 >
                   <span className="text-base">{skill.name}</span>
@@ -938,7 +938,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
               {!showBalls ? (
                 <button onClick={() => setShowBalls(true)} disabled={actionLoading}
                   className="flex-1 p-3 rounded-xl font-bold text-white transition hover:brightness-110"
-                  style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                   🔴 投精灵球
                 </button>
               ) : (
@@ -951,13 +951,13 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
                       <button key={bt} onClick={() => { onAction('capture', undefined, bt); setShowBalls(false) }}
                         disabled={actionLoading}
                         className="flex-1 p-2 rounded-lg font-bold text-white text-xs transition hover:brightness-110"
-                        style={{ background: 'rgba(239,68,68,0.5)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                        style={{ background: 'rgba(239,68,68,0.5)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                         {emojis[bt]} {names[bt]} ×{qty}
                       </button>
                     ) : null
                   })}
                   {Object.values(balls).every(qty => !qty || qty <= 0) && (
-                    <span className="text-gray-400 text-xs flex-1 text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    <span className="text-gray-400 text-xs flex-1 text-center" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                       没有精灵球了！去商店购买吧
                     </span>
                   )}
@@ -967,7 +967,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
               )}
               <button onClick={() => onAction('flee')} disabled={actionLoading}
                 className="px-6 p-3 rounded-xl font-bold text-gray-300 transition hover:text-white"
-                style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                 🏃 逃跑
               </button>
             </div>
@@ -1047,7 +1047,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
         <motion.span
           initial={{ y: -10, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}
           className="inline-block px-4 py-1.5 rounded-full font-bold text-white text-sm mb-3"
-          style={{ background: resultConfig.tagBg, fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+          style={{ background: resultConfig.tagBg, fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}
         >
           {resultConfig.tag}
         </motion.span>
@@ -1062,18 +1062,18 @@ function ResultView({ result, wild, pokemon, onReturn }: {
         </motion.div>
 
         {/* Title */}
-        <h2 className="text-3xl font-bold mb-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", color: resultConfig.titleColor }}>
+        <h2 className="text-3xl font-bold mb-1" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", color: resultConfig.titleColor }}>
           {resultConfig.title}
         </h2>
 
         {/* Subtitle */}
-        <p className="text-lg opacity-80" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <p className="text-lg opacity-80" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           {resultConfig.subtitle}
         </p>
 
         {/* Capture rate info */}
         {isCaptured && result.captureRate && (
-          <p className="text-sm mt-2 opacity-60" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <p className="text-sm mt-2 opacity-60" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             捕获率: {Math.round(result.captureRate * 100)}%
           </p>
         )}
@@ -1083,7 +1083,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
       {result.message && (
         <motion.p
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
-          className="text-gray-300 text-lg mb-4 text-center max-w-sm" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+          className="text-gray-300 text-lg mb-4 text-center max-w-sm" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}
         >
           {result.message}
         </motion.p>
@@ -1093,7 +1093,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
       {(isWin || isCaptured) && result.rewards && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
           className="rounded-2xl p-4 mb-4 w-full max-w-sm" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}>
-          <p className="font-bold mb-2 text-center text-yellow-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>🎁 获得奖励</p>
+          <p className="font-bold mb-2 text-center text-yellow-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>🎁 获得奖励</p>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <span>⭐ 经验 +{result.rewards.exp}</span>
             <span>🍬 星星糖 +{result.rewards.candy}</span>
@@ -1108,7 +1108,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
           className="rounded-2xl p-4 mb-4 w-full max-w-sm text-center"
           style={{ background: 'linear-gradient(135deg, rgba(234,179,8,0.3), rgba(245,158,11,0.3))', border: '1px solid rgba(234,179,8,0.4)' }}>
-          <p className="text-xl font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <p className="text-xl font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             🎊 升级！Lv.{result.levelUp.oldLevel} → Lv.{result.levelUp.newLevel}
           </p>
         </motion.div>
@@ -1118,7 +1118,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
       {result.newSkills?.length > 0 && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }}
           className="text-center mb-4">
-          <p className="font-bold text-teal-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <p className="font-bold text-teal-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             ✨ 学会了新技能：{result.newSkills.join('、')}
           </p>
         </motion.div>
@@ -1129,7 +1129,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
         <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.6 }}
           className="rounded-2xl p-4 mb-4 w-full max-w-sm text-center"
           style={{ background: 'linear-gradient(135deg, rgba(168,85,247,0.3), rgba(139,92,246,0.3))', border: '1px solid rgba(168,85,247,0.4)' }}>
-          <p className="text-lg font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <p className="text-lg font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             🏆 BOSS击败奖励！
           </p>
           <p className="text-sm text-gray-300 mt-1">{result.bossRewards.description}</p>
@@ -1141,10 +1141,10 @@ function ResultView({ result, wild, pokemon, onReturn }: {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}
           className="rounded-2xl p-4 mb-4 w-full max-w-sm"
           style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
-          <p className="font-bold mb-2 text-center text-indigo-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <p className="font-bold mb-2 text-center text-indigo-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             📝 答题统计
           </p>
-          <div className="grid grid-cols-2 gap-2 text-sm text-gray-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <div className="grid grid-cols-2 gap-2 text-sm text-gray-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             <span>📊 答题数: {result.quizStats.totalAnswered}</span>
             <span>✅ 正确数: {result.quizStats.totalCorrect}</span>
             <span>🎯 正确率: {Math.round((result.quizStats.totalCorrect / result.quizStats.totalAnswered) * 100)}%</span>
@@ -1154,7 +1154,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
             <motion.p
               initial={{ scale: 0.9 }} animate={{ scale: 1 }}
               className="text-center mt-2 text-yellow-300 font-bold text-sm"
-              style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
               🌟 学霸加成！知识就是力量！
             </motion.p>
           )}
@@ -1166,7 +1166,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
           className="rounded-2xl p-4 mb-4 w-full max-w-sm text-center"
           style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}>
-          <p className="font-bold text-blue-300" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          <p className="font-bold text-blue-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             💪 多完成学习任务来变强吧！
           </p>
         </motion.div>
@@ -1174,7 +1174,7 @@ function ResultView({ result, wild, pokemon, onReturn }: {
 
       <button onClick={onReturn}
         className="mt-4 px-8 py-3 rounded-xl font-bold text-white transition hover:brightness-110"
-        style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+        style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '1.2rem' }}>
         返回地图 ({countdown}s)
       </button>
     </motion.div>
@@ -1192,12 +1192,12 @@ function TeamView({ team, onSwitch, onRelease, onBack }: {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="p-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           🎒 我的队伍
         </h2>
         <button onClick={onBack}
           className="px-4 py-2 rounded-xl font-bold text-gray-300 hover:text-white transition"
-          style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           ← 返回
         </button>
       </div>
@@ -1214,7 +1214,7 @@ function TeamView({ team, onSwitch, onRelease, onBack }: {
               style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.4))' }} />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-white font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{poke.name}</span>
+                <span className="text-white font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>{poke.name}</span>
                 <span className="text-teal-300 text-sm">Lv.{poke.battleLevel}</span>
                 {poke.isActive && <span className="text-xs px-2 py-0.5 rounded bg-teal-600/50 text-teal-200">出战中</span>}
                 {poke.source === 'captured' && <span className="text-xs px-2 py-0.5 rounded bg-purple-600/30 text-purple-300">野生</span>}
@@ -1231,13 +1231,13 @@ function TeamView({ team, onSwitch, onRelease, onBack }: {
               <div className="flex gap-2">
                 <button onClick={() => onSwitch(poke.id)}
                   className="px-4 py-2 rounded-xl font-bold text-white text-sm transition hover:brightness-110"
-                  style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                  style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                   出战
                 </button>
                 {poke.source === 'captured' && (
                   <button onClick={() => onRelease(poke.id)}
                     className="px-3 py-2 rounded-xl font-bold text-red-300 text-sm transition hover:text-red-200"
-                    style={{ background: 'rgba(239,68,68,0.2)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    style={{ background: 'rgba(239,68,68,0.2)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                     释放
                   </button>
                 )}
@@ -1281,12 +1281,12 @@ function PokedexView({ onBack }: { onBack: () => void }) {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="p-6 max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           📖 宝可梦图鉴
         </h2>
         <button onClick={onBack}
           className="px-4 py-2 rounded-xl font-bold text-gray-300 hover:text-white transition"
-          style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           ← 返回
         </button>
       </div>
@@ -1305,13 +1305,13 @@ function PokedexView({ onBack }: { onBack: () => void }) {
       <div className="flex gap-2 mb-4 flex-wrap">
         <button onClick={() => setFilter(0)}
           className={`px-3 py-1 rounded-lg text-sm font-bold transition ${filter === 0 ? 'text-white' : 'text-gray-400'}`}
-          style={{ background: filter === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          style={{ background: filter === 0 ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           全部
         </button>
         {[1, 2, 3, 4, 5, 6].map(r => (
           <button key={r} onClick={() => setFilter(r)}
             className={`px-3 py-1 rounded-lg text-sm font-bold transition ${filter === r ? 'text-white' : 'text-gray-400'}`}
-            style={{ background: filter === r ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+            style={{ background: filter === r ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.05)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
             {REGION_NAMES[r]}
           </button>
         ))}
@@ -1341,7 +1341,7 @@ function PokedexView({ onBack }: { onBack: () => void }) {
               )}
               <p className="text-xs mt-1 truncate" style={{
                 color: sp.discovered ? '#fff' : '#4B5563',
-                fontFamily: "'ZCOOL KuaiLe', sans-serif",
+                fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
               }}>
                 {sp.discovered ? sp.name : '???'}
               </p>
@@ -1376,17 +1376,17 @@ function ShopView({ balls, onBuy, onBack }: {
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="p-6 max-w-2xl mx-auto">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <h2 className="text-2xl font-bold text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           🛒 精灵球商店
         </h2>
         <button onClick={onBack}
           className="px-4 py-2 rounded-xl font-bold text-gray-300 hover:text-white transition"
-          style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+          style={{ background: 'rgba(255,255,255,0.1)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           ← 返回
         </button>
       </div>
 
-      <p className="text-gray-400 mb-4" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+      <p className="text-gray-400 mb-4" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
         使用星星糖购买精灵球来收服野生宝可梦！
       </p>
 
@@ -1397,7 +1397,7 @@ function ShopView({ balls, onBuy, onBack }: {
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <span className="text-4xl">{item.emoji}</span>
             <div className="flex-1">
-              <p className="text-white font-bold text-lg" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+              <p className="text-white font-bold text-lg" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                 {item.name}
                 <span className="text-gray-400 text-sm ml-2">收服倍率 {item.mult}</span>
               </p>
@@ -1407,12 +1407,12 @@ function ShopView({ balls, onBuy, onBack }: {
             <div className="flex gap-2">
               <button onClick={() => onBuy(item.type, 1)}
                 className="px-4 py-2 rounded-xl font-bold text-white text-sm transition hover:brightness-110"
-                style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                style={{ background: 'linear-gradient(135deg, #10B981, #059669)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                 买1个
               </button>
               <button onClick={() => onBuy(item.type, 5)}
                 className="px-4 py-2 rounded-xl font-bold text-white text-sm transition hover:brightness-110"
-                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                style={{ background: 'linear-gradient(135deg, #F59E0B, #D97706)', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
                 买5个
               </button>
             </div>
@@ -1421,7 +1421,7 @@ function ShopView({ balls, onBuy, onBack }: {
       </div>
 
       <div className="mt-6 rounded-xl p-3 text-center" style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.3)' }}>
-        <p className="text-purple-300 text-sm" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+        <p className="text-purple-300 text-sm" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
           🟣 大师球无法购买，只能通过击败最终BOSS获得（100%收服率）
         </p>
       </div>
@@ -1434,7 +1434,7 @@ function ShopView({ balls, onBuy, onBack }: {
 // ════════════════════════════════════════════════════════════════════════════
 
 function QuizOverlay({ question, timer, onAnswer, onSkip }: {
-  question: { id: number; subject: string; question: string; options: string[]; timeLimit: number; category?: string; difficulty: number }
+  question: { id: number; subject: string; question: string; options: string[]; timeLimit: number; category?: string; difficulty: number; correctIndex: number }
   timer: number
   onAnswer: (correct: boolean, fast: boolean) => void
   onSkip: () => void
@@ -1444,8 +1444,160 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
   const [selected, setSelected] = useState<number | null>(null)
   const [correctIdx, setCorrectIdx] = useState<number | null>(null)
   const [answered, setAnswered] = useState(false)
+  const [quizCorrect, setQuizCorrect] = useState(false)
+  const [quizFast, setQuizFast] = useState(false)
   const startTimeRef = useRef(Date.now())
   const rafRef = useRef<number | null>(null)
+
+  // AI explanation state
+  const [explainPhase, setExplainPhase] = useState<'none' | 'loading' | 'streaming' | 'done'>('none')
+  const [explanation, setExplanation] = useState('')
+  const explainScrollRef = useRef<HTMLDivElement>(null)
+
+  // Preloaded AI explanation — starts when question loads, before child answers
+  const preloadedExplanationRef = useRef<string>('')
+  const preloadDoneRef = useRef(false)
+  const preloadAbortRef = useRef<AbortController | null>(null)
+
+  // TTS (Text-to-Speech) state
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null)
+  const bestVoiceRef = useRef<SpeechSynthesisVoice | null>(null)
+
+  // Pre-select the best Chinese voice as soon as voices are loaded
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+
+    const pickBestVoice = () => {
+      const voices = window.speechSynthesis.getVoices()
+      const zhVoices = voices.filter(v => v.lang === 'zh-CN' || v.lang.startsWith('zh'))
+      if (zhVoices.length === 0) return
+
+      // Debug: log all available Chinese voices so we can see exact names
+      console.log('[TTS] Available zh voices:', zhVoices.map(v =>
+        `${v.name} (${v.lang})${v.default ? ' [DEFAULT]' : ''}`
+      ))
+
+      // Respect the user's system default voice — they chose it for a reason
+      const systemDefault = zhVoices.find(v => v.default)
+
+      // Generic/novelty voices we'd rather skip (unless user explicitly set them as default)
+      const genericVoices = /Eddy|Flo|Grandma|Grandpa|Sandy|Shelley|Reed|Rocko|Ralph/i
+
+      // If the system default is a real voice (not a generic novelty), use it directly
+      if (systemDefault && !genericVoices.test(systemDefault.name)) {
+        bestVoiceRef.current = systemDefault
+        console.log('[TTS] Using system default voice:', systemDefault.name, systemDefault.lang)
+        return
+      }
+
+      // Otherwise, fall back to our own ranking:
+      // 1st: Known high-quality Apple Chinese voices (enhanced variant)
+      // 2nd: Known high-quality Apple Chinese voices (standard)
+      // 3rd: Any premium/enhanced/neural voice (excluding generic)
+      // 4th: Any non-generic voice
+      // 5th: Whatever is available
+      const preferredNames = [
+        'Tingting', 'Lili', 'Shanshan', 'Meijia', 'Sinji',
+        'Yu-shu', 'Li-mu',
+      ]
+      const preferredChinese = ['婷婷', '莉莉', '珊珊', '美佳', '月']
+
+      const isPreferred = (v: SpeechSynthesisVoice) =>
+        preferredNames.some(name => v.name.includes(name)) ||
+        preferredChinese.some(name => v.name.includes(name))
+
+      const appleEnhanced = zhVoices.find(v =>
+        isPreferred(v) && /premium|enhanced/i.test(v.name)
+      )
+      const appleStandard = zhVoices.find(v => isPreferred(v))
+      const otherPremium = zhVoices.find(v =>
+        /premium|enhanced|natural|neural/i.test(v.name) &&
+        !genericVoices.test(v.name)
+      )
+      const nonGeneric = zhVoices.find(v => !genericVoices.test(v.name))
+
+      bestVoiceRef.current = appleEnhanced || appleStandard || otherPremium || nonGeneric || zhVoices[0]
+
+      if (bestVoiceRef.current) {
+        console.log('[TTS] Selected voice:', bestVoiceRef.current.name, bestVoiceRef.current.lang)
+      }
+    }
+
+    // Try immediately (works on Firefox/some browsers)
+    pickBestVoice()
+    // Also listen for async voice loading (Chrome, Safari)
+    window.speechSynthesis.addEventListener('voiceschanged', pickBestVoice)
+    return () => {
+      window.speechSynthesis.removeEventListener('voiceschanged', pickBestVoice)
+    }
+  }, [])
+
+  // === Preload AI explanation as soon as question loads ===
+  const preloadExplanation = async () => {
+    // Abort previous preload if any
+    if (preloadAbortRef.current) {
+      preloadAbortRef.current.abort()
+    }
+    const abortController = new AbortController()
+    preloadAbortRef.current = abortController
+    preloadedExplanationRef.current = ''
+    preloadDoneRef.current = false
+
+    try {
+      const res = await fetch('/api/quiz/explain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: question.question,
+          options: question.options,
+          correctIndex: question.correctIndex,
+          // No userAnswerIndex — triggers preload mode on backend
+          subject: question.subject,
+          category: question.category,
+        }),
+        signal: abortController.signal,
+      })
+
+      if (!res.ok || !res.body) {
+        preloadDoneRef.current = true
+        return
+      }
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        if (abortController.signal.aborted) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const data = line.slice(6).trim()
+          if (data === '[DONE]') continue
+          try {
+            const parsed = JSON.parse(data)
+            if (parsed.text) {
+              preloadedExplanationRef.current += parsed.text
+            }
+          } catch {
+            // skip
+          }
+        }
+      }
+      preloadDoneRef.current = true
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') {
+        preloadDoneRef.current = true
+      }
+    }
+  }
 
   useEffect(() => {
     startTimeRef.current = Date.now()
@@ -1453,6 +1605,24 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
     setSelected(null)
     setCorrectIdx(null)
     setAnswered(false)
+    setExplainPhase('none')
+    setExplanation('')
+    setQuizCorrect(false)
+    setQuizFast(false)
+    setIsSpeaking(false)
+    preloadedExplanationRef.current = ''
+    preloadDoneRef.current = false
+
+    // Stop any ongoing speech when question changes
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+
+    // 🚀 Start preloading AI explanation immediately when question loads!
+    // The AI begins thinking while the child reads the question.
+    if (question.correctIndex !== undefined) {
+      preloadExplanation()
+    }
 
     const tick = () => {
       const elapsedSec = (Date.now() - startTimeRef.current) / 1000
@@ -1461,10 +1631,131 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
     }
     rafRef.current = requestAnimationFrame(tick)
 
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      // Abort preload on unmount
+      if (preloadAbortRef.current) preloadAbortRef.current.abort()
+      // Cleanup speech on unmount
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
+        window.speechSynthesis.cancel()
+      }
+    }
   }, [question.id, timer])
 
-  // No auto-skip - player can take as long as they want
+  // Auto-scroll explanation area
+  useEffect(() => {
+    if (explainScrollRef.current) {
+      explainScrollRef.current.scrollTop = explainScrollRef.current.scrollHeight
+    }
+  }, [explanation])
+
+  // Auto-start TTS when explanation is fully loaded
+  useEffect(() => {
+    if (explainPhase === 'done' && explanation && !isSpeaking) {
+      startSpeech(explanation)
+    }
+  }, [explainPhase])
+
+  // TTS: speak the explanation text
+  const startSpeech = (text: string) => {
+    if (typeof window === 'undefined' || !window.speechSynthesis) return
+    window.speechSynthesis.cancel()
+
+    // Strip emojis and special symbols before reading aloud
+    const cleanText = text
+      .replace(/[\u{1F600}-\u{1F64F}]/gu, '')  // Emoticons
+      .replace(/[\u{1F300}-\u{1F5FF}]/gu, '')  // Misc symbols & pictographs
+      .replace(/[\u{1F680}-\u{1F6FF}]/gu, '')  // Transport & map symbols
+      .replace(/[\u{1F1E0}-\u{1F1FF}]/gu, '')  // Flags
+      .replace(/[\u{2600}-\u{26FF}]/gu, '')     // Misc symbols
+      .replace(/[\u{2700}-\u{27BF}]/gu, '')     // Dingbats
+      .replace(/[\u{FE00}-\u{FE0F}]/gu, '')     // Variation selectors
+      .replace(/[\u{1F900}-\u{1F9FF}]/gu, '')   // Supplemental symbols
+      .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '')   // Chess symbols
+      .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '')   // Symbols extended-A
+      .replace(/[\u{200D}]/gu, '')               // Zero-width joiner
+      .replace(/[\u{20E3}]/gu, '')               // Combining enclosing keycap
+      .replace(/[★☆✅❌⚔️⏭️⏱️⚡]/g, '')          // Common game symbols
+      .replace(/\s{2,}/g, ' ')                   // Collapse multiple spaces
+      .trim()
+
+    if (!cleanText) return
+
+    const utterance = new SpeechSynthesisUtterance(cleanText)
+    utterance.lang = 'zh-CN'
+
+    // Use the pre-selected best Chinese voice (picked once via voiceschanged)
+    if (bestVoiceRef.current) {
+      utterance.voice = bestVoiceRef.current
+    }
+
+    // Tune for natural, warm, teacher-like delivery
+    utterance.rate = 0.92   // Slightly slower than normal — clear for kids
+    utterance.pitch = 1.05  // Just a touch higher — warm but not cartoonish
+    utterance.volume = 1.0
+
+    utterance.onend = () => setIsSpeaking(false)
+    utterance.onerror = () => setIsSpeaking(false)
+    utteranceRef.current = utterance
+    setIsSpeaking(true)
+    window.speechSynthesis.speak(utterance)
+  }
+
+  const stopSpeech = () => {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      window.speechSynthesis.cancel()
+    }
+    setIsSpeaking(false)
+  }
+
+  const toggleSpeech = () => {
+    if (isSpeaking) {
+      stopSpeech()
+    } else if (explanation) {
+      startSpeech(explanation)
+    }
+  }
+
+  // Show the preloaded explanation — either instantly (if already done) or stream the remainder
+  const showPreloadedExplanation = (isCorrect: boolean) => {
+    // Add a personalized prefix based on whether the child got it right
+    const prefix = isCorrect
+      ? '🎉 太棒了，答对了！'
+      : '💪 没关系，我们来看看这道题吧！'
+
+    if (preloadDoneRef.current && preloadedExplanationRef.current) {
+      // AI already finished! Show everything instantly — zero wait!
+      setExplanation(prefix + '\n\n' + preloadedExplanationRef.current)
+      setExplainPhase('done')
+      return
+    }
+
+    // AI is still working — set initial state based on what's available
+    if (preloadedExplanationRef.current) {
+      setExplanation(prefix + '\n\n' + preloadedExplanationRef.current)
+      setExplainPhase('streaming')
+    } else {
+      setExplainPhase('loading')
+    }
+
+    // Poll for new content from the preload stream (avoid stale closure with refs)
+    let currentPhase: 'loading' | 'streaming' = preloadedExplanationRef.current ? 'streaming' : 'loading'
+    const pollInterval = setInterval(() => {
+      const currentText = preloadedExplanationRef.current
+      if (currentText && currentPhase === 'loading') {
+        currentPhase = 'streaming'
+        setExplainPhase('streaming')
+      }
+      if (currentText) {
+        setExplanation(prefix + '\n\n' + currentText)
+      }
+      if (preloadDoneRef.current) {
+        clearInterval(pollInterval)
+        setExplanation(prefix + '\n\n' + (preloadedExplanationRef.current || '讲解暂时不可用，继续战斗吧！'))
+        setExplainPhase('done')
+      }
+    }, 100) // Check every 100ms for smooth updates
+  }
 
   const handleAnswer = async (idx: number) => {
     if (answered) return
@@ -1473,7 +1764,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
     if (rafRef.current) cancelAnimationFrame(rafRef.current)
 
     const elapsedSec = (Date.now() - startTimeRef.current) / 1000
-    const fast = elapsedSec <= QUIZ_FAST_TIME // within 30s = fast (1.5x), over 30s = slow (1.2x)
+    const fast = elapsedSec <= QUIZ_FAST_TIME
 
     try {
       const res = await fetch('/api/quiz', {
@@ -1483,15 +1774,21 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
       })
       const data = await res.json()
       setCorrectIdx(data.correctIndex)
+      setQuizCorrect(data.correct)
+      setQuizFast(fast)
 
-      // Show result briefly then callback
-      setTimeout(() => {
-        onAnswer(data.correct, fast)
-      }, 1200)
+      // Show preloaded explanation immediately! No waiting for AI at all!
+      // The AI has been working in the background since the question loaded.
+      showPreloadedExplanation(data.correct)
     } catch {
-      // On error, treat as skipped
       setTimeout(() => onSkip(), 500)
     }
+  }
+
+  // Continue to battle after explanation
+  const handleContinue = () => {
+    stopSpeech()
+    onAnswer(quizCorrect, quizFast)
   }
 
   const isFast = elapsed <= QUIZ_FAST_TIME
@@ -1504,32 +1801,153 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
 
   const diffStars = '★'.repeat(question.difficulty) + '☆'.repeat(Math.max(0, 3 - question.difficulty))
 
+  // === Explanation Phase UI ===
+  if (explainPhase !== 'none') {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed z-50 flex flex-col"
+        style={{
+          top: '2.5%', left: '2.5%', width: '95%', height: '95%',
+          background: 'linear-gradient(180deg, #1e293b, #0f172a)',
+          borderRadius: '1.5rem',
+          boxShadow: '0 0 60px rgba(0,0,0,0.8)',
+        }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-3">
+          <div className="flex items-center gap-3">
+            <span style={{ fontSize: '3rem' }}>🧑‍🏫</span>
+            <span className="text-indigo-300 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3rem' }}>
+              老师讲解
+            </span>
+          </div>
+          <div className="flex items-center gap-3">
+            {/* TTS toggle button */}
+            {(explainPhase === 'streaming' || explainPhase === 'done') && (
+              <button onClick={toggleSpeech}
+                className="px-4 py-3 rounded-xl font-bold transition"
+                style={{
+                  fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
+                  fontSize: '2rem',
+                  color: isSpeaking ? '#fbbf24' : '#94a3b8',
+                  background: isSpeaking ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)',
+                }}>
+                {isSpeaking ? '🔊 朗读中' : '🔈 朗读'}
+              </button>
+            )}
+            {(explainPhase === 'streaming' || explainPhase === 'done') && (
+              <button onClick={handleContinue}
+                className="text-teal-400 hover:text-teal-300 px-4 py-3 rounded-xl font-bold"
+                style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.2rem' }}>
+                {explainPhase === 'done' ? '继续战斗 ⚔️' : '跳过讲解 ⏭️'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Result badge */}
+        <div className="px-6 mb-4">
+          <div className="rounded-xl p-5 text-center" style={{
+            background: quizCorrect ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+            border: `1px solid ${quizCorrect ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
+          }}>
+            <span style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3rem', color: quizCorrect ? '#86efac' : '#fca5a5' }}>
+              {quizCorrect ? '✨ 回答正确！' : `😅 答错了，正确答案是 ${['A','B','C','D'][correctIdx ?? 0]}`}
+            </span>
+          </div>
+        </div>
+
+        {/* Question recap */}
+        <div className="px-6 mb-4">
+          <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.05)' }}>
+            <p className="text-gray-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.4rem', lineHeight: '1.5' }}>
+              📝 {question.question}
+            </p>
+          </div>
+        </div>
+
+        {/* AI Explanation — extra large font for kids */}
+        <div className="flex-1 px-6 overflow-hidden flex flex-col">
+          <div ref={explainScrollRef}
+            className="flex-1 rounded-2xl p-6 overflow-y-auto"
+            style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.25)' }}>
+            {explainPhase === 'loading' ? (
+              <div className="flex items-center gap-4 text-indigo-300">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
+                  className="w-10 h-10 border-3 border-indigo-400 border-t-transparent rounded-full"
+                />
+                <span style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.6rem' }}>老师正在思考中...</span>
+              </div>
+            ) : (
+              <p className="text-white whitespace-pre-wrap" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.8rem', lineHeight: '1.8' }}>
+                {explanation}
+                {explainPhase === 'streaming' && (
+                  <motion.span
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ repeat: Infinity, duration: 0.8 }}
+                    className="inline-block w-3 h-8 bg-indigo-400 ml-1 align-middle rounded-sm"
+                  />
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Continue button — big & friendly */}
+        <div className="px-6 py-5">
+          <button onClick={handleContinue}
+            className="w-full p-6 rounded-2xl font-bold text-white text-center transition hover:brightness-110"
+            style={{
+              background: explainPhase === 'done'
+                ? 'linear-gradient(135deg, #10B981, #059669)'
+                : 'rgba(255,255,255,0.1)',
+              fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
+              fontSize: '2.8rem',
+            }}>
+            {explainPhase === 'done' ? '⚔️ 继续战斗！' : '⏭️ 跳过讲解'}
+          </button>
+        </div>
+      </motion.div>
+    )
+  }
+
+  // === Answering Phase UI ===
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-40 flex flex-col"
-      style={{ background: 'linear-gradient(180deg, #1e293b, #0f172a)' }}
+      className="fixed z-50 flex flex-col"
+      style={{
+        top: '2.5%', left: '2.5%', width: '95%', height: '95%',
+        background: 'linear-gradient(180deg, #1e293b, #0f172a)',
+        borderRadius: '1.5rem',
+        boxShadow: '0 0 60px rgba(0,0,0,0.8)',
+      }}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl">{subjectEmoji[question.subject] || '📝'}</span>
-          <span className="text-indigo-300 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+      <div className="flex items-center justify-between px-6 pt-5 pb-3">
+        <div className="flex items-center gap-3">
+          <span style={{ fontSize: '3rem' }}>{subjectEmoji[question.subject] || '📝'}</span>
+          <span className="text-indigo-300 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.8rem' }}>
             {question.subject}{question.category ? ` · ${question.category}` : ''}
           </span>
-          <span className="text-gray-500 text-sm">{diffStars}</span>
+          <span className="text-gray-500" style={{ fontSize: '2rem' }}>{diffStars}</span>
         </div>
-        <button onClick={onSkip} className="text-gray-500 hover:text-gray-300 px-3 py-2 rounded-xl"
-          style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
+        <button onClick={onSkip} className="text-gray-500 hover:text-gray-300 px-4 py-3 rounded-xl"
+          style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.2rem' }}>
           跳过 ⏭️
         </button>
       </div>
 
-      {/* Timer bar - smooth, shows 30s fast-answer window */}
-      <div className="px-4">
-        <div className="h-2.5 rounded-full mb-2 overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
+      {/* Timer bar */}
+      <div className="px-6">
+        <div className="h-4 rounded-full mb-3 overflow-hidden" style={{ background: 'rgba(255,255,255,0.1)' }}>
           <div
             className="h-full rounded-full"
             style={{ background: timeColor, width: `${timePct}%`, transition: 'width 0.1s linear, background 0.3s ease' }}
@@ -1537,26 +1955,26 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
         </div>
 
         {/* Timer text */}
-        <div className="text-center mb-3">
+        <div className="text-center mb-4">
           <span
             className="font-bold"
-            style={{ color: timeColor, fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
+            style={{ color: timeColor, fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.6rem' }}
           >
             {isFast ? `⚡ 快速作答 ${Math.ceil(QUIZ_FAST_TIME - elapsed)}秒 → 伤害1.5倍！` : '⏱️ 正确作答 → 伤害1.2倍'}
           </span>
         </div>
       </div>
 
-      {/* Question - large and prominent */}
-      <div className="flex-1 flex flex-col px-4 overflow-auto">
-        <div className="rounded-2xl p-5 mb-4" style={{ background: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-white leading-relaxed" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.4rem' }}>
+      {/* Question — extra large font */}
+      <div className="flex-1 flex flex-col px-6 overflow-auto">
+        <div className="rounded-2xl p-6 mb-5" style={{ background: 'rgba(255,255,255,0.08)' }}>
+          <p className="text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3.2rem', lineHeight: '1.6' }}>
             {question.question}
           </p>
         </div>
 
-        {/* Options - large buttons */}
-        <div className="space-y-3 flex-1">
+        {/* Options — extra large for kids */}
+        <div className="space-y-4 flex-1">
           {question.options.map((opt, idx) => {
             const labels = ['A', 'B', 'C', 'D']
             let bg = 'rgba(255,255,255,0.08)'
@@ -1581,42 +1999,42 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
                 whileTap={!answered ? { scale: 0.97 } : {}}
                 onClick={() => handleAnswer(idx)}
                 disabled={answered}
-                className="w-full p-4 rounded-2xl text-left transition-all flex items-center gap-4 disabled:cursor-default"
+                className="w-full p-6 rounded-2xl text-left transition-all flex items-center gap-5 disabled:cursor-default"
                 style={{
                   background: bg,
                   border: `2px solid ${border}`,
                   color: textColor,
-                  fontFamily: "'ZCOOL KuaiLe', sans-serif",
+                  fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
                 }}
               >
-                <span className="w-10 h-10 rounded-full flex items-center justify-center font-bold flex-shrink-0"
-                  style={{ background: 'rgba(99,102,241,0.3)', color: '#a5b4fc', fontSize: '1.2rem' }}>
+                <span className="w-16 h-16 rounded-full flex items-center justify-center font-bold flex-shrink-0"
+                  style={{ background: 'rgba(99,102,241,0.3)', color: '#a5b4fc', fontSize: '2.8rem' }}>
                   {labels[idx]}
                 </span>
-                <span style={{ fontSize: '1.2rem' }}>{opt}</span>
-                {answered && idx === correctIdx && <span className="ml-auto text-2xl">✅</span>}
-                {answered && idx === selected && idx !== correctIdx && <span className="ml-auto text-2xl">❌</span>}
+                <span style={{ fontSize: '2.8rem', lineHeight: '1.4' }}>{opt}</span>
+                {answered && idx === correctIdx && <span className="ml-auto" style={{ fontSize: '3rem' }}>✅</span>}
+                {answered && idx === selected && idx !== correctIdx && <span className="ml-auto" style={{ fontSize: '3rem' }}>❌</span>}
               </motion.button>
             )
           })}
         </div>
       </div>
 
-      {/* Answer feedback */}
+      {/* Answer feedback (brief, before explanation loads) */}
       <AnimatePresence>
-        {answered && correctIdx !== null && (
+        {answered && correctIdx !== null && explainPhase === 'none' && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
-            className="px-4 py-4 text-center"
+            className="px-6 py-5 text-center"
           >
             {selected === correctIdx ? (
-              <span className="text-green-400 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem' }}>
-                ✨ 回答正确！攻击力提升！
+              <span className="text-green-400 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3.6rem' }}>
+                ✨ 回答正确！
               </span>
             ) : (
-              <span className="text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
+              <span className="text-gray-400" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3rem' }}>
                 😅 答错了，正确答案是 {['A','B','C','D'][correctIdx]}
               </span>
             )}
@@ -1634,7 +2052,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
 function TypeBadge({ type, small }: { type: string; small?: boolean }) {
   return (
     <span className={`inline-block rounded-full font-bold text-white ${small ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}`}
-      style={{ background: TYPE_COLORS[type] || '#6B7280', fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+      style={{ background: TYPE_COLORS[type] || '#6B7280', fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif" }}>
       {TYPE_NAMES[type] || type}
     </span>
   )

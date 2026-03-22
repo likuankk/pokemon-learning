@@ -42,3 +42,9 @@ next-env.d.ts
 pokemon.db
 pokemon.db-shm
 pokemon.db-wal
+
+# workbuddy
+.workbuddy/
+
+# remotion build output
+remotion-videos/

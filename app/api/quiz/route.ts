@@ -30,15 +30,16 @@ export async function GET(request: NextRequest) {
       if (!fallback) {
         return NextResponse.json({ error: 'No questions available' }, { status: 404 })
       }
-      return NextResponse.json({
-        id: fallback.id,
-        subject: fallback.subject,
-        question: fallback.question,
-        options: [fallback.option_a, fallback.option_b, fallback.option_c, fallback.option_d],
-        timeLimit: fallback.time_limit,
-        category: fallback.category,
-        difficulty: fallback.difficulty,
-      })
+    return NextResponse.json({
+      id: fallback.id,
+      subject: fallback.subject,
+      question: fallback.question,
+      options: [fallback.option_a, fallback.option_b, fallback.option_c, fallback.option_d],
+      correctIndex: fallback.correct_index,
+      timeLimit: fallback.time_limit,
+      category: fallback.category,
+      difficulty: fallback.difficulty,
+    })
     }
 
     return NextResponse.json({
@@ -46,6 +47,7 @@ export async function GET(request: NextRequest) {
       subject: question.subject,
       question: question.question,
       options: [question.option_a, question.option_b, question.option_c, question.option_d],
+      correctIndex: question.correct_index,
       timeLimit: question.time_limit,
       category: question.category,
       difficulty: question.difficulty,
