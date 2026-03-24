@@ -877,7 +877,7 @@ function seedTaskTemplates(s: any) {
 }
 
 function seedQuizQuestions(s: any) {
-  const jsonPath = path.join(__dirname, 'quiz-questions.json')
+  const jsonPath = path.join(process.cwd(), 'lib', 'quiz-questions.json')
   const quizQuestions: { subject: string; gmin: number; gmax: number; diff: number; q: string; a: string; b: string; c: string; d: string; correct: number; time: number; cat: string }[] = JSON.parse(fs.readFileSync(jsonPath, 'utf8'))
   const stmt = s.prepare(
     'INSERT INTO quiz_questions (subject, grade_min, grade_max, difficulty, question, option_a, option_b, option_c, option_d, correct_index, time_limit, category) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)'
