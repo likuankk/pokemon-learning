@@ -103,18 +103,30 @@ export default function BattlePage() {
   const [showTactics, setShowTactics] = useState(false)
   const [canTactic, setCanTactic] = useState(false)
 
+  // Display mode (from family settings)
+  const [quizDisplayMode, setQuizDisplayMode] = useState<'normal' | 'large'>('normal')
+
   // ── Load Data ──────────────────────────────────────────────────────────
 
   const loadBattleStatus = useCallback(async () => {
     try {
-      const res = await fetch('/api/battle')
-      const data = await res.json()
+      const [battleRes, settingsRes] = await Promise.all([
+        fetch('/api/battle'),
+        fetch('/api/anti-addiction'),
+      ])
+      const data = await battleRes.json()
       if (data.energy) setEnergy(data.energy)
       if (data.regions) setRegions(data.regions)
       setActivePokemon(data.activePokemon ?? null)
       if (data.balls) setBalls(data.balls)
       if (data.pokedex) setPokedex(data.pokedex)
       if (data.team) setTeam(data.team)
+
+      // Load quiz display mode from family settings
+      try {
+        const settingsData = await settingsRes.json()
+        if (settingsData.quizDisplayMode) setQuizDisplayMode(settingsData.quizDisplayMode)
+      } catch {}
     } catch (e) {
       console.error('Failed to load battle status:', e)
     } finally {
@@ -479,6 +491,7 @@ export default function BattlePage() {
             }}
             pendingSkillId={pendingSkillId}
             canTactic={canTactic} showTactics={showTactics} setShowTactics={setShowTactics}
+            quizDisplayMode={quizDisplayMode}
           />
         )}
 
@@ -697,7 +710,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
   battleLog, roundNum, balls, onAction, actionLoading,
   quizQuestion, quizPhase, quizCombo, quizTimer,
   onQuizAnswer, onQuizSkip, onSkillClick, pendingSkillId,
-  canTactic, showTactics, setShowTactics }: {
+  canTactic, showTactics, setShowTactics, quizDisplayMode }: {
   battleData: BattleData; activePokemon: PokemonInfo
   playerHP: number; playerMaxHP: number; wildHP: number; wildMaxHP: number
   battleLog: string[]; roundNum: number; balls: Record<string, number>
@@ -709,6 +722,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
   onSkillClick: (skillId: string) => void
   pendingSkillId: string | null
   canTactic: boolean; showTactics: boolean; setShowTactics: (v: boolean) => void
+  quizDisplayMode: 'normal' | 'large'
 }) {
   const [showBalls, setShowBalls] = useState(false)
   const [wildShake, setWildShake] = useState(false)
@@ -865,7 +879,7 @@ function BattleView({ battleData, activePokemon, playerHP, playerMaxHP, wildHP, 
       {/* Quiz Overlay */}
       <AnimatePresence>
         {quizPhase === 'answering' && quizQuestion && (
-          <QuizOverlay question={quizQuestion} timer={quizTimer} onAnswer={onQuizAnswer} onSkip={onQuizSkip} />
+          <QuizOverlay question={quizQuestion} timer={quizTimer} onAnswer={onQuizAnswer} onSkip={onQuizSkip} displayMode={quizDisplayMode} />
         )}
       </AnimatePresence>
 
@@ -1433,12 +1447,65 @@ function ShopView({ balls, onBuy, onBack }: {
 // QUIZ OVERLAY
 // ════════════════════════════════════════════════════════════════════════════
 
-function QuizOverlay({ question, timer, onAnswer, onSkip }: {
+function QuizOverlay({ question, timer, onAnswer, onSkip, displayMode = 'normal' }: {
   question: { id: number; subject: string; question: string; options: string[]; timeLimit: number; category?: string; difficulty: number; correctIndex: number }
   timer: number
   onAnswer: (correct: boolean, fast: boolean) => void
   onSkip: () => void
+  displayMode?: 'normal' | 'large'
 }) {
+  // Font sizes: normal mode (standard) vs large mode (for projectors/TV)
+  const S = displayMode === 'large' ? {
+    headerIcon: '3rem',
+    headerTitle: '3rem',
+    ttsBtn: '2rem',
+    headerBtn: '2.2rem',
+    resultBadge: '3rem',
+    questionRecap: '2.4rem',
+    loadingText: '2.6rem',
+    explainText: '2.8rem',
+    explainLineHeight: '1.8',
+    continueBtn: '2.8rem',
+    subjectTitle: '2.8rem',
+    diffStars: '2rem',
+    skipBtn: '2.2rem',
+    timerText: '2.6rem',
+    questionText: '3.2rem',
+    questionLineHeight: '1.6',
+    optionLabel: '2.8rem',
+    optionText: '2.8rem',
+    optionLineHeight: '1.4',
+    optionCheck: '3rem',
+    feedbackCorrect: '3.6rem',
+    feedbackWrong: '3rem',
+    optionCircle: 'w-16 h-16',
+    optionPadding: 'p-6',
+  } : {
+    headerIcon: '1.8rem',
+    headerTitle: '1.8rem',
+    ttsBtn: '1.1rem',
+    headerBtn: '1.2rem',
+    resultBadge: '1.6rem',
+    questionRecap: '1.3rem',
+    loadingText: '1.4rem',
+    explainText: '1.5rem',
+    explainLineHeight: '1.7',
+    continueBtn: '1.5rem',
+    subjectTitle: '1.5rem',
+    diffStars: '1.1rem',
+    skipBtn: '1.2rem',
+    timerText: '1.4rem',
+    questionText: '1.6rem',
+    questionLineHeight: '1.6',
+    optionLabel: '1.4rem',
+    optionText: '1.4rem',
+    optionLineHeight: '1.4',
+    optionCheck: '1.6rem',
+    feedbackCorrect: '2rem',
+    feedbackWrong: '1.6rem',
+    optionCircle: 'w-10 h-10',
+    optionPadding: 'p-4',
+  }
   const QUIZ_FAST_TIME = 30 // 30 seconds = fast answer threshold
   const [elapsed, setElapsed] = useState(0)
   const [selected, setSelected] = useState<number | null>(null)
@@ -1770,7 +1837,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
       const res = await fetch('/api/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId: question.id, answerIndex: idx }),
+        body: JSON.stringify({ questionId: question.id, answerIndex: idx, timeSpent: Math.round(elapsedSec * 10) / 10 }),
       })
       const data = await res.json()
       setCorrectIdx(data.correctIndex)
@@ -1819,8 +1886,8 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-3">
           <div className="flex items-center gap-3">
-            <span style={{ fontSize: '3rem' }}>🧑‍🏫</span>
-            <span className="text-indigo-300 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3rem' }}>
+            <span style={{ fontSize: S.headerIcon }}>🧑‍🏫</span>
+            <span className="text-indigo-300 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.headerTitle }}>
               老师讲解
             </span>
           </div>
@@ -1831,7 +1898,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
                 className="px-4 py-3 rounded-xl font-bold transition"
                 style={{
                   fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
-                  fontSize: '2rem',
+                  fontSize: S.ttsBtn,
                   color: isSpeaking ? '#fbbf24' : '#94a3b8',
                   background: isSpeaking ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.05)',
                 }}>
@@ -1841,7 +1908,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
             {(explainPhase === 'streaming' || explainPhase === 'done') && (
               <button onClick={handleContinue}
                 className="text-teal-400 hover:text-teal-300 px-4 py-3 rounded-xl font-bold"
-                style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.2rem' }}>
+                style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.headerBtn }}>
                 {explainPhase === 'done' ? '继续战斗 ⚔️' : '跳过讲解 ⏭️'}
               </button>
             )}
@@ -1854,7 +1921,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
             background: quizCorrect ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
             border: `1px solid ${quizCorrect ? 'rgba(34,197,94,0.4)' : 'rgba(239,68,68,0.4)'}`,
           }}>
-            <span style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3rem', color: quizCorrect ? '#86efac' : '#fca5a5' }}>
+            <span style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.resultBadge, color: quizCorrect ? '#86efac' : '#fca5a5' }}>
               {quizCorrect ? '✨ 回答正确！' : `😅 答错了，正确答案是 ${['A','B','C','D'][correctIdx ?? 0]}`}
             </span>
           </div>
@@ -1863,13 +1930,13 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
         {/* Question recap */}
         <div className="px-6 mb-4">
           <div className="rounded-xl p-5" style={{ background: 'rgba(255,255,255,0.05)' }}>
-            <p className="text-gray-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.4rem', lineHeight: '1.5' }}>
+            <p className="text-gray-300" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.questionRecap, lineHeight: '1.5' }}>
               📝 {question.question}
             </p>
           </div>
         </div>
 
-        {/* AI Explanation — extra large font for kids */}
+        {/* AI Explanation */}
         <div className="flex-1 px-6 overflow-hidden flex flex-col">
           <div ref={explainScrollRef}
             className="flex-1 rounded-2xl p-6 overflow-y-auto"
@@ -1881,10 +1948,10 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
                   transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
                   className="w-10 h-10 border-3 border-indigo-400 border-t-transparent rounded-full"
                 />
-                <span style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.6rem' }}>老师正在思考中...</span>
+                <span style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.loadingText }}>老师正在思考中...</span>
               </div>
             ) : (
-              <p className="text-white whitespace-pre-wrap" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.8rem', lineHeight: '1.8' }}>
+              <p className="text-white whitespace-pre-wrap" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.explainText, lineHeight: S.explainLineHeight }}>
                 {explanation}
                 {explainPhase === 'streaming' && (
                   <motion.span
@@ -1898,16 +1965,16 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
           </div>
         </div>
 
-        {/* Continue button — big & friendly */}
+        {/* Continue button */}
         <div className="px-6 py-5">
           <button onClick={handleContinue}
-            className="w-full p-6 rounded-2xl font-bold text-white text-center transition hover:brightness-110"
+            className={`w-full ${S.optionPadding} rounded-2xl font-bold text-white text-center transition hover:brightness-110`}
             style={{
               background: explainPhase === 'done'
                 ? 'linear-gradient(135deg, #10B981, #059669)'
                 : 'rgba(255,255,255,0.1)',
               fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
-              fontSize: '2.8rem',
+              fontSize: S.continueBtn,
             }}>
             {explainPhase === 'done' ? '⚔️ 继续战斗！' : '⏭️ 跳过讲解'}
           </button>
@@ -1933,14 +2000,14 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
       {/* Header */}
       <div className="flex items-center justify-between px-6 pt-5 pb-3">
         <div className="flex items-center gap-3">
-          <span style={{ fontSize: '3rem' }}>{subjectEmoji[question.subject] || '📝'}</span>
-          <span className="text-indigo-300 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.8rem' }}>
+          <span style={{ fontSize: S.headerIcon }}>{subjectEmoji[question.subject] || '📝'}</span>
+          <span className="text-indigo-300 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.subjectTitle }}>
             {question.subject}{question.category ? ` · ${question.category}` : ''}
           </span>
-          <span className="text-gray-500" style={{ fontSize: '2rem' }}>{diffStars}</span>
+          <span className="text-gray-500" style={{ fontSize: S.diffStars }}>{diffStars}</span>
         </div>
         <button onClick={onSkip} className="text-gray-500 hover:text-gray-300 px-4 py-3 rounded-xl"
-          style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.2rem' }}>
+          style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.skipBtn }}>
           跳过 ⏭️
         </button>
       </div>
@@ -1958,22 +2025,22 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
         <div className="text-center mb-4">
           <span
             className="font-bold"
-            style={{ color: timeColor, fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '2.6rem' }}
+            style={{ color: timeColor, fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.timerText }}
           >
             {isFast ? `⚡ 快速作答 ${Math.ceil(QUIZ_FAST_TIME - elapsed)}秒 → 伤害1.5倍！` : '⏱️ 正确作答 → 伤害1.2倍'}
           </span>
         </div>
       </div>
 
-      {/* Question — extra large font */}
+      {/* Question */}
       <div className="flex-1 flex flex-col px-6 overflow-auto">
         <div className="rounded-2xl p-6 mb-5" style={{ background: 'rgba(255,255,255,0.08)' }}>
-          <p className="text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3.2rem', lineHeight: '1.6' }}>
+          <p className="text-white" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.questionText, lineHeight: S.questionLineHeight }}>
             {question.question}
           </p>
         </div>
 
-        {/* Options — extra large for kids */}
+        {/* Options */}
         <div className="space-y-4 flex-1">
           {question.options.map((opt, idx) => {
             const labels = ['A', 'B', 'C', 'D']
@@ -1999,7 +2066,7 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
                 whileTap={!answered ? { scale: 0.97 } : {}}
                 onClick={() => handleAnswer(idx)}
                 disabled={answered}
-                className="w-full p-6 rounded-2xl text-left transition-all flex items-center gap-5 disabled:cursor-default"
+                className={`w-full ${S.optionPadding} rounded-2xl text-left transition-all flex items-center gap-5 disabled:cursor-default`}
                 style={{
                   background: bg,
                   border: `2px solid ${border}`,
@@ -2007,13 +2074,13 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
                   fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif",
                 }}
               >
-                <span className="w-16 h-16 rounded-full flex items-center justify-center font-bold flex-shrink-0"
-                  style={{ background: 'rgba(99,102,241,0.3)', color: '#a5b4fc', fontSize: '2.8rem' }}>
+                <span className={`${S.optionCircle} rounded-full flex items-center justify-center font-bold flex-shrink-0`}
+                  style={{ background: 'rgba(99,102,241,0.3)', color: '#a5b4fc', fontSize: S.optionLabel }}>
                   {labels[idx]}
                 </span>
-                <span style={{ fontSize: '2.8rem', lineHeight: '1.4' }}>{opt}</span>
-                {answered && idx === correctIdx && <span className="ml-auto" style={{ fontSize: '3rem' }}>✅</span>}
-                {answered && idx === selected && idx !== correctIdx && <span className="ml-auto" style={{ fontSize: '3rem' }}>❌</span>}
+                <span style={{ fontSize: S.optionText, lineHeight: S.optionLineHeight }}>{opt}</span>
+                {answered && idx === correctIdx && <span className="ml-auto" style={{ fontSize: S.optionCheck }}>✅</span>}
+                {answered && idx === selected && idx !== correctIdx && <span className="ml-auto" style={{ fontSize: S.optionCheck }}>❌</span>}
               </motion.button>
             )
           })}
@@ -2030,11 +2097,11 @@ function QuizOverlay({ question, timer, onAnswer, onSkip }: {
             className="px-6 py-5 text-center"
           >
             {selected === correctIdx ? (
-              <span className="text-green-400 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3.6rem' }}>
+              <span className="text-green-400 font-bold" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.feedbackCorrect }}>
                 ✨ 回答正确！
               </span>
             ) : (
-              <span className="text-gray-400" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: '3rem' }}>
+              <span className="text-gray-400" style={{ fontFamily: "'PingFang SC', 'Heiti SC', 'SimHei', 'Microsoft YaHei', sans-serif", fontSize: S.feedbackWrong }}>
                 😅 答错了，正确答案是 {['A','B','C','D'][correctIdx]}
               </span>
             )}

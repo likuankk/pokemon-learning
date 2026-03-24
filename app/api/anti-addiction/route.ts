@@ -69,6 +69,7 @@ export async function GET(request: NextRequest) {
       limitMinutes,
       curfewStart,
       curfewEnd,
+      quizDisplayMode: settings.quiz_display_mode || 'normal',
       sessions: todaySessions.length,
     })
   } catch (error) {
@@ -113,7 +114,7 @@ export async function POST(request: NextRequest) {
       if (session?.role !== 'parent') {
         return NextResponse.json({ error: '只有家长可以修改设置' }, { status: 403 })
       }
-      const { curfewStart, curfewEnd, warningMinutes, limitMinutes } = body
+      const { curfewStart, curfewEnd, warningMinutes, limitMinutes, quizDisplayMode } = body
 
       // Ensure record exists
       sqlite.prepare('INSERT OR IGNORE INTO family_settings (family_id) VALUES (?)').run(familyId)
@@ -125,6 +126,7 @@ export async function POST(request: NextRequest) {
       if (curfewEnd !== undefined) { updates.push('curfew_end = ?'); values.push(curfewEnd) }
       if (warningMinutes !== undefined) { updates.push('warning_minutes = ?'); values.push(warningMinutes) }
       if (limitMinutes !== undefined) { updates.push('limit_minutes = ?'); values.push(limitMinutes) }
+      if (quizDisplayMode !== undefined) { updates.push('quiz_display_mode = ?'); values.push(quizDisplayMode) }
 
       if (updates.length > 0) {
         updates.push("updated_at = datetime('now')")

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import db from '@/lib/db'
 import { hashPassword, verifyPassword, setSession, clearSession, getSession } from '@/lib/auth'
 
-// Generate a readable invite code from family_id
+// Generate a readable invite code from family_id (kept for get_invite_code)
 function generateInviteCode(familyId: number): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // no ambiguous chars
   const base = familyId * 7919 + 100000 // simple obfuscation
@@ -36,16 +36,17 @@ function resolveInviteCode(code: string, sqlite: any): number | null {
   return null
 }
 
-// POST /api/auth - Login or Register
+// POST /api/auth - Login, Logout, Session, Demo login, Add child (via invite code)
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { action, name, password, role, familyId, inviteCode } = body
+    const { action, name, password, role, inviteCode } = body
     const sqlite = (db as any).session.client
 
+    // ── Register: only child can register (via invite code from parent) ──
     if (action === 'register') {
-      if (!name || !password || !role) {
-        return NextResponse.json({ error: '请填写完整信息' }, { status: 400 })
+      if (!name || !password || role !== 'child') {
+        return NextResponse.json({ error: '仅限小朋友通过邀请码注册' }, { status: 400 })
       }
 
       // Check duplicate name within role
@@ -54,40 +55,24 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: '该名称已被使用' }, { status: 400 })
       }
 
-      let targetFamilyId: number
-
-      if (role === 'parent') {
-        // Create new family
-        const maxFamily = sqlite.prepare('SELECT MAX(family_id) as maxF FROM users').get() as any
-        targetFamilyId = (maxFamily?.maxF || 0) + 1
-      } else {
-        // Child must provide invite code
-        if (!inviteCode) {
-          return NextResponse.json({ error: '请输入家庭邀请码，让家长在设置页面查看' }, { status: 400 })
-        }
-        const resolved = resolveInviteCode(inviteCode, sqlite)
-        if (!resolved) {
-          return NextResponse.json({ error: '邀请码无效，请确认后重试' }, { status: 400 })
-        }
-        targetFamilyId = resolved
+      if (!inviteCode) {
+        return NextResponse.json({ error: '请输入家庭邀请码' }, { status: 400 })
+      }
+      const resolved = resolveInviteCode(inviteCode, sqlite)
+      if (!resolved) {
+        return NextResponse.json({ error: '邀请码无效，请确认后重试' }, { status: 400 })
       }
 
       const hash = hashPassword(password)
       const result = sqlite.prepare(
         'INSERT INTO users (name, role, family_id, password_hash) VALUES (?, ?, ?, ?)'
-      ).run(name, role, targetFamilyId, hash)
+      ).run(name, 'child', resolved, hash)
 
       const userId = result.lastInsertRowid as number
-      const user = { id: userId, name, role, familyId: targetFamilyId }
+      const user = { id: userId, name, role: 'child', familyId: resolved }
       await setSession(user as any)
 
-      // For parent, return invite code
-      const responseData: any = { success: true, user, familyId: targetFamilyId }
-      if (role === 'parent') {
-        responseData.inviteCode = generateInviteCode(targetFamilyId)
-      }
-
-      return NextResponse.json(responseData)
+      return NextResponse.json({ success: true, user, familyId: resolved })
     }
 
     if (action === 'login') {

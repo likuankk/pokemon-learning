@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { href: '/parent/honor', label: '荣誉榜', emoji: '🏆' },
   { href: '/parent/weekend', label: '周末挑战', emoji: '🎯' },
   { href: '/parent/quiz', label: '题库管理', emoji: '📝' },
+  { href: '/parent/wrong-book', label: '错题查看', emoji: '📕' },
   { href: '/parent/skills', label: '技能管理', emoji: '⚔️' },
   { href: '/parent/settings', label: '家庭设置', emoji: '⚙️' },
 ]

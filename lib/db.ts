@@ -186,6 +186,7 @@ sqlite.exec(`
     curfew_end INTEGER NOT NULL DEFAULT 7,
     warning_minutes INTEGER NOT NULL DEFAULT 20,
     limit_minutes INTEGER NOT NULL DEFAULT 30,
+    quiz_display_mode TEXT NOT NULL DEFAULT 'normal',
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -343,6 +344,22 @@ sqlite.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(child_id)
   );
+
+  -- Quiz answer history (for dedup + wrong answer tracking)
+  CREATE TABLE IF NOT EXISTS quiz_answer_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    child_id INTEGER NOT NULL,
+    question_id INTEGER NOT NULL,
+    answer_index INTEGER NOT NULL,
+    correct INTEGER NOT NULL DEFAULT 0,
+    time_spent_sec REAL NOT NULL DEFAULT 0,
+    answered_at TEXT NOT NULL DEFAULT (datetime('now'))
+  );
+
+  -- Index for fast dedup query (recent questions by child)
+  CREATE INDEX IF NOT EXISTS idx_quiz_history_child_time ON quiz_answer_history(child_id, answered_at DESC);
+  -- Index for wrong answer queries
+  CREATE INDEX IF NOT EXISTS idx_quiz_history_wrong ON quiz_answer_history(child_id, correct);
 `)
 
 // Run migrations for existing DBs
@@ -481,6 +498,12 @@ const runMigrations = () => {
         }
       }
     }
+  }
+
+  // family_settings: add quiz_display_mode
+  const fsCols = (sqlite.prepare(`PRAGMA table_info(family_settings)`).all() as {name:string}[]).map(c => c.name)
+  if (!fsCols.includes('quiz_display_mode')) {
+    safeAddColumn('family_settings', 'quiz_display_mode', "TEXT NOT NULL DEFAULT 'normal'")
   }
 }
 

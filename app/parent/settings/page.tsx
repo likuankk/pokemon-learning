@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [curfewEnd, setCurfewEnd] = useState(7)
   const [warningMinutes, setWarningMinutes] = useState(20)
   const [limitMinutes, setLimitMinutes] = useState(30)
+  const [quizDisplayMode, setQuizDisplayMode] = useState<'normal' | 'large'>('normal')
   const [inviteCode, setInviteCode] = useState('')
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -33,6 +34,7 @@ export default function SettingsPage() {
       if (antiData.curfewEnd !== undefined) setCurfewEnd(antiData.curfewEnd)
       if (antiData.warningMinutes !== undefined) setWarningMinutes(antiData.warningMinutes)
       if (antiData.limitMinutes !== undefined) setLimitMinutes(antiData.limitMinutes)
+      if (antiData.quizDisplayMode) setQuizDisplayMode(antiData.quizDisplayMode)
       if (authData.inviteCode) setInviteCode(authData.inviteCode)
       if (authData.members) setMembers(authData.members)
       setLoading(false)
@@ -51,6 +53,7 @@ export default function SettingsPage() {
         curfewEnd,
         warningMinutes,
         limitMinutes,
+        quizDisplayMode,
       }),
     })
     const data = await res.json()
@@ -103,56 +106,53 @@ export default function SettingsPage() {
               </motion.div>
             )}
 
-            {/* Family Invite Code */}
+            {/* Family Members */}
             <div className="bg-white rounded-3xl border-2 border-gray-200 p-7 mb-6" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
               <div className="flex items-center gap-3 mb-5">
                 <span className="text-4xl">👨‍👩‍👧‍👦</span>
                 <div>
                   <h2 className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>
-                    家庭邀请码
+                    家庭成员
                   </h2>
                   <p className="text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
-                    将邀请码分享给孩子，让 TA 注册时加入家庭
+                    当前家庭的所有成员
                   </p>
                 </div>
               </div>
 
-              <div className="bg-indigo-50 border-2 border-indigo-200 rounded-2xl px-6 py-5 text-center mb-4">
-                <p className="text-gray-500 mb-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
-                  你的邀请码
-                </p>
-                <p className="text-indigo-600 font-bold tracking-widest" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '2.5rem' }}>
-                  {inviteCode}
-                </p>
-              </div>
-
-              <button
-                onClick={() => { navigator.clipboard?.writeText(inviteCode); setMessage('邀请码已复制！') }}
-                className="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-bold py-3 rounded-xl transition-all"
-                style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}
-              >
-                📋 复制邀请码
-              </button>
-
-              {/* Family Members */}
               {members.length > 0 && (
-                <div className="mt-5 pt-5 border-t-2 border-gray-100">
-                  <p className="text-gray-500 font-bold mb-3" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.1rem' }}>
-                    家庭成员 ({members.length})
-                  </p>
-                  <div className="space-y-2">
-                    {members.map((m: any) => (
-                      <div key={m.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
-                        <span className="text-2xl">{m.role === 'parent' ? '👩‍👦' : '🧒'}</span>
-                        <span className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.15rem' }}>
-                          {m.name}
-                        </span>
-                        <span className="text-gray-400 text-sm ml-auto" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
-                          {m.role === 'parent' ? '家长' : '小朋友'}
-                        </span>
-                      </div>
-                    ))}
+                <div className="space-y-2 mb-4">
+                  {members.map((m: any) => (
+                    <div key={m.id} className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
+                      <span className="text-2xl">{m.role === 'parent' ? '👩‍👦' : '🧒'}</span>
+                      <span className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.15rem' }}>
+                        {m.name}
+                      </span>
+                      <span className="text-gray-400 text-sm ml-auto" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                        {m.role === 'parent' ? '家长' : '小朋友'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {inviteCode && (
+                <div className="bg-indigo-50 rounded-xl px-4 py-3 border border-indigo-100">
+                  <div className="flex items-center justify-between">
+                    <p className="text-indigo-600 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
+                      📮 家庭邀请码：<span className="tracking-wider">{inviteCode}</span>
+                    </p>
+                    <button
+                      onClick={() => { navigator.clipboard?.writeText(inviteCode); showToast('📋 邀请码已复制！', 'success') }}
+                      className="text-indigo-500 hover:text-indigo-700 font-bold text-sm px-3 py-1 rounded-lg hover:bg-indigo-100 transition-all"
+                      style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+                    >
+                      复制
+                    </button>
                   </div>
+                  <p className="text-indigo-400 text-sm mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                    将邀请码告诉孩子，孩子登录时可使用
+                  </p>
                 </div>
               )}
             </div>
@@ -285,6 +285,64 @@ export default function SettingsPage() {
               </div>
             </div>
 
+            {/* Quiz Display Mode */}
+            <div className="bg-white rounded-3xl border-2 border-gray-200 p-7 mb-6" style={{ boxShadow: '0 4px 0 rgba(0,0,0,0.06)' }}>
+              <div className="flex items-center gap-3 mb-5">
+                <span className="text-4xl">🔤</span>
+                <div>
+                  <h2 className="font-bold text-gray-800" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.75rem' }}>
+                    答题显示模式
+                  </h2>
+                  <p className="text-gray-400" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
+                    控制答题和讲解界面的字体大小
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setQuizDisplayMode('normal')}
+                  className={`rounded-2xl p-5 border-2 transition-all text-center ${
+                    quizDisplayMode === 'normal'
+                      ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200'
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="block text-3xl mb-2">Aa</span>
+                  <span className="font-bold block" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem', color: quizDisplayMode === 'normal' ? '#4338ca' : '#6b7280' }}>
+                    正常模式
+                  </span>
+                  <span className="text-gray-400 block mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.85rem' }}>
+                    适合平板/电脑
+                  </span>
+                </button>
+                <button
+                  onClick={() => setQuizDisplayMode('large')}
+                  className={`rounded-2xl p-5 border-2 transition-all text-center ${
+                    quizDisplayMode === 'large'
+                      ? 'border-indigo-400 bg-indigo-50 ring-2 ring-indigo-200'
+                      : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                  }`}
+                >
+                  <span className="block text-5xl mb-2">Aa</span>
+                  <span className="font-bold block" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem', color: quizDisplayMode === 'large' ? '#4338ca' : '#6b7280' }}>
+                    放大模式
+                  </span>
+                  <span className="text-gray-400 block mt-1" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '0.85rem' }}>
+                    适合投影仪/电视
+                  </span>
+                </button>
+              </div>
+
+              <div className="mt-4 bg-purple-50 rounded-xl px-4 py-3 border border-purple-100">
+                <p className="text-purple-600 font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1rem' }}>
+                  {quizDisplayMode === 'normal'
+                    ? '📱 正常模式：题目和选项使用标准字体大小'
+                    : '🖥️ 放大模式：题目和选项使用超大字体，适合远距离观看'}
+                </p>
+              </div>
+            </div>
+
             {/* Save Button */}
             <motion.button
               onClick={handleSave}
@@ -294,7 +352,7 @@ export default function SettingsPage() {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
             >
-              {saving ? '保存中...' : '保存防沉迷设置 ✓'}
+              {saving ? '保存中...' : '保存设置 ✓'}
             </motion.button>
 
             <div className="bg-yellow-50 rounded-2xl border-2 border-yellow-200 p-5 mb-6">

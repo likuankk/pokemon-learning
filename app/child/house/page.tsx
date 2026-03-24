@@ -59,35 +59,58 @@ interface PlacementMeta {
 }
 
 const PLACEMENT_META: Record<string, PlacementMeta> = {
-  // ── Furniture ──
-  'bed_basic':    { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.15 },
-  'bed_fancy':    { zone: 'corner', facing: Math.PI / 4, offsetX: -0.1, offsetZ: -0.1 },
-  'desk_study':   { zone: 'wall-back', facing: 0, offsetZ: -0.3 },
-  'bookshelf':    { zone: 'wall-back', facing: 0, offsetZ: -0.3 },
-  'sofa_comfy':   { zone: 'center', facing: Math.PI * 0.75 },
-  'lamp_star':    { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.3 },
-  'wardrobe':     { zone: 'wall-back', facing: 0, offsetZ: -0.15 },
-  'piano':        { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.2 },
-  // ── Wall ──
-  'poster_pikachu': { zone: 'wall-back', facing: 0, offsetZ: -0.35 },
-  'poster_badge':   { zone: 'wall-back', facing: 0, offsetZ: -0.35 },
-  'clock_pokeball': { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.35 },
-  'window_garden':  { zone: 'wall-back', facing: 0, offsetZ: -0.35 },
-  // ── Toy ──
-  'toy_ball':      { zone: 'anywhere', facing: 0 },
-  'toy_doll':      { zone: 'center', facing: 0 },
-  'toy_puzzle':    { zone: 'center', facing: 0 },
-  'toy_telescope': { zone: 'edge', facing: 0 },
-  // ── Plant ──
-  'plant_flower':  { zone: 'edge', facing: 0 },
-  'plant_tree':    { zone: 'edge', facing: 0 },
-  'plant_cactus':  { zone: 'edge', facing: 0 },
-  'plant_bamboo':  { zone: 'edge', facing: 0 },
-  // ── Outdoor ──
-  'outdoor_swing':    { zone: 'outdoor', facing: 0 },
-  'outdoor_pool':     { zone: 'outdoor', facing: 0 },
-  'outdoor_tent':     { zone: 'outdoor', facing: 0 },
-  'outdoor_fountain': { zone: 'outdoor', facing: 0 },
+  // ── CAT-01 Furniture (F-xx) ──
+  'F-01':  { zone: 'center', facing: 0 },                                    // 木质小圆桌
+  'F-02':  { zone: 'center', facing: Math.PI * 0.75 },                       // 毛茸茸懒人沙发
+  'F-03':  { zone: 'wall-back', facing: 0, offsetZ: -0.3 },                  // 书架（小）
+  'F-04':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.3 },        // 皮卡丘台灯
+  'F-05':  { zone: 'center', facing: 0 },                                    // 宝可梦图案地毯
+  'F-06':  { zone: 'center', facing: 0 },                                    // 贝壳形摇椅
+  'F-07':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.15 },       // 星空吊床
+  'F-08':  { zone: 'wall-back', facing: 0, offsetZ: -0.15 },                 // 水晶玻璃展示柜
+  'F-09':  { zone: 'center', facing: Math.PI * 0.75 },                       // 豪华双人大沙发
+  'F-10':  { zone: 'edge', facing: 0 },                                      // 魔法音乐盒
+  'F-11':  { zone: 'wall-back', facing: 0, offsetZ: -0.2 },                  // 宝可梦中心接待台
+  'F-12':  { zone: 'corner', facing: Math.PI / 4 },                          // 冠军宝座
+  // ── CAT-04 Outdoor (O-xx) ──
+  'O-01':  { zone: 'outdoor', facing: 0 },                                   // 向日葵花盆
+  'O-02':  { zone: 'outdoor', facing: 0 },                                   // 小木栅栏
+  'O-03':  { zone: 'outdoor', facing: 0 },                                   // 石头小径
+  'O-04':  { zone: 'outdoor', facing: 0 },                                   // 樱桃树盆栽
+  'O-05':  { zone: 'outdoor', facing: 0 },                                   // 蘑菇路灯
+  'O-06':  { zone: 'outdoor', facing: 0 },                                   // 精灵球喷水池
+  'O-09':  { zone: 'outdoor', facing: 0 },                                   // 宝可梦石像
+  'O-10':  { zone: 'outdoor', facing: 0 },                                   // 彩虹桥
+  'O-11':  { zone: 'outdoor', facing: 0 },                                   // 光之树
+  'O-12':  { zone: 'outdoor', facing: 0 },                                   // 胜利旗杆
+  // ── CAT-05 Toy (T-xx) ──
+  'T-01':  { zone: 'anywhere', facing: 0 },                                  // 毛线球
+  'T-02':  { zone: 'anywhere', facing: 0 },                                  // 精灵球玩具
+  'T-03':  { zone: 'edge', facing: 0 },                                      // 旋转风车
+  'T-04':  { zone: 'center', facing: 0 },                                    // 积木套装
+  'T-05':  { zone: 'center', facing: 0 },                                    // 宝可梦拼图
+  'T-06':  { zone: 'center', facing: 0 },                                    // 弹跳蹦床
+  'T-07':  { zone: 'edge', facing: 0 },                                      // 魔法水晶球
+  'T-08':  { zone: 'center', facing: 0 },                                    // 迷你滑梯
+  'T-09':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.2 },        // 宝可梦乐器套装
+  'T-10':  { zone: 'edge', facing: 0 },                                      // 时光胶囊
+  // ── CAT-06 Functional (FN-xx) ──
+  'FN-01': { zone: 'wall-back', facing: 0, offsetZ: -0.35 },                 // 心愿便利贴板
+  'FN-03': { zone: 'wall-back', facing: 0, offsetZ: -0.35 },                 // 宝可梦日历
+  'FN-06': { zone: 'edge', facing: 0 },                                      // 时间沙漏
+  'FN-07': { zone: 'wall-back', facing: 0, offsetZ: -0.15 },                 // 荣誉奖杯柜
+  'FN-08': { zone: 'edge', facing: 0 },                                      // 成长树
+  // ── CAT-07 Door (D-xx) ──
+  'D-01':  { zone: 'entrance', facing: 0 },                                  // 彩色门垫
+  'D-02':  { zone: 'wall-back', facing: 0, offsetZ: -0.35 },                 // 精灵球门牌
+  'D-03':  { zone: 'entrance', facing: 0 },                                  // 植物门帘
+  'D-06':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.35 },       // 星星风铃
+  // ── CAT-08 Bed (B-xx) ──
+  'B-01':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.15 },       // 草编小窝
+  'B-02':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.15 },       // 云朵床
+  'B-03':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.15 },       // 星星睡袋
+  'B-07':  { zone: 'corner', facing: Math.PI / 4, offsetX: -0.1, offsetZ: -0.1 }, // 皇家四柱床
+  'B-08':  { zone: 'wall-left', facing: Math.PI / 2, offsetX: -0.15 },       // 梦境发生器
 }
 
 const ZONE_POSITIONS: Record<string, [number, number][]> = {
@@ -270,53 +293,37 @@ function Furniture3DModel({ id, category, color }: { id: string; category: strin
   const white = '#F5F5F0'
   const metal = '#9E9E9E'
 
-  // ── Furniture ──────────────────────────────────────────
-  if (id === 'bed_basic') {
-    // 基础小床 (0.6m宽, 0.9m长, 0.3m高)
+  // ── F-01 木质小圆桌 ──
+  if (id === 'F-01') {
     return (
       <group>
-        <mesh position={[0, 0.15, 0]} castShadow><boxGeometry args={[0.6, 0.15, 0.9]} /><meshStandardMaterial color={wood} /></mesh>
-        <mesh position={[0, 0.26, 0]} castShadow><boxGeometry args={[0.55, 0.08, 0.85]} /><meshStandardMaterial color="#90CAF9" /></mesh>
-        <mesh position={[0, 0.33, -0.35]} castShadow><boxGeometry args={[0.4, 0.06, 0.12]} /><meshStandardMaterial color={white} /></mesh>
-        <mesh position={[0, 0.35, -0.42]} castShadow><boxGeometry args={[0.6, 0.35, 0.06]} /><meshStandardMaterial color={woodDark} /></mesh>
-      </group>
-    )
-  }
-  if (id === 'bed_fancy') {
-    // 豪华大床 — 四柱床
-    return (
-      <group>
-        <mesh position={[0, 0.15, 0]} castShadow><boxGeometry args={[0.8, 0.15, 1.0]} /><meshStandardMaterial color="#8D6E63" /></mesh>
-        <mesh position={[0, 0.26, 0]} castShadow><boxGeometry args={[0.75, 0.08, 0.95]} /><meshStandardMaterial color="#CE93D8" /></mesh>
-        <mesh position={[0, 0.33, -0.35]} castShadow><boxGeometry args={[0.55, 0.08, 0.18]} /><meshStandardMaterial color={white} /></mesh>
-        {[[-0.37, -0.47], [0.37, -0.47], [-0.37, 0.47], [0.37, 0.47]].map(([x, z], i) => (
-          <mesh key={i} position={[x, 0.6, z]} castShadow><cylinderGeometry args={[0.03, 0.03, 1.05, 8]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        <mesh position={[0, 0.4, 0]} castShadow><cylinderGeometry args={[0.35, 0.35, 0.04, 16]} /><meshStandardMaterial color={wood} /></mesh>
+        <mesh position={[0, 0.2, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, 0.4, 8]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {/* 两把椅子 */}
+        {[-0.45, 0.45].map((x, i) => (
+          <group key={i} position={[x, 0, 0]}>
+            <mesh position={[0, 0.25, 0]} castShadow><boxGeometry args={[0.25, 0.04, 0.25]} /><meshStandardMaterial color={wood} /></mesh>
+            {[[-0.1, -0.1], [0.1, -0.1], [-0.1, 0.1], [0.1, 0.1]].map(([lx, lz], j) => (
+              <mesh key={j} position={[lx, 0.12, lz]} castShadow><cylinderGeometry args={[0.015, 0.015, 0.24, 6]} /><meshStandardMaterial color={woodDark} /></mesh>
+            ))}
+            <mesh position={[0, 0.42, i === 0 ? 0.1 : -0.1]} castShadow><boxGeometry args={[0.25, 0.3, 0.03]} /><meshStandardMaterial color={wood} /></mesh>
+          </group>
         ))}
-        <mesh position={[0, 1.1, 0]} castShadow><boxGeometry args={[0.82, 0.025, 1.02]} /><meshStandardMaterial color="#5D4037" /></mesh>
       </group>
     )
   }
-  if (id === 'desk_study') {
-    // 学习书桌 + 椅子
+  // ── F-02 毛茸茸懒人沙发 ──
+  if (id === 'F-02') {
     return (
       <group>
-        <mesh position={[0, 0.73, 0]} castShadow><boxGeometry args={[0.9, 0.04, 0.5]} /><meshStandardMaterial color={wood} /></mesh>
-        {[[-0.4, -0.2], [0.4, -0.2], [-0.4, 0.2], [0.4, 0.2]].map(([x, z], i) => (
-          <mesh key={i} position={[x, 0.36, z]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.72, 6]} /><meshStandardMaterial color={woodDark} /></mesh>
-        ))}
-        {/* Chair */}
-        <group position={[0, 0, 0.55]}>
-          <mesh position={[0, 0.44, 0]} castShadow><boxGeometry args={[0.38, 0.04, 0.38]} /><meshStandardMaterial color={wood} /></mesh>
-          {[[-0.14, -0.14], [0.14, -0.14], [-0.14, 0.14], [0.14, 0.14]].map(([x, z], i) => (
-            <mesh key={i} position={[x, 0.22, z]} castShadow><cylinderGeometry args={[0.02, 0.02, 0.44, 6]} /><meshStandardMaterial color={woodDark} /></mesh>
-          ))}
-          <mesh position={[0, 0.68, 0.16]} castShadow><boxGeometry args={[0.38, 0.44, 0.03]} /><meshStandardMaterial color={wood} /></mesh>
-        </group>
+        <mesh position={[0, 0.2, 0]} castShadow><sphereGeometry args={[0.35, 16, 12, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#F8BBD0" /></mesh>
+        <mesh position={[0, 0.05, 0]} castShadow><cylinderGeometry args={[0.36, 0.38, 0.1, 16]} /><meshStandardMaterial color="#F48FB1" /></mesh>
+        <mesh position={[0, 0.3, 0]} castShadow><sphereGeometry args={[0.18, 12, 12]} /><meshStandardMaterial color="#FCE4EC" /></mesh>
       </group>
     )
   }
-  if (id === 'bookshelf') {
-    // 知识书架 — 三层
+  // ── F-03 书架（小）——三层 ──
+  if (id === 'F-03') {
     return (
       <group>
         {[0, 0.38, 0.76].map((y, i) => (
@@ -336,8 +343,90 @@ function Furniture3DModel({ id, category, color }: { id: string; category: strin
       </group>
     )
   }
-  if (id === 'sofa_comfy') {
-    // 舒适沙发
+  // ── F-04 皮卡丘台灯 ──
+  if (id === 'F-04') {
+    return (
+      <group>
+        <mesh position={[0, 0.02, 0]} castShadow><cylinderGeometry args={[0.1, 0.12, 0.03, 16]} /><meshStandardMaterial color={woodDark} /></mesh>
+        <mesh position={[0, 0.25, 0]} castShadow><cylinderGeometry args={[0.015, 0.015, 0.44, 8]} /><meshStandardMaterial color={metal} /></mesh>
+        {/* 皮卡丘头 */}
+        <mesh position={[0, 0.5, 0]} castShadow><sphereGeometry args={[0.12, 12, 12]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.4} /></mesh>
+        {/* 耳朵 */}
+        <mesh position={[-0.08, 0.65, 0]} castShadow rotation={[0, 0, -0.3]}><coneGeometry args={[0.03, 0.12, 6]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        <mesh position={[0.08, 0.65, 0]} castShadow rotation={[0, 0, 0.3]}><coneGeometry args={[0.03, 0.12, 6]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        {/* 眼睛 */}
+        <mesh position={[-0.04, 0.52, 0.1]} castShadow><sphereGeometry args={[0.015, 8, 8]} /><meshStandardMaterial color="#212121" /></mesh>
+        <mesh position={[0.04, 0.52, 0.1]} castShadow><sphereGeometry args={[0.015, 8, 8]} /><meshStandardMaterial color="#212121" /></mesh>
+        <mesh position={[-0.07, 0.48, 0.09]} castShadow><sphereGeometry args={[0.02, 8, 8]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0.07, 0.48, 0.09]} castShadow><sphereGeometry args={[0.02, 8, 8]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <pointLight position={[0, 0.5, 0]} intensity={0.6} distance={2.5} color="#FFE0B2" />
+      </group>
+    )
+  }
+  // ── F-05 宝可梦图案地毯 ──
+  if (id === 'F-05') {
+    return (
+      <group>
+        <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><circleGeometry args={[0.4, 24]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.012, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.35, 24]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.014, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[0.06, 16]} /><meshStandardMaterial color="#212121" /></mesh>
+        <mesh position={[0, 0.013, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.34, 0.36, 24]} /><meshStandardMaterial color="#212121" /></mesh>
+      </group>
+    )
+  }
+  // ── F-06 贝壳形摇椅 ──
+  if (id === 'F-06') {
+    return (
+      <group>
+        <mesh position={[0, 0.25, -0.05]} castShadow><sphereGeometry args={[0.3, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.25, -0.2]} castShadow><sphereGeometry args={[0.3, 12, 8, 0, Math.PI, Math.PI / 4, Math.PI / 2]} /><meshStandardMaterial color="#F5F5F5" /></mesh>
+        {/* 摇椅底弧 */}
+        <mesh position={[0, 0.02, 0]} castShadow rotation={[0, 0, Math.PI / 2]}><torusGeometry args={[0.25, 0.02, 8, 16, Math.PI]} /><meshStandardMaterial color={woodDark} /></mesh>
+        <mesh position={[0, 0.2, 0.1]} castShadow><sphereGeometry args={[0.08, 8, 8]} /><meshStandardMaterial color="#E0E0E0" /></mesh>
+      </group>
+    )
+  }
+  // ── F-07 星空吊床 ──
+  if (id === 'F-07') {
+    return (
+      <group>
+        {/* 支柱 */}
+        <mesh position={[-0.4, 0.4, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.8, 8]} /><meshStandardMaterial color={woodDark} /></mesh>
+        <mesh position={[0.4, 0.4, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.8, 8]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {/* 床面（弧形近似） */}
+        <mesh position={[0, 0.35, 0]} castShadow><boxGeometry args={[0.7, 0.03, 0.35]} /><meshStandardMaterial color="#1A237E" /></mesh>
+        <mesh position={[0, 0.33, 0]} castShadow><boxGeometry args={[0.6, 0.02, 0.3]} /><meshStandardMaterial color="#283593" /></mesh>
+        {/* 星星装饰 */}
+        {[[-0.15, 0.37, 0.05], [0.1, 0.38, -0.08], [0.2, 0.37, 0.1]].map(([x, y, z], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow><octahedronGeometry args={[0.025, 0]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.3} /></mesh>
+        ))}
+        {/* 绳子 */}
+        {[-0.35, 0.35].map((x, i) => (
+          <mesh key={i} position={[x, 0.6, 0]} castShadow><cylinderGeometry args={[0.008, 0.008, 0.3, 4]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        ))}
+      </group>
+    )
+  }
+  // ── F-08 水晶玻璃展示柜 ──
+  if (id === 'F-08') {
+    return (
+      <group>
+        <mesh position={[0, 0.5, 0]} castShadow><boxGeometry args={[0.6, 1.0, 0.35]} /><meshStandardMaterial color="#E3F2FD" transparent opacity={0.3} /></mesh>
+        {/* 木框 */}
+        <mesh position={[0, 0.0, 0]} castShadow><boxGeometry args={[0.62, 0.04, 0.37]} /><meshStandardMaterial color={woodDark} /></mesh>
+        <mesh position={[0, 1.0, 0]} castShadow><boxGeometry args={[0.62, 0.04, 0.37]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {/* 隔板 */}
+        {[0.33, 0.66].map((y, i) => (
+          <mesh key={i} position={[0, y, 0]} castShadow><boxGeometry args={[0.56, 0.02, 0.32]} /><meshStandardMaterial color="#E3F2FD" transparent opacity={0.2} /></mesh>
+        ))}
+        {/* 展示物 */}
+        <mesh position={[-0.1, 0.18, 0]} castShadow><sphereGeometry args={[0.05, 8, 8]} /><meshStandardMaterial color="#FFD54F" metalness={0.6} /></mesh>
+        <mesh position={[0.1, 0.5, 0]} castShadow><cylinderGeometry args={[0.04, 0.04, 0.08, 6]} /><meshStandardMaterial color="#C0C0C0" metalness={0.6} /></mesh>
+      </group>
+    )
+  }
+  // ── F-09 豪华双人大沙发 ──
+  if (id === 'F-09') {
     return (
       <group>
         <mesh position={[0, 0.21, 0.05]} castShadow><boxGeometry args={[1.2, 0.42, 0.55]} /><meshStandardMaterial color="#2E7D32" /></mesh>
@@ -349,151 +438,259 @@ function Furniture3DModel({ id, category, color }: { id: string; category: strin
       </group>
     )
   }
-  if (id === 'lamp_star') {
-    // 星星灯
+  // ── F-10 魔法音乐盒 ──
+  if (id === 'F-10') {
     return (
       <group>
-        <mesh position={[0, 0.02, 0]} castShadow><cylinderGeometry args={[0.1, 0.12, 0.03, 16]} /><meshStandardMaterial color={woodDark} /></mesh>
-        <mesh position={[0, 0.25, 0]} castShadow><cylinderGeometry args={[0.015, 0.015, 0.44, 8]} /><meshStandardMaterial color={metal} /></mesh>
-        <mesh position={[0, 0.5, 0]} castShadow>
-          <octahedronGeometry args={[0.14, 0]} />
-          <meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.5} />
-        </mesh>
-        <pointLight position={[0, 0.5, 0]} intensity={0.6} distance={2.5} color="#FFE0B2" />
+        <mesh position={[0, 0.1, 0]} castShadow><boxGeometry args={[0.25, 0.18, 0.2]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        <mesh position={[0, 0.2, 0]} castShadow><boxGeometry args={[0.26, 0.02, 0.21]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {/* 旋转装饰 */}
+        <mesh position={[0, 0.3, 0]} castShadow><cylinderGeometry args={[0.03, 0.03, 0.12, 8]} /><meshStandardMaterial color={metal} /></mesh>
+        <mesh position={[0, 0.38, 0]} castShadow><sphereGeometry args={[0.05, 8, 8]} /><meshStandardMaterial color="#CE93D8" emissive="#CE93D8" emissiveIntensity={0.3} /></mesh>
+        {/* 音符装饰 */}
+        <mesh position={[0.12, 0.35, 0.05]} castShadow><sphereGeometry args={[0.02, 6, 6]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.4} /></mesh>
+        <mesh position={[-0.1, 0.4, -0.03]} castShadow><sphereGeometry args={[0.015, 6, 6]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.4} /></mesh>
       </group>
     )
   }
-  if (id === 'wardrobe') {
-    // 大衣柜
+  // ── F-11 宝可梦中心接待台 ──
+  if (id === 'F-11') {
     return (
       <group>
-        <mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={[0.8, 1.2, 0.4]} /><meshStandardMaterial color={wood} /></mesh>
-        {/* Doors */}
-        <mesh position={[-0.19, 0.6, 0.21]} castShadow><boxGeometry args={[0.38, 1.1, 0.02]} /><meshStandardMaterial color={woodDark} /></mesh>
-        <mesh position={[0.19, 0.6, 0.21]} castShadow><boxGeometry args={[0.38, 1.1, 0.02]} /><meshStandardMaterial color={woodDark} /></mesh>
-        {/* Handles */}
-        <mesh position={[-0.04, 0.6, 0.23]} castShadow><sphereGeometry args={[0.02, 8, 8]} /><meshStandardMaterial color="#FFD54F" metalness={0.5} /></mesh>
-        <mesh position={[0.04, 0.6, 0.23]} castShadow><sphereGeometry args={[0.02, 8, 8]} /><meshStandardMaterial color="#FFD54F" metalness={0.5} /></mesh>
+        <mesh position={[0, 0.4, 0]} castShadow><boxGeometry args={[1.0, 0.8, 0.5]} /><meshStandardMaterial color={white} /></mesh>
+        {/* 红色顶部 */}
+        <mesh position={[0, 0.81, 0]} castShadow><boxGeometry args={[1.02, 0.04, 0.52]} /><meshStandardMaterial color="#E53935" /></mesh>
+        {/* 精灵球标志 */}
+        <mesh position={[0, 0.5, 0.26]} castShadow><cylinderGeometry args={[0.1, 0.1, 0.02, 16]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.5, 0.27]} castShadow><cylinderGeometry args={[0.04, 0.04, 0.02, 12]} /><meshStandardMaterial color={white} /></mesh>
+        {/* 十字标志 */}
+        <mesh position={[0.35, 0.6, 0.26]} castShadow><boxGeometry args={[0.08, 0.12, 0.01]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0.35, 0.6, 0.26]} castShadow><boxGeometry args={[0.12, 0.08, 0.01]} /><meshStandardMaterial color="#E53935" /></mesh>
       </group>
     )
   }
-  if (id === 'piano') {
-    // 小钢琴
+  // ── F-12 冠军宝座 ──
+  if (id === 'F-12') {
     return (
       <group>
-        <mesh position={[0, 0.35, 0]} castShadow><boxGeometry args={[0.7, 0.06, 0.4]} /><meshStandardMaterial color="#212121" /></mesh>
-        <mesh position={[0, 0.6, -0.15]} castShadow><boxGeometry args={[0.7, 0.48, 0.06]} /><meshStandardMaterial color="#212121" /></mesh>
-        {/* Keys */}
-        {Array.from({ length: 7 }).map((_, i) => (
-          <mesh key={i} position={[-0.27 + i * 0.09, 0.39, 0.1]} castShadow>
-            <boxGeometry args={[0.07, 0.02, 0.2]} />
-            <meshStandardMaterial color={white} />
-          </mesh>
-        ))}
-        {[0, 1, 3, 4, 5].map((i) => (
-          <mesh key={`b${i}`} position={[-0.225 + i * 0.09, 0.41, 0.04]} castShadow>
-            <boxGeometry args={[0.04, 0.02, 0.12]} />
-            <meshStandardMaterial color="#212121" />
-          </mesh>
-        ))}
-        {/* Legs */}
-        {[[-0.3, 0.15], [0.3, 0.15], [0, -0.15]].map(([x, z], i) => (
-          <mesh key={i} position={[x, 0.16, z]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.32, 8]} /><meshStandardMaterial color="#212121" /></mesh>
-        ))}
+        {/* 底座 */}
+        <mesh position={[0, 0.08, 0]} castShadow><boxGeometry args={[0.6, 0.16, 0.5]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        {/* 座面 */}
+        <mesh position={[0, 0.28, 0.05]} castShadow><boxGeometry args={[0.55, 0.08, 0.45]} /><meshStandardMaterial color="#B71C1C" /></mesh>
+        {/* 靠背 */}
+        <mesh position={[0, 0.6, -0.2]} castShadow><boxGeometry args={[0.55, 0.6, 0.06]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        {/* 扶手 */}
+        <mesh position={[-0.28, 0.4, 0.05]} castShadow><boxGeometry args={[0.06, 0.2, 0.45]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        <mesh position={[0.28, 0.4, 0.05]} castShadow><boxGeometry args={[0.06, 0.2, 0.45]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        {/* 冠冕装饰 */}
+        <mesh position={[0, 0.95, -0.2]} castShadow><coneGeometry args={[0.08, 0.12, 5]} /><meshStandardMaterial color="#FFD54F" metalness={0.6} /></mesh>
+        <mesh position={[0, 0.95, -0.2]} castShadow><sphereGeometry args={[0.03, 8, 8]} /><meshStandardMaterial color="#E53935" /></mesh>
       </group>
     )
   }
 
-  // ── Wall decorations ──────────────────────────────────
-  if (id === 'poster_pikachu') {
-    // 皮卡丘海报 — 挂墙
+  // ── O-01 向日葵花盆 ──
+  if (id === 'O-01') {
     return (
       <group>
-        <mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={[0.5, 0.4, 0.02]} /><meshStandardMaterial color="#FFD54F" /></mesh>
-        <mesh position={[0, 0.6, 0.011]} castShadow><boxGeometry args={[0.44, 0.34, 0.005]} /><meshStandardMaterial color="#FFF9C4" /></mesh>
-        {/* Frame */}
-        <mesh position={[0, 0.6, 0.012]}><boxGeometry args={[0.5, 0.02, 0.01]} /><meshStandardMaterial color={woodDark} /></mesh>
+        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.12, 0.09, 0.2, 12]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        {/* 茎 */}
+        <mesh position={[-0.03, 0.35, 0]} castShadow><cylinderGeometry args={[0.015, 0.015, 0.3, 6]} /><meshStandardMaterial color="#558B2F" /></mesh>
+        <mesh position={[0.04, 0.3, 0]} castShadow><cylinderGeometry args={[0.015, 0.015, 0.22, 6]} /><meshStandardMaterial color="#558B2F" /></mesh>
+        {/* 向日葵花 */}
+        <mesh position={[-0.03, 0.52, 0]} castShadow><sphereGeometry args={[0.07, 12, 12]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        <mesh position={[-0.03, 0.52, 0]} castShadow><sphereGeometry args={[0.035, 8, 8]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        <mesh position={[0.04, 0.43, 0]} castShadow><sphereGeometry args={[0.055, 10, 10]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        <mesh position={[0.04, 0.43, 0]} castShadow><sphereGeometry args={[0.028, 8, 8]} /><meshStandardMaterial color="#5D4037" /></mesh>
       </group>
     )
   }
-  if (id === 'poster_badge') {
-    // 徽章展示墙
+  // ── O-02 小木栅栏 ──
+  if (id === 'O-02') {
     return (
       <group>
-        <mesh position={[0, 0.6, 0]} castShadow><boxGeometry args={[0.6, 0.5, 0.03]} /><meshStandardMaterial color="#8D6E63" /></mesh>
-        {[[-0.15, 0.7], [0.12, 0.55], [-0.08, 0.48], [0.18, 0.72]].map(([x, y], i) => (
-          <mesh key={i} position={[x, y, 0.02]} castShadow>
-            <cylinderGeometry args={[0.05, 0.05, 0.01, 8]} />
-            <meshStandardMaterial color={['#FFD54F', '#C0C0C0', '#CD7F32', '#4CAF50'][i]} metalness={0.6} />
+        {/* 横梁 */}
+        <mesh position={[0, 0.15, 0]} castShadow><boxGeometry args={[0.8, 0.04, 0.03]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.3, 0]} castShadow><boxGeometry args={[0.8, 0.04, 0.03]} /><meshStandardMaterial color={white} /></mesh>
+        {/* 竖栏 */}
+        {[-0.35, -0.2, -0.05, 0.1, 0.25, 0.35].map((x, i) => (
+          <mesh key={i} position={[x, 0.2, 0]} castShadow><boxGeometry args={[0.04, 0.4, 0.03]} /><meshStandardMaterial color={white} /></mesh>
+        ))}
+        {/* 尖顶 */}
+        {[-0.35, -0.05, 0.25].map((x, i) => (
+          <mesh key={i} position={[x, 0.42, 0]} castShadow><coneGeometry args={[0.025, 0.05, 4]} /><meshStandardMaterial color={white} /></mesh>
+        ))}
+      </group>
+    )
+  }
+  // ── O-03 石头小径 ──
+  if (id === 'O-03') {
+    return (
+      <group>
+        {[[-0.1, 0], [0.05, 0.12], [-0.08, -0.15], [0.12, -0.05], [0, 0.06]].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.02, z]} castShadow rotation={[-Math.PI / 2, 0, i * 0.5]}>
+            <circleGeometry args={[0.06 + i * 0.01, 8]} />
+            <meshStandardMaterial color={['#9E9E9E', '#BDBDBD', '#757575', '#A0A0A0', '#8D8D8D'][i]} />
           </mesh>
         ))}
       </group>
     )
   }
-  if (id === 'clock_pokeball') {
-    // 精灵球时钟
+  // ── O-04 樱桃树盆栽 ──
+  if (id === 'O-04') {
     return (
       <group>
-        <mesh position={[0, 0.6, 0]} castShadow>
-          <cylinderGeometry args={[0.15, 0.15, 0.03, 24]} />
-          <meshStandardMaterial color="#E53935" />
-        </mesh>
-        <mesh position={[0, 0.6, 0.016]} castShadow>
-          <cylinderGeometry args={[0.13, 0.13, 0.01, 24, 1, false, 0, Math.PI]} />
-          <meshStandardMaterial color={white} />
-        </mesh>
-        <mesh position={[0, 0.6, 0.02]} castShadow><sphereGeometry args={[0.03, 12, 12]} /><meshStandardMaterial color="#212121" /></mesh>
-        {/* Clock hands */}
-        <mesh position={[0, 0.66, 0.02]} castShadow><boxGeometry args={[0.01, 0.1, 0.005]} /><meshStandardMaterial color="#212121" /></mesh>
-        <mesh position={[0.03, 0.6, 0.02]} castShadow rotation={[0, 0, -Math.PI / 3]}><boxGeometry args={[0.01, 0.07, 0.005]} /><meshStandardMaterial color="#212121" /></mesh>
+        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.14, 0.11, 0.2, 10]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        <mesh position={[0, 0.4, 0]} castShadow><cylinderGeometry args={[0.04, 0.05, 0.4, 6]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        <mesh position={[0, 0.72, 0]} castShadow><sphereGeometry args={[0.25, 12, 12]} /><meshStandardMaterial color="#F8BBD0" /></mesh>
+        <mesh position={[-0.15, 0.6, 0]} castShadow><sphereGeometry args={[0.12, 8, 8]} /><meshStandardMaterial color="#F48FB1" /></mesh>
+        <mesh position={[0.12, 0.64, 0.1]} castShadow><sphereGeometry args={[0.12, 8, 8]} /><meshStandardMaterial color="#F48FB1" /></mesh>
+        {/* 樱桃果 */}
+        {[[-0.1, 0.58, 0.15], [0.15, 0.65, -0.1], [0.05, 0.78, 0.08]].map(([x, y, z], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow><sphereGeometry args={[0.025, 8, 8]} /><meshStandardMaterial color="#E53935" /></mesh>
+        ))}
       </group>
     )
   }
-  if (id === 'window_garden') {
-    // 花园窗户
+  // ── O-05 蘑菇路灯 ──
+  if (id === 'O-05') {
     return (
       <group>
-        <mesh position={[0, 0.65, 0]} castShadow><boxGeometry args={[0.6, 0.5, 0.04]} /><meshStandardMaterial color="#E3F2FD" transparent opacity={0.4} /></mesh>
-        {/* Frame */}
-        <mesh position={[0, 0.65, 0.02]} castShadow><boxGeometry args={[0.62, 0.02, 0.02]} /><meshStandardMaterial color={white} /></mesh>
-        <mesh position={[0, 0.65, 0.02]} castShadow><boxGeometry args={[0.02, 0.52, 0.02]} /><meshStandardMaterial color={white} /></mesh>
-        {/* Top/bottom */}
-        <mesh position={[0, 0.91, 0.01]} castShadow><boxGeometry args={[0.64, 0.04, 0.05]} /><meshStandardMaterial color={white} /></mesh>
-        <mesh position={[0, 0.39, 0.01]} castShadow><boxGeometry args={[0.64, 0.04, 0.05]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.3, 0]} castShadow><cylinderGeometry args={[0.03, 0.04, 0.6, 8]} /><meshStandardMaterial color="#BCAAA4" /></mesh>
+        <mesh position={[0, 0.65, 0]} castShadow><sphereGeometry args={[0.15, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#E53935" /></mesh>
+        {/* 白色斑点 */}
+        {[[0.08, 0.7, 0.08], [-0.06, 0.72, -0.05], [0.02, 0.73, 0.1]].map(([x, y, z], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow><sphereGeometry args={[0.02, 6, 6]} /><meshStandardMaterial color={white} /></mesh>
+        ))}
+        <pointLight position={[0, 0.55, 0]} intensity={0.4} distance={2} color="#FFE0B2" />
+      </group>
+    )
+  }
+  // ── O-06 精灵球喷水池 ──
+  if (id === 'O-06') {
+    return (
+      <group>
+        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.4, 0.35, 0.2, 16]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
+        <mesh position={[0, 0.22, 0]} castShadow><cylinderGeometry args={[0.35, 0.35, 0.04, 16]} /><meshStandardMaterial color="#64B5F6" transparent opacity={0.7} /></mesh>
+        {/* 精灵球中心柱 */}
+        <mesh position={[0, 0.3, 0]} castShadow><cylinderGeometry args={[0.06, 0.08, 0.2, 10]} /><meshStandardMaterial color={metal} /></mesh>
+        <mesh position={[0, 0.42, 0]} castShadow><sphereGeometry args={[0.1, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.42, 0]} castShadow><sphereGeometry args={[0.1, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.52, 0]} castShadow><sphereGeometry args={[0.05, 8, 8]} /><meshStandardMaterial color="#90CAF9" transparent opacity={0.5} /></mesh>
+      </group>
+    )
+  }
+  // ── O-09 宝可梦石像 ──
+  if (id === 'O-09') {
+    return (
+      <group>
+        {/* 底座 */}
+        <mesh position={[0, 0.08, 0]} castShadow><boxGeometry args={[0.35, 0.16, 0.35]} /><meshStandardMaterial color="#9E9E9E" /></mesh>
+        {/* 身体 */}
+        <mesh position={[0, 0.3, 0]} castShadow><sphereGeometry args={[0.15, 10, 10]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
+        {/* 头 */}
+        <mesh position={[0, 0.5, 0]} castShadow><sphereGeometry args={[0.12, 10, 10]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
+        {/* 耳朵 */}
+        <mesh position={[-0.08, 0.62, 0]} castShadow rotation={[0, 0, -0.3]}><coneGeometry args={[0.04, 0.1, 6]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
+        <mesh position={[0.08, 0.62, 0]} castShadow rotation={[0, 0, 0.3]}><coneGeometry args={[0.04, 0.1, 6]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
+      </group>
+    )
+  }
+  // ── O-10 彩虹桥 ──
+  if (id === 'O-10') {
+    return (
+      <group>
+        {['#E53935', '#FF9800', '#FFD54F', '#66BB6A', '#42A5F5', '#5C6BC0', '#AB47BC'].map((c, i) => (
+          <mesh key={i} position={[0, 0.02 + i * 0.025, 0]} castShadow rotation={[0, 0, Math.PI / 2]}>
+            <torusGeometry args={[0.35 - i * 0.03, 0.015, 8, 24, Math.PI]} />
+            <meshStandardMaterial color={c} />
+          </mesh>
+        ))}
+      </group>
+    )
+  }
+  // ── O-11 光之树 ──
+  if (id === 'O-11') {
+    return (
+      <group>
+        <mesh position={[0, 0.35, 0]} castShadow><cylinderGeometry args={[0.05, 0.07, 0.7, 6]} /><meshStandardMaterial color="#E0E0E0" /></mesh>
+        <mesh position={[0, 0.8, 0]} castShadow><sphereGeometry args={[0.3, 12, 12]} /><meshStandardMaterial color="#F5F5F5" emissive="#FFD54F" emissiveIntensity={0.3} /></mesh>
+        <mesh position={[-0.2, 0.65, 0]} castShadow><sphereGeometry args={[0.15, 8, 8]} /><meshStandardMaterial color="#FAFAFA" emissive="#FFD54F" emissiveIntensity={0.2} /></mesh>
+        <mesh position={[0.18, 0.7, 0.1]} castShadow><sphereGeometry args={[0.15, 8, 8]} /><meshStandardMaterial color="#FAFAFA" emissive="#FFD54F" emissiveIntensity={0.2} /></mesh>
+        <pointLight position={[0, 0.8, 0]} intensity={0.8} distance={3} color="#FFF9C4" />
+      </group>
+    )
+  }
+  // ── O-12 胜利旗杆 ──
+  if (id === 'O-12') {
+    return (
+      <group>
+        <mesh position={[0, 0.5, 0]} castShadow><cylinderGeometry args={[0.02, 0.025, 1.0, 8]} /><meshStandardMaterial color={metal} /></mesh>
+        <mesh position={[0, 1.0, 0]} castShadow><sphereGeometry args={[0.03, 8, 8]} /><meshStandardMaterial color="#FFD54F" metalness={0.5} /></mesh>
+        {/* 旗帜 */}
+        <mesh position={[0.12, 0.88, 0]} castShadow><boxGeometry args={[0.22, 0.15, 0.01]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0.12, 0.88, 0.006]} castShadow><boxGeometry args={[0.06, 0.06, 0.005]} /><meshStandardMaterial color="#FFD54F" /></mesh>
       </group>
     )
   }
 
-  // ── Toys ──────────────────────────────────────────────
-  if (id === 'toy_ball') {
-    // 精灵球玩具
+  // ── T-01 毛线球 ──
+  if (id === 'T-01') {
     return (
       <group>
-        <mesh position={[0, 0.1, 0]} castShadow><sphereGeometry args={[0.1, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#E53935" /></mesh>
-        <mesh position={[0, 0.1, 0]} castShadow><sphereGeometry args={[0.1, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} /><meshStandardMaterial color={white} /></mesh>
-        <mesh position={[0, 0.1, 0]} castShadow rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.1, 0.008, 8, 24]} /><meshStandardMaterial color="#212121" /></mesh>
-        <mesh position={[0, 0.1, 0.1]} castShadow><sphereGeometry args={[0.025, 10, 10]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.08, 0]} castShadow><sphereGeometry args={[0.08, 12, 12]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0.03, 0.12, 0.05]} castShadow><sphereGeometry args={[0.06, 10, 10]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        <mesh position={[-0.05, 0.06, -0.03]} castShadow><sphereGeometry args={[0.07, 10, 10]} /><meshStandardMaterial color="#42A5F5" /></mesh>
+        <mesh position={[0.06, 0.05, -0.06]} castShadow><sphereGeometry args={[0.065, 10, 10]} /><meshStandardMaterial color="#66BB6A" /></mesh>
+        <mesh position={[-0.03, 0.1, 0.06]} castShadow><sphereGeometry args={[0.055, 10, 10]} /><meshStandardMaterial color="#AB47BC" /></mesh>
       </group>
     )
   }
-  if (id === 'toy_doll') {
-    // 宝可梦玩偶
+  // ── T-02 精灵球玩具 ──
+  if (id === 'T-02') {
     return (
       <group>
-        <mesh position={[0, 0.15, 0]} castShadow><sphereGeometry args={[0.15, 12, 12]} /><meshStandardMaterial color="#FFD54F" /></mesh>
-        <mesh position={[-0.1, 0.3, 0]} castShadow rotation={[0, 0, -0.3]}><coneGeometry args={[0.05, 0.15, 6]} /><meshStandardMaterial color="#FFD54F" /></mesh>
-        <mesh position={[0.1, 0.3, 0]} castShadow rotation={[0, 0, 0.3]}><coneGeometry args={[0.05, 0.15, 6]} /><meshStandardMaterial color="#FFD54F" /></mesh>
-        {/* Eyes */}
-        <mesh position={[-0.05, 0.18, 0.13]} castShadow><sphereGeometry args={[0.02, 8, 8]} /><meshStandardMaterial color="#212121" /></mesh>
-        <mesh position={[0.05, 0.18, 0.13]} castShadow><sphereGeometry args={[0.02, 8, 8]} /><meshStandardMaterial color="#212121" /></mesh>
-        {/* Cheeks */}
-        <mesh position={[-0.1, 0.13, 0.12]} castShadow><sphereGeometry args={[0.03, 8, 8]} /><meshStandardMaterial color="#E53935" /></mesh>
-        <mesh position={[0.1, 0.13, 0.12]} castShadow><sphereGeometry args={[0.03, 8, 8]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.12, 0]} castShadow><sphereGeometry args={[0.12, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.12, 0]} castShadow><sphereGeometry args={[0.12, 16, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.12, 0]} castShadow rotation={[Math.PI / 2, 0, 0]}><torusGeometry args={[0.12, 0.008, 8, 24]} /><meshStandardMaterial color="#212121" /></mesh>
+        <mesh position={[0, 0.12, 0.12]} castShadow><sphereGeometry args={[0.03, 10, 10]} /><meshStandardMaterial color={white} /></mesh>
       </group>
     )
   }
-  if (id === 'toy_puzzle') {
-    // 智力拼图
+  // ── T-03 旋转风车 ──
+  if (id === 'T-03') {
+    return (
+      <group>
+        <mesh position={[0, 0.25, 0]} castShadow><cylinderGeometry args={[0.015, 0.02, 0.5, 6]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {/* 风车叶 */}
+        {[0, 1, 2, 3].map(i => (
+          <mesh key={i} position={[0, 0.48, 0.02]} castShadow rotation={[0, 0, (i / 4) * Math.PI * 2]}>
+            <boxGeometry args={[0.04, 0.18, 0.005]} />
+            <meshStandardMaterial color={['#E53935', '#FFD54F', '#42A5F5', '#66BB6A'][i]} />
+          </mesh>
+        ))}
+        <mesh position={[0, 0.48, 0.025]} castShadow><sphereGeometry args={[0.015, 8, 8]} /><meshStandardMaterial color="#212121" /></mesh>
+      </group>
+    )
+  }
+  // ── T-04 积木套装 ──
+  if (id === 'T-04') {
+    return (
+      <group>
+        {/* 底层 */}
+        <mesh position={[-0.06, 0.04, -0.03]} castShadow><boxGeometry args={[0.1, 0.08, 0.1]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0.06, 0.04, -0.03]} castShadow><boxGeometry args={[0.1, 0.08, 0.1]} /><meshStandardMaterial color="#42A5F5" /></mesh>
+        <mesh position={[0, 0.04, 0.08]} castShadow><boxGeometry args={[0.1, 0.08, 0.1]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        {/* 中层 */}
+        <mesh position={[0, 0.12, 0]} castShadow><boxGeometry args={[0.1, 0.08, 0.1]} /><meshStandardMaterial color="#66BB6A" /></mesh>
+        <mesh position={[0.08, 0.12, 0.05]} castShadow><boxGeometry args={[0.08, 0.08, 0.08]} /><meshStandardMaterial color="#AB47BC" /></mesh>
+        {/* 顶层 */}
+        <mesh position={[0.02, 0.2, 0.02]} castShadow><boxGeometry args={[0.08, 0.08, 0.08]} /><meshStandardMaterial color="#FF9800" /></mesh>
+      </group>
+    )
+  }
+  // ── T-05 宝可梦拼图 ──
+  if (id === 'T-05') {
     return (
       <group>
         <mesh position={[0, 0.01, 0]} receiveShadow><boxGeometry args={[0.4, 0.02, 0.3]} /><meshStandardMaterial color="#FFF9C4" /></mesh>
@@ -506,79 +703,191 @@ function Furniture3DModel({ id, category, color }: { id: string; category: strin
       </group>
     )
   }
-  if (id === 'toy_telescope') {
-    // 迷你望远镜
+  // ── T-06 弹跳蹦床 ──
+  if (id === 'T-06') {
     return (
       <group>
-        {/* Tripod legs */}
-        {[0, 1, 2].map(i => {
-          const a = (i / 3) * Math.PI * 2
-          return (
-            <mesh key={i} position={[Math.sin(a) * 0.12, 0.25, Math.cos(a) * 0.12]} castShadow rotation={[Math.sin(a) * 0.3, 0, Math.cos(a) * 0.3]}>
-              <cylinderGeometry args={[0.015, 0.015, 0.5, 6]} />
-              <meshStandardMaterial color={metal} />
-            </mesh>
-          )
+        <mesh position={[0, 0.15, 0]} castShadow><cylinderGeometry args={[0.3, 0.32, 0.06, 16]} /><meshStandardMaterial color="#42A5F5" /></mesh>
+        <mesh position={[0, 0.12, 0]} castShadow><cylinderGeometry args={[0.32, 0.32, 0.24, 16]} /><meshStandardMaterial color={metal} /></mesh>
+        {/* 弹簧装饰 */}
+        {[0, 1, 2, 3, 4, 5].map(i => {
+          const a = (i / 6) * Math.PI * 2
+          return <mesh key={i} position={[Math.cos(a) * 0.28, 0.06, Math.sin(a) * 0.28]} castShadow><cylinderGeometry args={[0.015, 0.015, 0.12, 6]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
         })}
-        {/* Tube */}
-        <mesh position={[0, 0.45, 0]} castShadow rotation={[0.4, 0, 0]}>
-          <cylinderGeometry args={[0.04, 0.06, 0.35, 12]} />
-          <meshStandardMaterial color="#37474F" />
-        </mesh>
-        <mesh position={[0, 0.55, -0.12]} castShadow>
-          <cylinderGeometry args={[0.06, 0.06, 0.02, 12]} />
-          <meshStandardMaterial color="#42A5F5" transparent opacity={0.5} />
-        </mesh>
+      </group>
+    )
+  }
+  // ── T-07 魔法水晶球 ──
+  if (id === 'T-07') {
+    return (
+      <group>
+        <mesh position={[0, 0.04, 0]} castShadow><cylinderGeometry args={[0.1, 0.12, 0.06, 12]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        <mesh position={[0, 0.2, 0]} castShadow><sphereGeometry args={[0.14, 16, 16]} /><meshStandardMaterial color="#E3F2FD" transparent opacity={0.4} /></mesh>
+        {/* 内部雪花 */}
+        {[[-0.03, 0.22, 0.02], [0.04, 0.18, -0.03], [0, 0.25, 0.01]].map(([x, y, z], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow><octahedronGeometry args={[0.015, 0]} /><meshStandardMaterial color={white} emissive={white} emissiveIntensity={0.3} /></mesh>
+        ))}
+        <pointLight position={[0, 0.2, 0]} intensity={0.3} distance={1.5} color="#E3F2FD" />
+      </group>
+    )
+  }
+  // ── T-08 迷你滑梯 ──
+  if (id === 'T-08') {
+    return (
+      <group>
+        {/* 阶梯 */}
+        <mesh position={[-0.15, 0.2, -0.1]} castShadow><boxGeometry args={[0.2, 0.4, 0.04]} /><meshStandardMaterial color="#42A5F5" /></mesh>
+        {[0.08, 0.18, 0.28, 0.38].map((y, i) => (
+          <mesh key={i} position={[-0.15, y, -0.1]} castShadow><boxGeometry args={[0.2, 0.02, 0.1]} /><meshStandardMaterial color="#1E88E5" /></mesh>
+        ))}
+        {/* 滑道 */}
+        <mesh position={[0.1, 0.2, 0.05]} castShadow rotation={[0.5, 0, 0]}><boxGeometry args={[0.25, 0.02, 0.5]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        {/* 平台 */}
+        <mesh position={[-0.02, 0.39, -0.1]} castShadow><boxGeometry args={[0.3, 0.03, 0.15]} /><meshStandardMaterial color="#42A5F5" /></mesh>
+      </group>
+    )
+  }
+  // ── T-09 宝可梦乐器套装 ──
+  if (id === 'T-09') {
+    return (
+      <group>
+        {/* 小鼓 */}
+        <mesh position={[-0.15, 0.08, 0]} castShadow><cylinderGeometry args={[0.08, 0.08, 0.1, 12]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[-0.15, 0.14, 0]} castShadow><cylinderGeometry args={[0.08, 0.08, 0.01, 12]} /><meshStandardMaterial color="#FFF9C4" /></mesh>
+        {/* 小吉他 */}
+        <mesh position={[0.05, 0.15, 0]} castShadow rotation={[0, 0, 0.2]}><capsuleGeometry args={[0.05, 0.08, 8, 8]} /><meshStandardMaterial color={wood} /></mesh>
+        <mesh position={[0.08, 0.3, 0]} castShadow rotation={[0, 0, 0.2]}><boxGeometry args={[0.03, 0.15, 0.02]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {/* 木琴 */}
+        <mesh position={[0, 0.02, 0.15]} castShadow><boxGeometry args={[0.25, 0.02, 0.1]} /><meshStandardMaterial color={wood} /></mesh>
+        {[-0.08, -0.03, 0.02, 0.07].map((x, i) => (
+          <mesh key={i} position={[x, 0.04, 0.15]} castShadow><boxGeometry args={[0.04, 0.01, 0.08 - i * 0.01]} /><meshStandardMaterial color={['#E53935', '#FF9800', '#FFD54F', '#66BB6A'][i]} /></mesh>
+        ))}
+      </group>
+    )
+  }
+  // ── T-10 时光胶囊 ──
+  if (id === 'T-10') {
+    return (
+      <group>
+        <mesh position={[0, 0.15, 0]} castShadow><capsuleGeometry args={[0.1, 0.15, 12, 16]} /><meshStandardMaterial color="#CE93D8" transparent opacity={0.6} /></mesh>
+        <mesh position={[0, 0.15, 0]} castShadow><capsuleGeometry args={[0.06, 0.08, 8, 12]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.5} /></mesh>
+        <pointLight position={[0, 0.15, 0]} intensity={0.4} distance={1.5} color="#CE93D8" />
       </group>
     )
   }
 
-  // ── Plants ──────────────────────────────────────────────
-  if (id === 'plant_flower') {
-    // 小花盆
+  // ── FN-01 心愿便利贴板 ──
+  if (id === 'FN-01') {
     return (
       <group>
-        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.12, 0.09, 0.2, 12]} /><meshStandardMaterial color="#8D6E63" /></mesh>
-        <mesh position={[0, 0.28, 0]} castShadow><cylinderGeometry args={[0.02, 0.02, 0.16, 6]} /><meshStandardMaterial color="#558B2F" /></mesh>
-        <mesh position={[0, 0.4, 0]} castShadow><sphereGeometry args={[0.08, 12, 12]} /><meshStandardMaterial color="#F48FB1" /></mesh>
-        <mesh position={[0, 0.4, 0]} castShadow><sphereGeometry args={[0.03, 8, 8]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+        <mesh position={[0, 0.4, 0]} castShadow><boxGeometry args={[0.5, 0.5, 0.03]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        {[[-0.12, 0.5, '#FFD54F'], [0.1, 0.45, '#F48FB1'], [-0.05, 0.3, '#81D4FA'], [0.15, 0.35, '#A5D6A7']].map(([x, y, c], i) => (
+          <mesh key={i} position={[Number(x), Number(y), 0.02]} castShadow><boxGeometry args={[0.1, 0.1, 0.005]} /><meshStandardMaterial color={String(c)} /></mesh>
+        ))}
       </group>
     )
   }
-  if (id === 'plant_tree') {
-    // 迷你树
+  // ── FN-03 宝可梦日历 ──
+  if (id === 'FN-03') {
     return (
       <group>
-        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.14, 0.11, 0.2, 10]} /><meshStandardMaterial color="#8D6E63" /></mesh>
-        <mesh position={[0, 0.4, 0]} castShadow><cylinderGeometry args={[0.04, 0.05, 0.4, 6]} /><meshStandardMaterial color="#5D4037" /></mesh>
-        <mesh position={[0, 0.72, 0]} castShadow><sphereGeometry args={[0.25, 12, 12]} /><meshStandardMaterial color="#43A047" /></mesh>
-        <mesh position={[-0.15, 0.6, 0]} castShadow><sphereGeometry args={[0.12, 8, 8]} /><meshStandardMaterial color="#66BB6A" /></mesh>
-        <mesh position={[0.12, 0.64, 0.1]} castShadow><sphereGeometry args={[0.12, 8, 8]} /><meshStandardMaterial color="#66BB6A" /></mesh>
+        <mesh position={[0, 0.15, 0]} castShadow><boxGeometry args={[0.25, 0.3, 0.04]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.28, 0]} castShadow><boxGeometry args={[0.25, 0.05, 0.045]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.15, 0.021]} castShadow><boxGeometry args={[0.2, 0.18, 0.005]} /><meshStandardMaterial color="#FAFAFA" /></mesh>
+        {/* 日期格子 */}
+        {Array.from({ length: 6 }).map((_, i) => (
+          <mesh key={i} position={[-0.06 + (i % 3) * 0.06, 0.1 + Math.floor(i / 3) * 0.06, 0.024]} castShadow>
+            <boxGeometry args={[0.04, 0.04, 0.002]} />
+            <meshStandardMaterial color="#E0E0E0" />
+          </mesh>
+        ))}
       </group>
     )
   }
-  if (id === 'plant_cactus') {
-    // 仙人掌
+  // ── FN-06 时间沙漏 ──
+  if (id === 'FN-06') {
     return (
       <group>
-        <mesh position={[0, 0.08, 0]} castShadow><cylinderGeometry args={[0.1, 0.08, 0.16, 10]} /><meshStandardMaterial color="#8D6E63" /></mesh>
-        <mesh position={[0, 0.35, 0]} castShadow><capsuleGeometry args={[0.08, 0.25, 8, 12]} /><meshStandardMaterial color="#388E3C" /></mesh>
-        <mesh position={[-0.12, 0.4, 0]} castShadow rotation={[0, 0, 0.5]}><capsuleGeometry args={[0.04, 0.1, 6, 8]} /><meshStandardMaterial color="#43A047" /></mesh>
-        <mesh position={[0.1, 0.5, 0]} castShadow rotation={[0, 0, -0.4]}><capsuleGeometry args={[0.04, 0.08, 6, 8]} /><meshStandardMaterial color="#43A047" /></mesh>
+        {/* 上下框 */}
+        <mesh position={[0, 0.0, 0]} castShadow><boxGeometry args={[0.15, 0.03, 0.1]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        <mesh position={[0, 0.45, 0]} castShadow><boxGeometry args={[0.15, 0.03, 0.1]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        {/* 支柱 */}
+        {[-0.06, 0.06].map((x, i) => (
+          <mesh key={i} position={[x, 0.225, 0]} castShadow><cylinderGeometry args={[0.01, 0.01, 0.42, 6]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        ))}
+        {/* 上玻璃 */}
+        <mesh position={[0, 0.32, 0]} castShadow><coneGeometry args={[0.06, 0.18, 12]} /><meshStandardMaterial color="#FFF9C4" transparent opacity={0.4} /></mesh>
+        {/* 下玻璃 */}
+        <mesh position={[0, 0.14, 0]} castShadow rotation={[Math.PI, 0, 0]}><coneGeometry args={[0.06, 0.18, 12]} /><meshStandardMaterial color="#FFF9C4" transparent opacity={0.4} /></mesh>
+        {/* 沙子 */}
+        <mesh position={[0, 0.08, 0]} castShadow rotation={[Math.PI, 0, 0]}><coneGeometry args={[0.04, 0.08, 10]} /><meshStandardMaterial color="#FFD54F" /></mesh>
       </group>
     )
   }
-  if (id === 'plant_bamboo') {
-    // 幸运竹
+  // ── FN-07 荣誉奖杯柜 ──
+  if (id === 'FN-07') {
     return (
       <group>
-        <mesh position={[0, 0.06, 0]} castShadow><cylinderGeometry args={[0.1, 0.08, 0.12, 10]} /><meshStandardMaterial color="#8D6E63" /></mesh>
-        {[-0.03, 0.03].map((x, i) => (
+        <mesh position={[0, 0.5, 0]} castShadow><boxGeometry args={[0.6, 1.0, 0.3]} /><meshStandardMaterial color={wood} /></mesh>
+        <mesh position={[0, 0.5, 0.16]} castShadow><boxGeometry args={[0.56, 0.96, 0.01]} /><meshStandardMaterial color="#E3F2FD" transparent opacity={0.3} /></mesh>
+        {/* 奖杯 */}
+        <mesh position={[-0.12, 0.7, 0]} castShadow><cylinderGeometry args={[0.04, 0.02, 0.08, 8]} /><meshStandardMaterial color="#FFD54F" metalness={0.6} /></mesh>
+        <mesh position={[0.12, 0.7, 0]} castShadow><cylinderGeometry args={[0.03, 0.02, 0.06, 8]} /><meshStandardMaterial color="#C0C0C0" metalness={0.6} /></mesh>
+        <mesh position={[0, 0.3, 0]} castShadow><cylinderGeometry args={[0.035, 0.02, 0.07, 8]} /><meshStandardMaterial color="#CD7F32" metalness={0.6} /></mesh>
+        {/* 隔板 */}
+        <mesh position={[0, 0.5, 0]} castShadow><boxGeometry args={[0.56, 0.02, 0.28]} /><meshStandardMaterial color={woodDark} /></mesh>
+      </group>
+    )
+  }
+  // ── FN-08 成长树 ──
+  if (id === 'FN-08') {
+    return (
+      <group>
+        <mesh position={[0, 0.08, 0]} castShadow><cylinderGeometry args={[0.15, 0.12, 0.16, 10]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        <mesh position={[0, 0.4, 0]} castShadow><cylinderGeometry args={[0.04, 0.05, 0.5, 6]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        <mesh position={[0, 0.75, 0]} castShadow><sphereGeometry args={[0.22, 12, 12]} /><meshStandardMaterial color="#43A047" /></mesh>
+        <mesh position={[-0.15, 0.65, 0]} castShadow><sphereGeometry args={[0.1, 8, 8]} /><meshStandardMaterial color="#66BB6A" /></mesh>
+        <mesh position={[0.12, 0.68, 0.1]} castShadow><sphereGeometry args={[0.1, 8, 8]} /><meshStandardMaterial color="#66BB6A" /></mesh>
+        {/* 果实/星星 */}
+        {[[-0.08, 0.82, 0.1], [0.12, 0.78, -0.05], [0.02, 0.88, 0]].map(([x, y, z], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow><octahedronGeometry args={[0.025, 0]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.3} /></mesh>
+        ))}
+      </group>
+    )
+  }
+
+  // ── D-01 彩色门垫 ──
+  if (id === 'D-01') {
+    return (
+      <group>
+        <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow><boxGeometry args={[0.5, 0.35, 0.02]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        {['#E53935', '#FF9800', '#FFD54F', '#66BB6A', '#42A5F5', '#AB47BC'].map((c, i) => (
+          <mesh key={i} position={[-0.2 + i * 0.08, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}><boxGeometry args={[0.06, 0.3, 0.005]} /><meshStandardMaterial color={c} /></mesh>
+        ))}
+      </group>
+    )
+  }
+  // ── D-02 精灵球门牌 ──
+  if (id === 'D-02') {
+    return (
+      <group>
+        <mesh position={[0, 0.6, 0]} castShadow><cylinderGeometry args={[0.12, 0.12, 0.03, 20]} /><meshStandardMaterial color="#E53935" /></mesh>
+        <mesh position={[0, 0.6, 0.016]} castShadow><cylinderGeometry args={[0.11, 0.11, 0.01, 20, 1, false, 0, Math.PI]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[0, 0.6, 0.02]} castShadow><sphereGeometry args={[0.025, 10, 10]} /><meshStandardMaterial color="#212121" /></mesh>
+      </group>
+    )
+  }
+  // ── D-03 植物门帘 ──
+  if (id === 'D-03') {
+    return (
+      <group>
+        <mesh position={[0, 0.9, 0]} castShadow><boxGeometry args={[0.5, 0.04, 0.03]} /><meshStandardMaterial color={woodDark} /></mesh>
+        {[-0.18, -0.06, 0.06, 0.18].map((x, i) => (
           <group key={i}>
-            <mesh position={[x, 0.4, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.65, 8]} /><meshStandardMaterial color="#558B2F" /></mesh>
-            {[0.25, 0.45, 0.6].map((y, j) => (
-              <mesh key={j} position={[x + (j % 2 === 0 ? 0.06 : -0.06), y, 0]} castShadow rotation={[0, 0, j % 2 === 0 ? -0.4 : 0.4]}>
-                <boxGeometry args={[0.08, 0.01, 0.03]} />
+            <mesh position={[x, 0.5, 0]} castShadow><cylinderGeometry args={[0.008, 0.008, 0.8, 4]} /><meshStandardMaterial color="#558B2F" /></mesh>
+            {[0.3, 0.5, 0.7].map((y, j) => (
+              <mesh key={j} position={[x + (j % 2 === 0 ? 0.03 : -0.03), y, 0.01]} castShadow>
+                <boxGeometry args={[0.05, 0.025, 0.005]} />
                 <meshStandardMaterial color="#66BB6A" />
               </mesh>
             ))}
@@ -587,57 +896,91 @@ function Furniture3DModel({ id, category, color }: { id: string; category: strin
       </group>
     )
   }
-
-  // ── Outdoor ──────────────────────────────────────────────
-  if (id === 'outdoor_swing') {
-    // 秋千
+  // ── D-06 星星风铃 ──
+  if (id === 'D-06') {
     return (
       <group>
-        <mesh position={[-0.3, 0.5, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 1.0, 8]} /><meshStandardMaterial color={woodDark} /></mesh>
-        <mesh position={[0.3, 0.5, 0]} castShadow><cylinderGeometry args={[0.025, 0.025, 1.0, 8]} /><meshStandardMaterial color={woodDark} /></mesh>
-        <mesh position={[0, 0.95, 0]} castShadow><boxGeometry args={[0.65, 0.04, 0.04]} /><meshStandardMaterial color={woodDark} /></mesh>
-        {/* Seat */}
-        <mesh position={[0, 0.3, 0]} castShadow><boxGeometry args={[0.3, 0.03, 0.2]} /><meshStandardMaterial color={wood} /></mesh>
-        {/* Chains */}
-        {[-0.12, 0.12].map((x, i) => (
-          <mesh key={i} position={[x, 0.63, 0]} castShadow><cylinderGeometry args={[0.008, 0.008, 0.65, 4]} /><meshStandardMaterial color={metal} /></mesh>
+        <mesh position={[0, 0.85, 0]} castShadow><cylinderGeometry args={[0.06, 0.06, 0.02, 12]} /><meshStandardMaterial color="#FFD54F" metalness={0.4} /></mesh>
+        {[-0.04, 0, 0.04].map((x, i) => (
+          <group key={i}>
+            <mesh position={[x, 0.6 - i * 0.08, 0]} castShadow><cylinderGeometry args={[0.002, 0.002, 0.3 + i * 0.08, 4]} /><meshStandardMaterial color="#FFD54F" /></mesh>
+            <mesh position={[x, 0.45 - i * 0.1, 0]} castShadow><octahedronGeometry args={[0.025, 0]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.3} /></mesh>
+          </group>
         ))}
       </group>
     )
   }
-  if (id === 'outdoor_pool') {
-    // 小水池
+
+  // ── B-01 草编小窝 ──
+  if (id === 'B-01') {
     return (
       <group>
-        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.4, 0.35, 0.2, 16]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
-        <mesh position={[0, 0.12, 0]} castShadow><cylinderGeometry args={[0.35, 0.35, 0.04, 16]} /><meshStandardMaterial color="#64B5F6" transparent opacity={0.7} /></mesh>
+        <mesh position={[0, 0.08, 0]} castShadow><cylinderGeometry args={[0.25, 0.2, 0.16, 12]} /><meshStandardMaterial color="#A1887F" /></mesh>
+        <mesh position={[0, 0.08, 0]} castShadow><cylinderGeometry args={[0.22, 0.18, 0.12, 12]} /><meshStandardMaterial color="#D7CCC8" /></mesh>
+        <mesh position={[0, 0.16, -0.15]} castShadow><sphereGeometry args={[0.12, 8, 6, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color="#A1887F" /></mesh>
       </group>
     )
   }
-  if (id === 'outdoor_tent') {
-    // 帐篷
+  // ── B-02 云朵床 ──
+  if (id === 'B-02') {
     return (
       <group>
-        <mesh position={[0, 0.4, 0]} castShadow>
-          <coneGeometry args={[0.45, 0.8, 4]} />
-          <meshStandardMaterial color="#FF7043" />
-        </mesh>
-        {/* Door opening */}
-        <mesh position={[0, 0.15, 0.35]} castShadow>
-          <boxGeometry args={[0.2, 0.3, 0.01]} />
-          <meshStandardMaterial color="#5D4037" />
-        </mesh>
+        <mesh position={[0, 0.12, 0]} castShadow><sphereGeometry args={[0.25, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2]} /><meshStandardMaterial color={white} /></mesh>
+        <mesh position={[-0.15, 0.1, 0]} castShadow><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#FAFAFA" /></mesh>
+        <mesh position={[0.15, 0.1, 0]} castShadow><sphereGeometry args={[0.15, 10, 8]} /><meshStandardMaterial color="#FAFAFA" /></mesh>
+        <mesh position={[0, 0.1, -0.12]} castShadow><sphereGeometry args={[0.12, 8, 8]} /><meshStandardMaterial color="#F5F5F5" /></mesh>
+        <mesh position={[0, 0.1, 0.12]} castShadow><sphereGeometry args={[0.12, 8, 8]} /><meshStandardMaterial color="#F5F5F5" /></mesh>
       </group>
     )
   }
-  if (id === 'outdoor_fountain') {
-    // 喷泉
+  // ── B-03 星星睡袋 ──
+  if (id === 'B-03') {
     return (
       <group>
-        <mesh position={[0, 0.1, 0]} castShadow><cylinderGeometry args={[0.4, 0.35, 0.2, 16]} /><meshStandardMaterial color="#BDBDBD" /></mesh>
-        <mesh position={[0, 0.22, 0]} castShadow><cylinderGeometry args={[0.35, 0.35, 0.04, 16]} /><meshStandardMaterial color="#64B5F6" transparent opacity={0.7} /></mesh>
-        <mesh position={[0, 0.3, 0]} castShadow><cylinderGeometry args={[0.06, 0.08, 0.2, 10]} /><meshStandardMaterial color="#9E9E9E" /></mesh>
-        <mesh position={[0, 0.45, 0]} castShadow><sphereGeometry args={[0.08, 10, 10]} /><meshStandardMaterial color="#90CAF9" transparent opacity={0.6} /></mesh>
+        <mesh position={[0, 0.06, 0]} castShadow><boxGeometry args={[0.35, 0.08, 0.6]} /><meshStandardMaterial color="#1A237E" /></mesh>
+        <mesh position={[0, 0.1, 0]} castShadow><boxGeometry args={[0.32, 0.04, 0.55]} /><meshStandardMaterial color="#283593" /></mesh>
+        {/* 星星图案 */}
+        {[[-0.08, 0.11, 0.1], [0.06, 0.11, -0.1], [0.1, 0.11, 0.15]].map(([x, y, z], i) => (
+          <mesh key={i} position={[x, y, z]} castShadow><octahedronGeometry args={[0.018, 0]} /><meshStandardMaterial color="#FFD54F" emissive="#FFD54F" emissiveIntensity={0.3} /></mesh>
+        ))}
+        {/* 头部开口 */}
+        <mesh position={[0, 0.1, -0.28]} castShadow><cylinderGeometry args={[0.12, 0.15, 0.04, 10]} /><meshStandardMaterial color="#303F9F" /></mesh>
+      </group>
+    )
+  }
+  // ── B-07 皇家四柱床 ──
+  if (id === 'B-07') {
+    return (
+      <group>
+        <mesh position={[0, 0.12, 0]} castShadow><boxGeometry args={[0.6, 0.12, 0.8]} /><meshStandardMaterial color="#8D6E63" /></mesh>
+        <mesh position={[0, 0.2, 0]} castShadow><boxGeometry args={[0.55, 0.06, 0.75]} /><meshStandardMaterial color="#CE93D8" /></mesh>
+        <mesh position={[0, 0.26, -0.3]} castShadow><boxGeometry args={[0.4, 0.06, 0.1]} /><meshStandardMaterial color={white} /></mesh>
+        {/* 四柱 */}
+        {[[-0.28, -0.38], [0.28, -0.38], [-0.28, 0.38], [0.28, 0.38]].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0.55, z]} castShadow><cylinderGeometry args={[0.025, 0.025, 0.9, 8]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        ))}
+        {/* 顶篷 */}
+        <mesh position={[0, 0.95, 0]} castShadow><boxGeometry args={[0.62, 0.02, 0.82]} /><meshStandardMaterial color="#5D4037" /></mesh>
+        {/* 帷幔 */}
+        <mesh position={[0, 0.7, -0.39]} castShadow><boxGeometry args={[0.58, 0.5, 0.01]} /><meshStandardMaterial color="#E1BEE7" transparent opacity={0.6} /></mesh>
+      </group>
+    )
+  }
+  // ── B-08 梦境发生器 ──
+  if (id === 'B-08') {
+    return (
+      <group>
+        {/* 底座 */}
+        <mesh position={[0, 0.06, 0]} castShadow><boxGeometry args={[0.6, 0.1, 0.8]} /><meshStandardMaterial color="#37474F" /></mesh>
+        {/* 舱体 */}
+        <mesh position={[0, 0.25, 0]} castShadow><capsuleGeometry args={[0.2, 0.5, 12, 16]} /><meshStandardMaterial color="#455A64" /></mesh>
+        {/* 透明盖 */}
+        <mesh position={[0, 0.3, 0.15]} castShadow><sphereGeometry args={[0.18, 12, 8, 0, Math.PI, 0, Math.PI / 2]} /><meshStandardMaterial color="#80DEEA" transparent opacity={0.3} /></mesh>
+        {/* 灯光条 */}
+        {[-0.15, 0, 0.15].map((z, i) => (
+          <mesh key={i} position={[0.21, 0.25, z]} castShadow><boxGeometry args={[0.01, 0.04, 0.08]} /><meshStandardMaterial color="#64FFDA" emissive="#64FFDA" emissiveIntensity={0.5} /></mesh>
+        ))}
+        <pointLight position={[0, 0.3, 0]} intensity={0.3} distance={1.5} color="#80DEEA" />
       </group>
     )
   }

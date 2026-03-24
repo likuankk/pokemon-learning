@@ -28,6 +28,7 @@ const navItems: NavItem[] = [
   { href: '/child/house', label: '小屋装饰', emoji: '🪑' },
   { href: '/child/manage', label: '宝可梦管理', emoji: '📦' },
   { href: '/child/battle', label: '宝可梦战斗', emoji: '⚔️' },
+  { href: '/child/wrong-book', label: '错题本', emoji: '📕' },
   { href: '/child/letter', label: '宝可梦的信', emoji: '💌' },
 ]
 
