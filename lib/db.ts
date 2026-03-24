@@ -6,15 +6,60 @@ import * as schema from './schema'
 
 const DB_PATH = path.join(process.cwd(), 'pokemon.db')
 
-const sqlite = new Database(DB_PATH)
-sqlite.pragma('journal_mode = WAL')
-sqlite.pragma('foreign_keys = ON')
-sqlite.pragma('busy_timeout = 5000')
+// ── Lazy initialization ──────────────────────────────────────────────────────
+// We must NOT open the SQLite database at module-import time because Next.js
+// evaluates API-route modules during `next build` (static analysis / page-data
+// collection).  On Linux CI the native better-sqlite3 binding or the DB file
+// may not be available at that point, causing "Failed to collect page data".
+//
+// Instead we open the connection lazily on first use at *runtime*.
 
-export const db = drizzle(sqlite, { schema })
+let _sqlite: InstanceType<typeof Database> | null = null
+let _db: ReturnType<typeof drizzle> | null = null
+let _initialized = false
 
-// Initialize tables on first import
-sqlite.exec(`
+function getSqlite() {
+  if (!_sqlite) {
+    _sqlite = new Database(DB_PATH)
+    _sqlite.pragma('journal_mode = WAL')
+    _sqlite.pragma('foreign_keys = ON')
+    _sqlite.pragma('busy_timeout = 5000')
+  }
+  return _sqlite
+}
+
+function getDb() {
+  if (!_db) {
+    _db = drizzle(getSqlite(), { schema })
+  }
+  if (!_initialized) {
+    _initialized = true
+    initTables()
+    runMigrations()
+  }
+  return _db
+}
+
+// Proxy that lazily initialises on property access so existing call-sites
+// like `(db as any).session.client` and drizzle queries keep working.
+const db: any = new Proxy({} as any, {
+  get(_target, prop) {
+    const realDb = getDb() as any
+    // Expose the raw sqlite connection via `session.client` for legacy code
+    if (prop === 'session') {
+      return { client: getSqlite() }
+    }
+    return realDb[prop]
+  },
+})
+
+export { db }
+export default db
+
+// Initialize tables (called lazily on first db access)
+function initTables() {
+  const sqlite = getSqlite()
+  sqlite.exec(`
   CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
@@ -70,8 +115,6 @@ sqlite.exec(`
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
 `)
-
-// ── New tables for full feature set ──────────────────────────────────────────
 
 sqlite.exec(`
   -- Achievements definition table
@@ -361,14 +404,16 @@ sqlite.exec(`
   -- Index for wrong answer queries
   CREATE INDEX IF NOT EXISTS idx_quiz_history_wrong ON quiz_answer_history(child_id, correct);
 `)
+}
 
 // Run migrations for existing DBs
 // Helper to safely add column (ignores "duplicate column name" errors from race conditions)
 const safeAddColumn = (table: string, col: string, def: string) => {
-  try { sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`) } catch {}
+  try { getSqlite().exec(`ALTER TABLE ${table} ADD COLUMN ${col} ${def}`) } catch {}
 }
 
 const runMigrations = () => {
+  const sqlite = getSqlite()
   // tasks: add last_updated
   const taskCols = (sqlite.prepare(`PRAGMA table_info(tasks)`).all() as {name:string}[]).map(c => c.name)
   if (!taskCols.includes('last_updated')) {
@@ -841,7 +886,3 @@ function seedQuizQuestions(s: any) {
     stmt.run(q.subject, q.gmin, q.gmax, q.diff, q.q, q.a, q.b, q.c, q.d, q.correct, q.time, q.cat)
   }
 }
-
-runMigrations()
-
-export default db
