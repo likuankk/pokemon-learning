@@ -9,15 +9,52 @@ export default function AuthPage() {
   const router = useRouter()
   const { refresh } = useSession()
   const [role, setRole] = useState<'parent' | 'child'>('parent')
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
   const [password, setPassword] = useState('')
+  const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // 切换角色时重置模式（家长只能登录）
+  const handleRoleChange = (r: 'parent' | 'child') => {
+    setRole(r)
+    if (r === 'parent') setMode('login')
+    setError('')
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true); setError('')
 
+    // 注册模式（仅孩子）
+    if (mode === 'register' && role === 'child') {
+      if (!inviteCode.trim()) {
+        setError('请输入家庭邀请码')
+        setLoading(false)
+        return
+      }
+      const res = await fetch('/api/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'register',
+          name, password, role: 'child', inviteCode: inviteCode.trim(),
+        }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        refresh()
+        document.cookie = 'onboarding_completed=1; path=/; max-age=31536000'
+        router.push('/child')
+      } else {
+        setError(data.error || '注册失败')
+      }
+      setLoading(false)
+      return
+    }
+
+    // 登录模式
     const res = await fetch('/api/auth', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -33,7 +70,6 @@ export default function AuthPage() {
       if (actualRole === 'parent') {
         router.push('/parent')
       } else {
-        // 老用户登录，标记 onboarding 已完成（跳过检查）
         document.cookie = 'onboarding_completed=1; path=/; max-age=31536000'
         router.push('/child')
       }
@@ -68,7 +104,7 @@ export default function AuthPage() {
         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
       >
         <h1 className="game-label text-center mb-2" style={{ fontSize: '2.5rem' }}>
-          登录
+          {mode === 'register' ? '注册' : '登录'}
         </h1>
         <p className="text-center text-gray-400 mb-8" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.2rem' }}>
           宝可梦学习乐园
@@ -82,7 +118,7 @@ export default function AuthPage() {
               { key: 'child', label: '🧒 小朋友', color: 'yellow' },
             ].map(r => (
               <button key={r.key} type="button"
-                onClick={() => setRole(r.key as any)}
+                onClick={() => handleRoleChange(r.key as any)}
                 className={`flex-1 py-4 rounded-2xl font-bold border-2 transition-all ${
                   role === r.key ? 'bg-indigo-500 text-white border-indigo-500' : 'bg-white text-gray-600 border-gray-200'
                 }`}
@@ -92,6 +128,28 @@ export default function AuthPage() {
               </button>
             ))}
           </div>
+
+          {/* 孩子角色时显示 登录/注册 切换 */}
+          {role === 'child' && (
+            <div className="flex gap-2 bg-gray-100 rounded-xl p-1">
+              {[
+                { key: 'login', label: '登录' },
+                { key: 'register', label: '注册新账号' },
+              ].map(m => (
+                <button key={m.key} type="button"
+                  onClick={() => { setMode(m.key as any); setError('') }}
+                  className={`flex-1 py-2.5 rounded-lg font-bold transition-all text-base ${
+                    mode === m.key
+                      ? 'bg-white text-indigo-600 shadow-sm'
+                      : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                  style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           <input
             type="text" value={name} onChange={e => setName(e.target.value)}
@@ -107,6 +165,22 @@ export default function AuthPage() {
             style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}
           />
 
+          {/* 注册模式时显示邀请码输入 */}
+          {mode === 'register' && role === 'child' && (
+            <div>
+              <input
+                type="text" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())}
+                placeholder="家庭邀请码" required
+                className="w-full border-2 border-amber-300 rounded-2xl px-5 py-4 text-xl focus:outline-none focus:ring-4 focus:ring-amber-200 bg-amber-50"
+                style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", letterSpacing: '0.15em' }}
+                maxLength={10}
+              />
+              <p className="text-sm text-gray-400 mt-2 text-center" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>
+                💡 邀请码在家长的「设置」页面查看
+              </p>
+            </div>
+          )}
+
           {error && <p className="text-red-500 text-center font-bold" style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif" }}>{error}</p>}
 
           <button
@@ -114,7 +188,7 @@ export default function AuthPage() {
             className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-5 rounded-2xl transition-all disabled:opacity-50"
             style={{ fontFamily: "'ZCOOL KuaiLe', sans-serif", fontSize: '1.5rem', boxShadow: '0 5px 0 #3730a3' }}
           >
-            {loading ? '请稍候...' : '登录'}
+            {loading ? '请稍候...' : mode === 'register' ? '注册并进入' : '登录'}
           </button>
         </form>
 
